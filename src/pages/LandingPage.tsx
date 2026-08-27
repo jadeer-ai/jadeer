@@ -1084,6 +1084,10 @@ function Footer() {
 export default function LandingPage() {
   const { userRole, setUserRole, clearUserRole } = useUserRole();
 
+  useEffect(() => {
+    clearUserRole();
+  }, [clearUserRole]);
+
   const handleSelectRole = (role: UserRole) => {
     setUserRole(role);
     // Smooth scroll to top when switching
