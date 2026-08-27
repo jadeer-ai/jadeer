@@ -10,6 +10,10 @@ export { default as ProjectWorkspacePage } from './ProjectWorkspacePage';
 export { default as PortfolioPage } from './PortfolioPage';
 export { default as JobMatchesPage } from './JobMatchesPage';
 export { default as SettingsPage } from './SettingsPage';
+export { default as StudentDashboardPage } from './StudentDashboardPage';
+export { default as MentorConsultationPage } from './MentorConsultationPage';
+export { default as BookSessionPage } from './BookSessionPage';
 export {
   ReadinessPage,
 } from './PlaceholderPages';
+

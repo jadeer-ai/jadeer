@@ -4,6 +4,9 @@ import LandingPage from '@/pages/LandingPage';
 import SignUpPage from '@/pages/SignUpPage';
 import SignInPage from '@/pages/SignInPage';
 import CandidateWizardPage from '@/pages/CandidateWizardPage';
+import StudentDashboardPage from '@/pages/StudentDashboardPage';
+import MentorConsultationPage from '@/pages/MentorConsultationPage';
+import BookSessionPage from '@/pages/BookSessionPage';
 import {
   DashboardPage,
   CandidateProfilesPage,
@@ -32,7 +35,7 @@ const router = createBrowserRouter([
       { path: '/dashboard', element: <DashboardPage /> },
       { path: '/candidates/wizard', element: <CandidateWizardPage /> },
 
-      /* Candidate Journey Routes */
+      /* Candidate Journey Routes (Graduate Path) */
       { path: '/candidates/profiles', element: <CandidateProfilesPage /> },
       { path: '/candidates/ai-interview', element: <AIInterviewPage /> },
       { path: '/candidates/human-interview', element: <HumanInterviewPage /> },
@@ -44,8 +47,14 @@ const router = createBrowserRouter([
       { path: '/settings', element: <SettingsPage /> },
       { path: '/candidates/settings', element: <SettingsPage /> },
       { path: '/candidates/readiness', element: <ReadinessPage /> },
+
+      /* Student Mentorship Routes */
+      { path: '/student/dashboard', element: <StudentDashboardPage /> },
+      { path: '/student/mentors', element: <MentorConsultationPage /> },
+      { path: '/student/book-session', element: <BookSessionPage /> },
     ],
   },
 ]);
 
 export default router;
+

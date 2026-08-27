@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useUserRole } from '@/contexts/UserRoleContext';
 import {
   Settings,
   Mail,
@@ -21,6 +23,9 @@ import {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 export default function SettingsPage() {
+  const { isStudent, clearUserRole } = useUserRole();
+  const navigate = useNavigate();
+
   // Account state
   const [email, setEmail] = useState('ahmad.hassan@example.com');
   const [currentPassword, setCurrentPassword] = useState('');
@@ -68,7 +73,7 @@ export default function SettingsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#6E8F75]/10 text-[#6E8F75] text-xs font-bold border border-[#6E8F75]/20">
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${isStudent ? 'bg-student-500/10 text-student-600 border-student-500/20' : 'bg-[#6E8F75]/10 text-[#6E8F75] border-[#6E8F75]/20'}`}>
                 <ShieldCheck className="w-3.5 h-3.5" />
                 Account Security & Delivery
               </span>
@@ -85,7 +90,7 @@ export default function SettingsPage() {
             </p>
           </div>
 
-          <div className="w-12 h-12 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.06] text-[#6E8F75] flex items-center justify-center shrink-0">
+          <div className={`w-12 h-12 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.06] ${isStudent ? 'text-student-500' : 'text-[#6E8F75]'} flex items-center justify-center shrink-0`}>
             <Settings className="w-6 h-6" />
           </div>
         </div>
@@ -105,7 +110,7 @@ export default function SettingsPage() {
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#0B0F19]/[0.06] shadow-[0_2px_16px_rgba(0,0,0,0.02)] space-y-6">
         <div className="flex items-center justify-between border-b border-[#0B0F19]/[0.06] pb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#6E8F75]/10 text-[#6E8F75] flex items-center justify-center font-bold">
+            <div className={`w-10 h-10 rounded-2xl ${isStudent ? 'bg-student-500/10 text-student-500' : 'bg-[#6E8F75]/10 text-[#6E8F75]'} flex items-center justify-center font-bold`}>
               <Bell className="w-5 h-5" />
             </div>
             <div>
@@ -118,14 +123,14 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <span className="hidden sm:inline-flex text-xs font-bold text-[#6E8F75] bg-[#6E8F75]/10 px-3 py-1 rounded-full">
+          <span className={`hidden sm:inline-flex text-xs font-bold ${isStudent ? 'text-student-500 bg-student-500/10' : 'text-[#6E8F75] bg-[#6E8F75]/10'} px-3 py-1 rounded-full`}>
             Email Delivery
           </span>
         </div>
 
         {/* Email Direct Integration Callout */}
         <div className="p-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.05] flex items-start gap-3 text-xs text-[#0B0F19]/75">
-          <Mail className="w-4 h-4 text-[#6E8F75] shrink-0 mt-0.5" />
+          <Mail className={`w-4 h-4 ${isStudent ? 'text-student-500' : 'text-[#6E8F75]'} shrink-0 mt-0.5`} />
           <p className="leading-relaxed">
             <strong className="text-[#0B0F19] font-bold">Automated Email Dispatch:</strong> When an employer requests an interview, the invitation, calendar time slot, and meeting link are sent directly to <code className="font-mono text-[11px] bg-white px-1.5 py-0.5 rounded border border-[#0B0F19]/[0.06] text-[#0B0F19]">{email}</code>.
           </p>
@@ -134,13 +139,13 @@ export default function SettingsPage() {
         {/* Toggle List */}
         <div className="space-y-4 pt-1">
           {/* Toggle 1: Interview Requests & Job Matches */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#0B0F19]/[0.06] hover:border-[#6E8F75]/30 transition-all flex items-start justify-between gap-4">
+          <div className={`p-4 sm:p-5 rounded-2xl bg-white border border-[#0B0F19]/[0.06] ${isStudent ? 'hover:border-student-500/30' : 'hover:border-[#6E8F75]/30'} transition-all flex items-start justify-between gap-4`}>
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="text-[14.5px] font-bold text-[#0B0F19]">
                   Interview Requests & Job Matches
                 </span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#6E8F75]/10 text-[#6E8F75] uppercase">
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${isStudent ? 'bg-student-500/10 text-student-600' : 'bg-[#6E8F75]/10 text-[#6E8F75]'} uppercase`}>
                   Essential
                 </span>
               </div>
@@ -158,7 +163,7 @@ export default function SettingsPage() {
               className={`
                 relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent
                 transition-colors duration-200 ease-in-out focus:outline-none mt-1
-                ${notifications.interviewRequests ? 'bg-[#6E8F75]' : 'bg-[#0B0F19]/20'}
+                ${notifications.interviewRequests ? (isStudent ? 'bg-student-500' : 'bg-[#6E8F75]') : 'bg-[#0B0F19]/20'}
               `}
             >
               <span
@@ -172,7 +177,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Toggle 2: Application Status Updates */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#0B0F19]/[0.06] hover:border-[#6E8F75]/30 transition-all flex items-start justify-between gap-4">
+          <div className={`p-4 sm:p-5 rounded-2xl bg-white border border-[#0B0F19]/[0.06] ${isStudent ? 'hover:border-student-500/30' : 'hover:border-[#6E8F75]/30'} transition-all flex items-start justify-between gap-4`}>
             <div className="space-y-1">
               <span className="text-[14.5px] font-bold text-[#0B0F19]">
                 Application Status Updates
@@ -191,7 +196,7 @@ export default function SettingsPage() {
               className={`
                 relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent
                 transition-colors duration-200 ease-in-out focus:outline-none mt-1
-                ${notifications.applicationStatus ? 'bg-[#6E8F75]' : 'bg-[#0B0F19]/20'}
+                ${notifications.applicationStatus ? (isStudent ? 'bg-student-500' : 'bg-[#6E8F75]') : 'bg-[#0B0F19]/20'}
               `}
             >
               <span
@@ -205,7 +210,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Toggle 3: Mentor Code Reviews & Workspace Syncs */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#0B0F19]/[0.06] hover:border-[#6E8F75]/30 transition-all flex items-start justify-between gap-4">
+          <div className={`p-4 sm:p-5 rounded-2xl bg-white border border-[#0B0F19]/[0.06] ${isStudent ? 'hover:border-student-500/30' : 'hover:border-[#6E8F75]/30'} transition-all flex items-start justify-between gap-4`}>
             <div className="space-y-1">
               <span className="text-[14.5px] font-bold text-[#0B0F19]">
                 Mentor Code Reviews & Project Syncs
@@ -224,7 +229,7 @@ export default function SettingsPage() {
               className={`
                 relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent
                 transition-colors duration-200 ease-in-out focus:outline-none mt-1
-                ${notifications.mentorReviews ? 'bg-[#6E8F75]' : 'bg-[#0B0F19]/20'}
+                ${notifications.mentorReviews ? (isStudent ? 'bg-student-500' : 'bg-[#6E8F75]') : 'bg-[#0B0F19]/20'}
               `}
             >
               <span
@@ -238,7 +243,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Toggle 4: Weekly Talent Digest */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#0B0F19]/[0.06] hover:border-[#6E8F75]/30 transition-all flex items-start justify-between gap-4">
+          <div className={`p-4 sm:p-5 rounded-2xl bg-white border border-[#0B0F19]/[0.06] ${isStudent ? 'hover:border-student-500/30' : 'hover:border-[#6E8F75]/30'} transition-all flex items-start justify-between gap-4`}>
             <div className="space-y-1">
               <span className="text-[14.5px] font-bold text-[#0B0F19]">
                 Weekly Jadeer Talent Digest
@@ -257,7 +262,7 @@ export default function SettingsPage() {
               className={`
                 relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent
                 transition-colors duration-200 ease-in-out focus:outline-none mt-1
-                ${notifications.talentDigest ? 'bg-[#6E8F75]' : 'bg-[#0B0F19]/20'}
+                ${notifications.talentDigest ? (isStudent ? 'bg-student-500' : 'bg-[#6E8F75]') : 'bg-[#0B0F19]/20'}
               `}
             >
               <span
@@ -276,12 +281,14 @@ export default function SettingsPage() {
           <button
             type="button"
             onClick={handleSaveNotifications}
-            className="
+            className={`
               inline-flex items-center gap-2 px-6 py-3 rounded-2xl
-              bg-[#6E8F75] text-white text-xs font-bold
-              hover:bg-[#5d7d64] hover:shadow-[0_4px_16px_rgba(110,143,117,0.3)]
-              transition-all shadow-sm cursor-pointer active:scale-95
-            "
+              text-white text-xs font-bold transition-all shadow-sm cursor-pointer active:scale-95
+              ${isStudent
+                ? 'bg-student-500 hover:bg-student-600 hover:shadow-[0_4px_16px_rgba(0,86,214,0.3)]'
+                : 'bg-[#6E8F75] hover:bg-[#5d7d64] hover:shadow-[0_4px_16px_rgba(110,143,117,0.3)]'
+              }
+            `}
           >
             <Save className="w-4 h-4" />
             <span>Save Notification Preferences</span>
@@ -296,7 +303,7 @@ export default function SettingsPage() {
         <div className="flex items-center justify-between border-b border-[#0B0F19]/[0.06] pb-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-[#0B0F19]/[0.05] text-[#0B0F19] flex items-center justify-center font-bold">
-              <KeyRound className="w-5 h-5 text-[#6E8F75]" />
+              <KeyRound className={`w-5 h-5 ${isStudent ? 'text-student-500' : 'text-[#6E8F75]'}`} />
             </div>
             <div>
               <h2 className="text-lg sm:text-xl font-extrabold text-[#0B0F19] tracking-tight">
@@ -327,7 +334,7 @@ export default function SettingsPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full h-11 px-3.5 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.1] text-sm text-[#0B0F19] font-medium focus:bg-white focus:border-[#6E8F75] focus:outline-none"
+                className={`w-full h-11 px-3.5 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.1] text-sm text-[#0B0F19] font-medium focus:bg-white focus:outline-none ${isStudent ? 'focus:border-student-500' : 'focus:border-[#6E8F75]'}`}
               />
             </div>
           </div>
@@ -350,7 +357,7 @@ export default function SettingsPage() {
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     placeholder="Enter current password"
-                    className="w-full h-10 px-3.5 rounded-xl bg-[#FAF9F6] border border-[#0B0F19]/[0.1] text-xs text-[#0B0F19] focus:bg-white focus:border-[#6E8F75] focus:outline-none"
+                    className={`w-full h-10 px-3.5 rounded-xl bg-[#FAF9F6] border border-[#0B0F19]/[0.1] text-xs text-[#0B0F19] focus:bg-white focus:outline-none ${isStudent ? 'focus:border-student-500' : 'focus:border-[#6E8F75]'}`}
                   />
                   <button
                     type="button"
@@ -373,7 +380,7 @@ export default function SettingsPage() {
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="At least 8 characters"
-                    className="w-full h-10 px-3.5 rounded-xl bg-[#FAF9F6] border border-[#0B0F19]/[0.1] text-xs text-[#0B0F19] focus:bg-white focus:border-[#6E8F75] focus:outline-none"
+                    className={`w-full h-10 px-3.5 rounded-xl bg-[#FAF9F6] border border-[#0B0F19]/[0.1] text-xs text-[#0B0F19] focus:bg-white focus:outline-none ${isStudent ? 'focus:border-student-500' : 'focus:border-[#6E8F75]'}`}
                   />
                   <button
                     type="button"
@@ -395,7 +402,7 @@ export default function SettingsPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Repeat new password"
-                  className="w-full h-10 px-3.5 rounded-xl bg-[#FAF9F6] border border-[#0B0F19]/[0.1] text-xs text-[#0B0F19] focus:bg-white focus:border-[#6E8F75] focus:outline-none"
+                  className={`w-full h-10 px-3.5 rounded-xl bg-[#FAF9F6] border border-[#0B0F19]/[0.1] text-xs text-[#0B0F19] focus:bg-white focus:outline-none ${isStudent ? 'focus:border-student-500' : 'focus:border-[#6E8F75]'}`}
                 />
               </div>
             </div>
@@ -416,6 +423,36 @@ export default function SettingsPage() {
             </button>
           </div>
         </form>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════════
+         SECTION 3: PORTAL SETTINGS & RESET
+         ═══════════════════════════════════════════════════════════════ */}
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-red-100 shadow-[0_2px_16px_rgba(0,0,0,0.02)] space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <h2 className="text-lg font-extrabold text-[#0B0F19] tracking-tight">
+              Portal Path Selection
+            </h2>
+            <p className="text-xs text-[#0B0F19]/55">
+              Reset your active view preferences and return to the main role selection screen.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              clearUserRole();
+              navigate('/');
+            }}
+            className="
+              inline-flex items-center justify-center px-5 py-3 rounded-2xl
+              bg-red-50 text-red-600 text-xs font-bold border border-red-100
+              hover:bg-red-100 hover:text-red-700 transition-all cursor-pointer active:scale-95
+            "
+          >
+            Exit Portal Selection
+          </button>
+        </div>
       </div>
     </div>
   );

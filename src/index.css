@@ -25,6 +25,18 @@
   --color-primary-900: #2a3e30;
   --color-primary-950: #1a2a1f;
 
+  /* Student Accent: Deep Ocean Blue (#0056D6) */
+  --color-student-50:  #E6EEFB;
+  --color-student-100: #BFCFF2;
+  --color-student-200: #80A3E8;
+  --color-student-300: #4D85E0;
+  --color-student-400: #2B6FDB;
+  --color-student-500: #0056D6;
+  --color-student-600: #0048B5;
+  --color-student-700: #003A94;
+  --color-student-800: #002C73;
+  --color-student-900: #001F52;
+
   /* Accent: Deep Navy (text / headings) */
   --color-navy-950: #050810;
   --color-navy-900: #0B0F19;
@@ -193,6 +205,43 @@
 @keyframes expand-width {
   from { width: 0; }
   to { width: 100%; }
+}
+
+/* ── Role Selection Animations ─────────────────────────────────────────── */
+@keyframes card-entrance {
+  from { opacity: 0; transform: translateY(28px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes card-select-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(110, 143, 117, 0.4); }
+  50% { box-shadow: 0 0 0 12px rgba(110, 143, 117, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(110, 143, 117, 0); }
+}
+
+@keyframes cross-fade-in {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes cross-fade-out {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.98); }
+}
+
+@keyframes pill-slide {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes gentle-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes icon-spin-in {
+  from { opacity: 0; transform: rotate(-12deg) scale(0.8); }
+  to { opacity: 1; transform: rotate(0deg) scale(1); }
 }
 
 /* ── Base Styles ────────────────────────────────────────────────────────── */

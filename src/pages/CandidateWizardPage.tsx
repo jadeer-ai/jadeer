@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, type DragEvent, type ChangeEvent } from 'react';
 import { BrandLogo } from '@/components/common';
+import { useUserRole } from '@/contexts/UserRoleContext';
 import {
   User,
   Code2,
@@ -135,6 +136,8 @@ const initialFormData: WizardFormData = {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 function ProgressBar({ currentStep }: { currentStep: number }) {
+  const { isStudent } = useUserRole();
+
   return (
     <div className="px-6 sm:px-10 pt-8 pb-2">
       {/* Step indicators */}
@@ -153,9 +156,13 @@ function ProgressBar({ currentStep }: { currentStep: number }) {
                     flex h-10 w-10 items-center justify-center rounded-full
                     border-2 transition-all duration-500
                     ${isComplete
-                      ? 'bg-[#6E8F75] border-[#6E8F75] text-white scale-100'
+                      ? isStudent
+                        ? 'bg-student-500 border-student-500 text-white scale-100'
+                        : 'bg-[#6E8F75] border-[#6E8F75] text-white scale-100'
                       : isActive
-                        ? 'bg-[#6E8F75]/10 border-[#6E8F75] text-[#6E8F75] scale-105'
+                        ? isStudent
+                          ? 'bg-student-500/10 border-student-500 text-student-600 scale-105'
+                          : 'bg-[#6E8F75]/10 border-[#6E8F75] text-[#6E8F75] scale-105'
                         : 'bg-[#FAF9F6] border-[#0B0F19]/10 text-[#0B0F19]/30'
                     }
                   `}
@@ -169,7 +176,12 @@ function ProgressBar({ currentStep }: { currentStep: number }) {
                 <span
                   className={`
                     mt-2 text-[11px] sm:text-xs font-semibold whitespace-nowrap transition-colors duration-300
-                    ${isActive ? 'text-[#6E8F75]' : isComplete ? 'text-[#6E8F75]/70' : 'text-[#0B0F19]/30'}
+                    ${isActive
+                      ? isStudent ? 'text-student-600' : 'text-[#6E8F75]'
+                      : isComplete
+                        ? isStudent ? 'text-student-600/70' : 'text-[#6E8F75]/70'
+                        : 'text-[#0B0F19]/30'
+                    }
                   `}
                 >
                   {step.label}
@@ -180,7 +192,7 @@ function ProgressBar({ currentStep }: { currentStep: number }) {
               {i < STEPS.length - 1 && (
                 <div className="flex-1 mx-3 sm:mx-5 h-[2px] rounded-full bg-[#0B0F19]/[0.06] mt-[-20px] overflow-hidden">
                   <div
-                    className="h-full bg-[#6E8F75] rounded-full transition-all duration-700 ease-out"
+                    className={`h-full rounded-full transition-all duration-700 ease-out ${isStudent ? 'bg-student-500' : 'bg-[#6E8F75]'}`}
                     style={{ width: isComplete ? '100%' : '0%' }}
                   />
                 </div>
@@ -204,13 +216,16 @@ function BasicProfileStep({
   data: WizardFormData;
   onChange: (patch: Partial<WizardFormData>) => void;
 }) {
+  const { isStudent } = useUserRole();
+
   const inputClass = `
     w-full h-[48px] px-4 rounded-xl
     bg-[#FAF9F6] border border-[#0B0F19]/[0.07]
     text-[15px] text-[#0B0F19] placeholder:text-[#0B0F19]/25
     transition-all duration-200
     hover:border-[#0B0F19]/12
-    focus:outline-none focus:border-[#6E8F75] focus:ring-[3px] focus:ring-[#6E8F75]/10 focus:bg-white
+    focus:outline-none focus:bg-white
+    ${isStudent ? 'focus:border-student-500 focus:ring-[3px] focus:ring-student-500/10' : 'focus:border-[#6E8F75] focus:ring-[3px] focus:ring-[#6E8F75]/10'}
   `;
 
   return (
@@ -227,8 +242,13 @@ function BasicProfileStep({
       <div className="flex items-start gap-5">
         {/* Avatar placeholder */}
         <div className="shrink-0">
-          <div className="w-[72px] h-[72px] rounded-2xl bg-[#6E8F75]/[0.08] border-2 border-dashed border-[#6E8F75]/20 flex items-center justify-center cursor-pointer hover:border-[#6E8F75]/40 hover:bg-[#6E8F75]/[0.12] transition-all duration-200 group">
-            <User className="w-6 h-6 text-[#6E8F75]/40 group-hover:text-[#6E8F75]/60 transition-colors" />
+          <div className={`w-[72px] h-[72px] rounded-2xl border-2 border-dashed flex items-center justify-center cursor-pointer transition-all duration-200 group
+            ${isStudent
+              ? 'bg-student-500/[0.08] border-student-500/20 hover:border-student-500/40 hover:bg-student-500/[0.12]'
+              : 'bg-[#6E8F75]/[0.08] border-[#6E8F75]/20 hover:border-[#6E8F75]/40 hover:bg-[#6E8F75]/[0.12]'
+            }
+          `}>
+            <User className={`w-6 h-6 transition-colors ${isStudent ? 'text-student-500/40 group-hover:text-student-500/60' : 'text-[#6E8F75]/40 group-hover:text-[#6E8F75]/60'}`} />
           </div>
           <p className="text-[10px] text-[#0B0F19]/30 text-center mt-1.5 font-medium">Add photo</p>
         </div>
@@ -300,15 +320,16 @@ function BasicProfileStep({
           placeholder="Tell companies about yourself, your interests, and what you're looking for..."
           rows={4}
           maxLength={300}
-          className="
+          className={`
             w-full px-4 py-3 rounded-xl resize-none
             bg-[#FAF9F6] border border-[#0B0F19]/[0.07]
             text-[15px] text-[#0B0F19] placeholder:text-[#0B0F19]/25
             transition-all duration-200
             hover:border-[#0B0F19]/12
-            focus:outline-none focus:border-[#6E8F75] focus:ring-[3px] focus:ring-[#6E8F75]/10 focus:bg-white
+            focus:outline-none focus:bg-white
+            ${isStudent ? 'focus:border-student-500 focus:ring-[3px] focus:ring-student-500/10' : 'focus:border-[#6E8F75] focus:ring-[3px] focus:ring-[#6E8F75]/10'}
             leading-relaxed
-          "
+          `}
         />
         <p className="text-right text-[11px] text-[#0B0F19]/25 mt-1">
           {data.bio.length}/300
@@ -329,7 +350,17 @@ function SkillsSelectionStep({
   data: WizardFormData;
   onChange: (patch: Partial<WizardFormData>) => void;
 }) {
+  const { isStudent } = useUserRole();
   const [activeCategory, setActiveCategory] = useState(0);
+  const [newSkill, setNewSkill] = useState('');
+
+  const addSkill = (skillName: string) => {
+    const trimmed = skillName.trim();
+    if (trimmed && !data.selectedSkills.includes(trimmed)) {
+      onChange({ selectedSkills: [...data.selectedSkills, trimmed] });
+    }
+    setNewSkill('');
+  };
 
   const toggleSkill = (skill: string) => {
     const current = data.selectedSkills;
@@ -343,6 +374,110 @@ function SkillsSelectionStep({
   const removeSkill = (skill: string) => {
     onChange({ selectedSkills: data.selectedSkills.filter((s) => s !== skill) });
   };
+
+  if (isStudent) {
+    return (
+      <div className="space-y-6">
+        {/* Section header */}
+        <div>
+          <h3 className="text-xl font-bold text-[#0B0F19] mb-1">What are your technical skills?</h3>
+          <p className="text-[14px] text-[#0B0F19]/45 leading-relaxed">
+            List the technologies, languages, or tools you are familiar with. This helps match you with the right mentors and career resources.
+          </p>
+        </div>
+
+        {/* Contextual prompt */}
+        <div className="flex items-start gap-3 px-4 py-3.5 rounded-xl bg-student-50 border border-student-100">
+          <Sparkles className="w-4 h-4 text-student-500 mt-0.5 shrink-0" />
+          <p className="text-[13px] text-student-600/80 leading-relaxed">
+            <span className="font-semibold text-student-600">Tip:</span> Type a skill name (like "React", "Python", "SQL") and click **Add** or press **Enter** to list it.
+          </p>
+        </div>
+
+        {/* Direct Input */}
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newSkill}
+            onChange={(e) => setNewSkill(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                addSkill(newSkill);
+              }
+            }}
+            placeholder="Type a skill (e.g. JavaScript, C++, Git) and press Enter..."
+            className="
+              flex-1 h-[46px] px-4 rounded-xl
+              bg-[#FAF9F6] border border-[#0B0F19]/[0.08]
+              text-sm text-[#0B0F19] placeholder:text-[#0B0F19]/25
+              transition-all duration-200
+              focus:outline-none focus:border-student-500 focus:ring-[3px] focus:ring-student-500/10 focus:bg-white
+            "
+          />
+          <button
+            type="button"
+            onClick={() => addSkill(newSkill)}
+            className="
+              px-5 rounded-xl bg-student-500 hover:bg-student-600 text-white
+              font-bold text-sm shadow-sm transition-all active:scale-[0.97] cursor-pointer
+            "
+          >
+            Add
+          </button>
+        </div>
+
+        {/* Selected skills list */}
+        <div className="pt-2">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[13px] font-semibold text-[#0B0F19]/60">
+              Your Skills
+              <span className="ml-2 inline-flex items-center justify-center w-5 h-5 rounded-full bg-student-500 text-white text-[11px] font-bold">
+                {data.selectedSkills.length}
+              </span>
+            </p>
+            {data.selectedSkills.length > 0 && (
+              <button
+                onClick={() => onChange({ selectedSkills: [] })}
+                className="text-[12px] font-medium text-[#0B0F19]/30 hover:text-red-500 transition-colors"
+              >
+                Clear all
+              </button>
+            )}
+          </div>
+
+          {data.selectedSkills.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {data.selectedSkills.map((skill) => (
+                <span
+                  key={skill}
+                  className="
+                    inline-flex items-center gap-1.5 pl-3 pr-2 py-1.5 rounded-lg
+                    bg-student-50 text-student-600 text-[13px] font-medium
+                    border border-student-100/60
+                  "
+                >
+                  {skill}
+                  <button
+                    onClick={() => removeSkill(skill)}
+                    className="p-0.5 rounded hover:bg-student-100 transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 border border-dashed border-[#0B0F19]/[0.08] rounded-2xl bg-[#FAF9F6]">
+              <p className="text-xs text-[#0B0F19]/40 italic">
+                No skills listed yet. Type a skill above and press Add.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   /* Filter skills by search */
   const searchLower = data.skillSearch.toLowerCase();
@@ -511,6 +646,7 @@ function ResumeUploadStep({
   data: WizardFormData;
   onChange: (patch: Partial<WizardFormData>) => void;
 }) {
+  const { isStudent } = useUserRole();
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -557,7 +693,8 @@ function ResumeUploadStep({
     text-[14px] text-[#0B0F19] placeholder:text-[#0B0F19]/25
     transition-all duration-200
     hover:border-[#0B0F19]/12
-    focus:outline-none focus:border-[#6E8F75] focus:ring-[3px] focus:ring-[#6E8F75]/10 focus:bg-white
+    focus:outline-none focus:bg-white
+    ${isStudent ? 'focus:border-student-500 focus:ring-[3px] focus:ring-student-500/10' : 'focus:border-[#6E8F75] focus:ring-[3px] focus:ring-[#6E8F75]/10'}
   `;
 
   return (
@@ -571,10 +708,12 @@ function ResumeUploadStep({
       </div>
 
       {/* AI analysis hint */}
-      <div className="flex items-start gap-3 px-4 py-3.5 rounded-xl bg-[#6E8F75]/[0.06] border border-[#6E8F75]/10">
-        <Sparkles className="w-4 h-4 text-[#6E8F75] mt-0.5 shrink-0" />
-        <p className="text-[13px] text-[#6E8F75]/80 leading-relaxed">
-          <span className="font-semibold text-[#6E8F75]">AI-Powered Analysis:</span> Our AI will extract skills, experience, and projects from your resume and GitHub to accelerate your profile setup.
+      <div className={`flex items-start gap-3 px-4 py-3.5 rounded-xl border
+        ${isStudent ? 'bg-student-50 border-student-100' : 'bg-[#6E8F75]/[0.06] border-[#6E8F75]/10'}
+      `}>
+        <Sparkles className={`w-4 h-4 mt-0.5 shrink-0 ${isStudent ? 'text-student-500' : 'text-[#6E8F75]'}`} />
+        <p className={`text-[13px] leading-relaxed ${isStudent ? 'text-student-600/80' : 'text-[#6E8F75]/80'}`}>
+          <span className={`font-semibold ${isStudent ? 'text-student-600' : 'text-[#6E8F75]'}`}>AI-Powered Analysis:</span> Our AI will extract skills, experience, and projects from your resume and GitHub to accelerate your profile setup.
         </p>
       </div>
 
@@ -596,8 +735,12 @@ function ResumeUploadStep({
               py-10 px-6 rounded-2xl cursor-pointer
               border-2 border-dashed transition-all duration-300
               ${isDragging
-                ? 'border-[#6E8F75] bg-[#6E8F75]/[0.06] scale-[1.01]'
-                : 'border-[#0B0F19]/10 bg-[#FAF9F6] hover:border-[#6E8F75]/30 hover:bg-[#6E8F75]/[0.02]'
+                ? isStudent
+                  ? 'border-student-500 bg-student-500/[0.06] scale-[1.01]'
+                  : 'border-[#6E8F75] bg-[#6E8F75]/[0.06] scale-[1.01]'
+                : isStudent
+                  ? 'border-[#0B0F19]/10 bg-[#FAF9F6] hover:border-student-500/30 hover:bg-student-500/[0.02]'
+                  : 'border-[#0B0F19]/10 bg-[#FAF9F6] hover:border-[#6E8F75]/30 hover:bg-[#6E8F75]/[0.02]'
               }
             `}
           >
@@ -606,7 +749,9 @@ function ResumeUploadStep({
                 flex h-14 w-14 items-center justify-center rounded-2xl mb-4
                 transition-all duration-300
                 ${isDragging
-                  ? 'bg-[#6E8F75]/15 text-[#6E8F75] scale-110'
+                  ? isStudent
+                    ? 'bg-student-500/15 text-student-500 scale-110'
+                    : 'bg-[#6E8F75]/15 text-[#6E8F75] scale-110'
                   : 'bg-[#0B0F19]/[0.04] text-[#0B0F19]/25'
                 }
               `}
@@ -639,9 +784,16 @@ function ResumeUploadStep({
           </div>
         ) : (
           /* File uploaded state */
-          <div className="flex items-center gap-4 px-5 py-4 rounded-2xl bg-[#6E8F75]/[0.05] border border-[#6E8F75]/15">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#6E8F75]/15">
-              <FileText className="w-5 h-5 text-[#6E8F75]" />
+          <div className={`flex items-center gap-4 px-5 py-4 rounded-2xl border
+            ${isStudent
+              ? 'bg-student-50/50 border-student-100/50'
+              : 'bg-[#6E8F75]/[0.05] border-[#6E8F75]/15'
+            }
+          `}>
+            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl
+              ${isStudent ? 'bg-student-500/10' : 'bg-[#6E8F75]/15'}
+            `}>
+              <FileText className={`w-5 h-5 ${isStudent ? 'text-student-500' : 'text-[#6E8F75]'}`} />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[14px] font-semibold text-[#0B0F19] truncate">
@@ -651,7 +803,7 @@ function ResumeUploadStep({
                 <span className="text-[12px] text-[#0B0F19]/35">
                   {formatFileSize(data.resumeFile.size)}
                 </span>
-                <span className="flex items-center gap-1 text-[12px] text-[#6E8F75] font-medium">
+                <span className={`flex items-center gap-1 text-[12px] font-medium ${isStudent ? 'text-student-600' : 'text-[#6E8F75]'}`}>
                   <CheckCircle2 className="w-3 h-3" />
                   Ready for analysis
                 </span>
@@ -741,32 +893,42 @@ function ResumeUploadStep({
    ═══════════════════════════════════════════════════════════════════════════ */
 
 function CompletionView() {
+  const { isStudent } = useUserRole();
+
   return (
     <div className="flex flex-col items-center text-center py-8">
-      <div className="w-20 h-20 rounded-full bg-[#6E8F75]/10 flex items-center justify-center mb-6 animate-[scale-in_0.5s_var(--ease-spring)_both]">
-        <CheckCircle2 className="w-10 h-10 text-[#6E8F75]" />
+      <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 animate-[scale-in_0.5s_var(--ease-spring)_both]
+        ${isStudent ? 'bg-student-500/10' : 'bg-[#6E8F75]/10'}
+      `}>
+        <CheckCircle2 className={`w-10 h-10 ${isStudent ? 'text-student-500' : 'text-[#6E8F75]'}`} />
       </div>
       <h3 className="text-2xl font-bold text-[#0B0F19] mb-2 animate-[slide-up_0.5s_var(--ease-spring)_0.1s_both]">
         Profile Created Successfully!
       </h3>
       <p className="text-[15px] text-[#0B0F19]/45 max-w-sm leading-relaxed mb-8 animate-[slide-up_0.5s_var(--ease-spring)_0.2s_both]">
-        Your candidate profile is ready. Next, you'll take the AI-powered technical interview to build your Skill Graph.
+        {isStudent 
+          ? 'Your student profile is ready. You can now explore resources, connect with industry mentors, and book feedback sessions.'
+          : 'Your candidate profile is ready. Next, you\'ll take the AI-powered technical interview to build your Skill Graph.'
+        }
       </p>
       <div className="flex flex-col sm:flex-row gap-3 animate-[slide-up_0.5s_var(--ease-spring)_0.3s_both]">
         <a
-          href="/candidates/ai-interview"
-          className="
+          href={isStudent ? "/student/dashboard" : "/candidates/ai-interview"}
+          className={`
             inline-flex items-center justify-center gap-2 px-7 py-3.5
-            bg-[#6E8F75] text-white text-[15px] font-semibold rounded-xl
-            hover:bg-[#5d7d64] hover:shadow-[0_8px_24px_rgba(110,143,117,0.3)]
+            text-white text-[15px] font-semibold rounded-xl
             transition-all duration-300 active:scale-[0.97]
-          "
+            ${isStudent
+              ? 'bg-student-500 hover:bg-student-600 hover:shadow-[0_8px_24px_rgba(0,86,214,0.3)]'
+              : 'bg-[#6E8F75] hover:bg-[#5d7d64] hover:shadow-[0_8px_24px_rgba(110,143,117,0.3)]'
+            }
+          `}
         >
-          Start AI Interview
+          {isStudent ? 'Go to Student Dashboard' : 'Start AI Interview'}
           <ChevronRight className="w-4 h-4" />
         </a>
         <a
-          href="/dashboard"
+          href={isStudent ? "/student/dashboard" : "/dashboard"}
           className="
             inline-flex items-center justify-center gap-2 px-7 py-3.5
             bg-white text-[#0B0F19]/60 text-[15px] font-semibold rounded-xl
@@ -787,6 +949,7 @@ function CompletionView() {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 export default function CandidateWizard({ embedded = false }: { embedded?: boolean }) {
+  const { isStudent } = useUserRole();
   const [currentStep, setCurrentStep] = useState(0);
   const [direction, setDirection] = useState<'forward' | 'backward'>('forward');
   const [isAnimating, setIsAnimating] = useState(false);
@@ -912,8 +1075,12 @@ export default function CandidateWizard({ embedded = false }: { embedded?: boole
                   inline-flex items-center gap-2 px-6 py-3 rounded-xl
                   text-[14px] font-semibold transition-all duration-300
                   ${canProceed()
-                    ? 'bg-[#6E8F75] text-white hover:bg-[#5d7d64] hover:shadow-[0_4px_16px_rgba(110,143,117,0.25)] active:scale-[0.97]'
-                    : 'bg-[#6E8F75]/30 text-white/60 cursor-not-allowed'
+                    ? isStudent
+                      ? 'bg-student-500 text-white hover:bg-student-600 hover:shadow-[0_4px_16px_rgba(0,86,214,0.25)] active:scale-[0.97]'
+                      : 'bg-[#6E8F75] text-white hover:bg-[#5d7d64] hover:shadow-[0_4px_16px_rgba(110,143,117,0.25)] active:scale-[0.97]'
+                    : isStudent
+                      ? 'bg-student-500/30 text-white/60 cursor-not-allowed'
+                      : 'bg-[#6E8F75]/30 text-white/60 cursor-not-allowed'
                   }
                 `}
               >
