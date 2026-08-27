@@ -1,4 +1,6 @@
-import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useUserRole } from '@/contexts/UserRoleContext';
 import {
   Check,
   BrainCircuit,
@@ -58,6 +60,19 @@ const journeyPhases: JourneyPhase[] = [
 ];
 
 export default function DashboardPage() {
+  const { isStudent } = useUserRole();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isStudent) {
+      navigate('/student/dashboard', { replace: true });
+    }
+  }, [isStudent, navigate]);
+
+  if (isStudent) {
+    return null;
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-8 sm:space-y-10 animate-[fade-in_0.4s_ease] py-2 sm:py-6">
 

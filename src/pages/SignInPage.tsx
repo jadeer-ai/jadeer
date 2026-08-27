@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useUserRole } from '@/contexts/UserRoleContext';
 import {
   Eye,
   EyeOff,
@@ -47,6 +48,7 @@ function GitHubIcon({ className }: { className?: string }) {
 
 export default function SignInPage() {
   const navigate = useNavigate();
+  const { isStudent } = useUserRole();
   const [email, setEmail] = useState('ahmad.hassan@example.com');
   const [password, setPassword] = useState('JadeerVerified2026!');
   const [showPassword, setShowPassword] = useState(false);
@@ -58,9 +60,18 @@ export default function SignInPage() {
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
-      navigate('/dashboard');
+      navigate(isStudent ? '/student/dashboard' : '/dashboard');
     }, 600);
   };
+
+  const primaryColorClass = isStudent ? 'text-student-500' : 'text-[#6E8F75]';
+  const primaryBgClass = isStudent ? 'bg-student-500 hover:bg-student-600' : 'bg-[#6E8F75] hover:bg-[#5d7d64]';
+  const focusRingClass = isStudent ? 'focus:border-student-500 focus:ring-student-500/15' : 'focus:border-[#6E8F75] focus:ring-[#6E8F75]/15';
+  const primaryHoverColorClass = isStudent ? 'hover:text-student-600' : 'hover:text-[#5d7d64]';
+  const headerLinkColorClass = isStudent ? 'text-student-500 hover:text-student-600' : 'text-[#6E8F75] hover:text-[#5d7d64]';
+  const badgeBgBorderClass = isStudent ? 'bg-student-500/10 border-student-500/20' : 'bg-[#6E8F75]/10 border-[#6E8F75]/20';
+  const checkboxAccentClass = isStudent ? 'text-student-500 focus:ring-student-500' : 'text-[#6E8F75] focus:ring-[#6E8F75]';
+  const shadowClass = isStudent ? 'hover:shadow-[0_12px_28px_rgba(0,86,214,0.28)]' : 'hover:shadow-[0_12px_28px_rgba(110,143,117,0.28)]';
 
   return (
     <div className="min-h-screen bg-[#FAF9F6] flex flex-col justify-between text-[#0B0F19] selection:bg-[#6E8F75]/20 selection:text-[#0B0F19]">
@@ -72,7 +83,7 @@ export default function SignInPage() {
           New to Jadeer?{' '}
           <Link
             to="/signup"
-            className="text-[#6E8F75] font-bold hover:text-[#5d7d64] transition-colors ml-1"
+            className={`${headerLinkColorClass} font-bold transition-colors ml-1`}
           >
             Get Verified →
           </Link>
@@ -85,10 +96,10 @@ export default function SignInPage() {
 
           {/* Heading */}
           <div className="space-y-2 text-center">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#6E8F75]/10 border border-[#6E8F75]/20 mb-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#6E8F75]" />
-              <span className="text-[11px] font-bold text-[#6E8F75] uppercase tracking-wider">
-                Candidate Portal
+            <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border ${badgeBgBorderClass} mb-1`}>
+              <ShieldCheck className={`w-3.5 h-3.5 ${primaryColorClass}`} />
+              <span className={`text-[11px] font-bold ${primaryColorClass} uppercase tracking-wider`}>
+                {isStudent ? 'Student Portal' : 'Candidate Portal'}
               </span>
             </div>
 
@@ -96,7 +107,10 @@ export default function SignInPage() {
               Welcome back
             </h1>
             <p className="text-xs sm:text-[13.5px] text-[#0B0F19]/55 leading-relaxed">
-              Sign in to access your AI assessments, active projects, and verified Evidence Portfolio.
+              {isStudent 
+                ? 'Sign in to access your dashboard, contact mentors, and explore career guidance resources.' 
+                : 'Sign in to access your AI assessments, active projects, and verified Evidence Portfolio.'
+              }
             </p>
           </div>
 
@@ -114,7 +128,7 @@ export default function SignInPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="engineer@domain.com"
-                  className="w-full h-11 px-3.5 pl-10 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-sm text-[#0B0F19] font-medium focus:bg-white focus:border-[#6E8F75] focus:ring-2 focus:ring-[#6E8F75]/15 focus:outline-none transition-all"
+                  className={`w-full h-11 px-3.5 pl-10 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-sm text-[#0B0F19] font-medium focus:bg-white focus:outline-none transition-all ${focusRingClass}`}
                 />
                 <Mail className="w-4 h-4 text-[#0B0F19]/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
               </div>
@@ -132,7 +146,7 @@ export default function SignInPage() {
                     e.preventDefault();
                     alert('Password reset instructions sent to registered email.');
                   }}
-                  className="text-[11px] font-semibold text-[#6E8F75] hover:underline"
+                  className={`text-[11px] font-semibold ${primaryColorClass} hover:underline`}
                 >
                   Forgot password?
                 </a>
@@ -144,7 +158,7 @@ export default function SignInPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="••••••••••••"
-                  className="w-full h-11 px-3.5 pl-10 pr-10 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-sm text-[#0B0F19] font-medium focus:bg-white focus:border-[#6E8F75] focus:ring-2 focus:ring-[#6E8F75]/15 focus:outline-none transition-all"
+                  className={`w-full h-11 px-3.5 pl-10 pr-10 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-sm text-[#0B0F19] font-medium focus:bg-white focus:outline-none transition-all ${focusRingClass}`}
                 />
                 <Lock className="w-4 h-4 text-[#0B0F19]/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <button
@@ -164,7 +178,7 @@ export default function SignInPage() {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 rounded border-[#0B0F19]/20 text-[#6E8F75] focus:ring-[#6E8F75]"
+                  className={`w-4 h-4 rounded border-[#0B0F19]/20 ${checkboxAccentClass}`}
                 />
                 <span>Remember this device</span>
               </label>
@@ -174,13 +188,12 @@ export default function SignInPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="
-                w-full py-3.5 rounded-2xl bg-[#6E8F75] text-white text-sm font-bold
-                hover:bg-[#5d7d64] hover:-translate-y-0.5
-                hover:shadow-[0_12px_28px_rgba(110,143,117,0.28)]
-                active:translate-y-0 active:scale-[0.98]
+              className={`
+                w-full py-3.5 rounded-2xl text-white text-sm font-bold
+                hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]
                 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-md mt-2
-              "
+                ${primaryBgClass} ${shadowClass}
+              `}
             >
               {isLoading ? (
                 <span className="flex items-center gap-2">
@@ -208,7 +221,7 @@ export default function SignInPage() {
           <div className="grid grid-cols-3 gap-2.5">
             <button
               type="button"
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate(isStudent ? '/student/dashboard' : '/dashboard')}
               className="flex items-center justify-center py-2.5 rounded-xl border border-[#0B0F19]/[0.08] hover:bg-[#FAF9F6] hover:border-[#0B0F19]/20 transition-all text-xs font-semibold"
               title="Sign in with Google"
             >
@@ -216,7 +229,7 @@ export default function SignInPage() {
             </button>
             <button
               type="button"
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate(isStudent ? '/student/dashboard' : '/dashboard')}
               className="flex items-center justify-center py-2.5 rounded-xl border border-[#0B0F19]/[0.08] hover:bg-[#FAF9F6] hover:border-[#0B0F19]/20 transition-all text-xs font-semibold"
               title="Sign in with LinkedIn"
             >
@@ -224,7 +237,7 @@ export default function SignInPage() {
             </button>
             <button
               type="button"
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate(isStudent ? '/student/dashboard' : '/dashboard')}
               className="flex items-center justify-center py-2.5 rounded-xl border border-[#0B0F19]/[0.08] hover:bg-[#FAF9F6] hover:border-[#0B0F19]/20 transition-all text-xs font-semibold"
               title="Sign in with GitHub"
             >
@@ -235,7 +248,7 @@ export default function SignInPage() {
 
         {/* Demo Fast Track Hint */}
         <div className="mt-4 p-3 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.04] text-center text-[11.5px] text-[#0B0F19]/50">
-          <span className="font-semibold text-[#6E8F75]">Demo Access:</span> Credentials are pre-filled for Junior Candidate Ahmad Al-Hassan.
+          <span className={`font-semibold ${primaryColorClass}`}>Demo Access:</span> Credentials are pre-filled for {isStudent ? 'CS Student Ahmad Al-Hassan' : 'Junior Candidate Ahmad Al-Hassan'}.
         </div>
       </main>
 

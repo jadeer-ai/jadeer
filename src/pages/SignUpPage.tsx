@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useUserRole } from '@/contexts/UserRoleContext';
 import { BrandLogo } from '@/components/common';
 import {
   Eye,
@@ -60,6 +61,7 @@ const passwordRules: PasswordRule[] = [
 
 export default function SignUpPage() {
   const navigate = useNavigate();
+  const { isStudent } = useUserRole();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -76,9 +78,16 @@ export default function SignUpPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (isFormValid) {
-      navigate('/candidates/wizard');
+      navigate(isStudent ? '/wizard' : '/candidates/wizard');
     }
   };
+
+  const primaryColorClass = isStudent ? 'text-student-500' : 'text-[#6E8F75]';
+  const primaryBgClass = isStudent ? 'bg-student-500 hover:bg-student-600' : 'bg-[#6E8F75] hover:bg-[#5d7d64]';
+  const focusRingClass = isStudent ? 'focus:border-student-500 focus:ring-student-500/15' : 'focus:border-[#6E8F75] focus:ring-[#6E8F75]/15';
+  const headerLinkColorClass = isStudent ? 'text-student-500 hover:text-student-600' : 'text-[#6E8F75] hover:text-[#5d7d64]';
+  const badgeBgBorderClass = isStudent ? 'bg-student-500/10 border-student-500/20' : 'bg-[#6E8F75]/10 border-[#6E8F75]/20';
+  const shadowClass = isStudent ? 'hover:shadow-[0_12px_28px_rgba(0,86,214,0.28)]' : 'hover:shadow-[0_12px_28px_rgba(110,143,117,0.28)]';
 
   return (
     <div className="min-h-screen bg-[#FAF9F6] flex flex-col justify-between text-[#0B0F19] relative overflow-hidden selection:bg-[#6E8F75]/20 selection:text-[#0B0F19]">
@@ -114,10 +123,10 @@ export default function SignUpPage() {
 
           {/* Heading */}
           <div className="text-center space-y-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#6E8F75]/10 border border-[#6E8F75]/20 mb-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#6E8F75]" />
-              <span className="text-[11px] font-bold text-[#6E8F75] uppercase tracking-wider">
-                Candidate Registration
+            <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border ${badgeBgBorderClass} mb-1`}>
+              <ShieldCheck className={`w-3.5 h-3.5 ${primaryColorClass}`} />
+              <span className={`text-[11px] font-bold ${primaryColorClass} uppercase tracking-wider`}>
+                {isStudent ? 'Student Registration' : 'Candidate Registration'}
               </span>
             </div>
 
@@ -125,7 +134,10 @@ export default function SignUpPage() {
               Create your account
             </h1>
             <p className="text-xs sm:text-[13.5px] text-[#0B0F19]/55 leading-relaxed max-w-sm mx-auto">
-              Join Jadeer to take AI assessments, build real-world software modules, and earn verified skill proof.
+              {isStudent 
+                ? 'Join Jadeer to explore career roadmaps, access custom resources, and receive 1-on-1 mentorship.' 
+                : 'Join Jadeer to take AI assessments, build real-world software modules, and earn verified skill proof.'
+              }
             </p>
           </div>
 
@@ -146,7 +158,7 @@ export default function SignUpPage() {
                 onChange={(e) => setFullName(e.target.value)}
                 required
                 placeholder="Ahmad Al-Hassan"
-                className="w-full h-11 px-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-sm text-[#0B0F19] font-medium focus:bg-white focus:border-[#6E8F75] focus:ring-2 focus:ring-[#6E8F75]/15 focus:outline-none transition-all placeholder:text-[#0B0F19]/30"
+                className={`w-full h-11 px-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-sm text-[#0B0F19] font-medium focus:bg-white focus:outline-none transition-all placeholder:text-[#0B0F19]/30 ${focusRingClass}`}
               />
             </div>
 
@@ -165,7 +177,7 @@ export default function SignUpPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="engineer@domain.com"
-                className="w-full h-11 px-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-sm text-[#0B0F19] font-medium focus:bg-white focus:border-[#6E8F75] focus:ring-2 focus:ring-[#6E8F75]/15 focus:outline-none transition-all placeholder:text-[#0B0F19]/30"
+                className={`w-full h-11 px-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-sm text-[#0B0F19] font-medium focus:bg-white focus:outline-none transition-all placeholder:text-[#0B0F19]/30 ${focusRingClass}`}
               />
             </div>
 
@@ -185,7 +197,7 @@ export default function SignUpPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="Create a secure password"
-                  className="w-full h-11 px-4 pr-11 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-sm text-[#0B0F19] font-medium focus:bg-white focus:border-[#6E8F75] focus:ring-2 focus:ring-[#6E8F75]/15 focus:outline-none transition-all placeholder:text-[#0B0F19]/30"
+                  className={`w-full h-11 px-4 pr-11 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-sm text-[#0B0F19] font-medium focus:bg-white focus:outline-none transition-all placeholder:text-[#0B0F19]/30 ${focusRingClass}`}
                 />
                 <button
                   type="button"
@@ -209,7 +221,9 @@ export default function SignUpPage() {
                       className={`
                         flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all duration-200
                         ${rule.passed
-                          ? 'bg-[#6E8F75] border-[#6E8F75]'
+                          ? isStudent
+                            ? 'bg-student-500 border-student-500'
+                            : 'bg-[#6E8F75] border-[#6E8F75]'
                           : 'bg-transparent border-[#0B0F19]/20'
                         }
                       `}
@@ -220,7 +234,7 @@ export default function SignUpPage() {
                         <Circle className="w-1.5 h-1.5 text-[#0B0F19]/20" fill="currentColor" />
                       )}
                     </div>
-                    <span className={rule.passed ? 'text-[#6E8F75] font-semibold' : 'text-[#0B0F19]/45'}>
+                    <span className={rule.passed ? `${primaryColorClass} font-semibold` : 'text-[#0B0F19]/45'}>
                       {rule.label}
                     </span>
                   </div>
@@ -237,8 +251,10 @@ export default function SignUpPage() {
                 w-full py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center gap-2
                 transition-all duration-300 shadow-md mt-4
                 ${isFormValid
-                  ? 'bg-[#6E8F75] text-white hover:bg-[#5d7d64] hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(110,143,117,0.28)] active:translate-y-0 active:scale-[0.98] cursor-pointer'
-                  : 'bg-[#6E8F75]/40 text-white/70 cursor-not-allowed'
+                  ? `${primaryBgClass} ${shadowClass} text-white hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] cursor-pointer`
+                  : isStudent
+                    ? 'bg-student-500/30 text-white/70 cursor-not-allowed'
+                    : 'bg-[#6E8F75]/30 text-white/70 cursor-not-allowed'
                 }
               `}
             >
@@ -259,7 +275,7 @@ export default function SignUpPage() {
           <div className="grid grid-cols-3 gap-2.5">
             <button
               type="button"
-              onClick={() => navigate('/candidates/wizard')}
+              onClick={() => navigate(isStudent ? '/wizard' : '/candidates/wizard')}
               className="flex items-center justify-center py-2.5 rounded-xl border border-[#0B0F19]/[0.08] hover:bg-[#FAF9F6] hover:border-[#0B0F19]/20 transition-all text-xs font-semibold"
               title="Sign up with Google"
             >
@@ -267,7 +283,7 @@ export default function SignUpPage() {
             </button>
             <button
               type="button"
-              onClick={() => navigate('/candidates/wizard')}
+              onClick={() => navigate(isStudent ? '/wizard' : '/candidates/wizard')}
               className="flex items-center justify-center py-2.5 rounded-xl border border-[#0B0F19]/[0.08] hover:bg-[#FAF9F6] hover:border-[#0B0F19]/20 transition-all text-xs font-semibold"
               title="Sign up with LinkedIn"
             >
@@ -275,7 +291,7 @@ export default function SignUpPage() {
             </button>
             <button
               type="button"
-              onClick={() => navigate('/candidates/wizard')}
+              onClick={() => navigate(isStudent ? '/wizard' : '/candidates/wizard')}
               className="flex items-center justify-center py-2.5 rounded-xl border border-[#0B0F19]/[0.08] hover:bg-[#FAF9F6] hover:border-[#0B0F19]/20 transition-all text-xs font-semibold"
               title="Sign up with GitHub"
             >
@@ -289,7 +305,7 @@ export default function SignUpPage() {
             <Link
               to="/signin"
               id="signin-link"
-              className="font-bold text-[#6E8F75] hover:text-[#5d7d64] transition-colors ml-1"
+              className={`font-bold ${headerLinkColorClass} transition-colors ml-1`}
             >
               Sign In
             </Link>
