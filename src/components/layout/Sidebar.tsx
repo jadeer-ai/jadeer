@@ -111,7 +111,7 @@ export default function Sidebar() {
 
             return (
               <Link
-                key={item.path}
+                key={item.label}
                 to={item.path}
                 onClick={closeMobile}
                 title={isCollapsed ? item.label : undefined}
