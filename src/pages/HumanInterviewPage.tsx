@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useInterviewSchedule } from '@/contexts/InterviewScheduleContext';
 import {
   Calendar as CalendarIcon,
   Clock,
@@ -21,11 +22,13 @@ import {
   FileText,
   Send,
   X,
+  Building2,
+  ExternalLink,
 } from 'lucide-react';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    JADEER — SCHEDULE HUMAN TECHNICAL INTERVIEW (RICH COMPREHENSIVE EDITION)
-   Stage 02B: 1-on-1 Mentor Calibration with Reschedule Request Workflow
+   Stage 02B: 1-to-1 Mentor Calibration with Reschedule Request Workflow
    ═══════════════════════════════════════════════════════════════════════════ */
 
 interface TimeSlot {
@@ -63,6 +66,12 @@ export default function HumanInterviewPage() {
   const [rescheduleSlot, setRescheduleSlot] = useState('t4');
   const [rescheduleStatus, setRescheduleStatus] = useState<RescheduleStatus>('none');
   const [isSubmittingReschedule, setIsSubmittingReschedule] = useState(false);
+
+  // Shared interview schedule context for candidate JAD-8492
+  const { getInterviewsForCandidate } = useInterviewSchedule();
+  const employerInterviews = getInterviewsForCandidate('JAD-8492').filter(
+    (i) => i.status === 'scheduled'
+  );
 
   const daysInMonth = [
     { day: 19, available: false, label: 'Mon' },
@@ -130,7 +139,7 @@ export default function HumanInterviewPage() {
               Schedule Human Technical Interview
             </h1>
             <p className="text-[14px] text-[#0B0F19]/55 max-w-3xl leading-relaxed">
-              Book a 1-on-1 technical calibration session with an industry Senior Mentor to review your AI assessment findings, discuss system design trade-offs, and finalize project readiness.
+              Book a 1-to-1 technical calibration session with an industry Senior Mentor to review your AI assessment findings, discuss system design trade-offs, and finalize project readiness.
             </p>
           </div>
 
@@ -151,6 +160,75 @@ export default function HumanInterviewPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Employer Scheduled Interviews Banner (Cross-Portal Data Sync) ── */}
+      {employerInterviews.length > 0 && (
+        <div className="bg-white rounded-3xl p-6 border-2 border-employer-400/50 shadow-[0_8px_30px_rgba(217,119,6,0.08)] space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-employer-50 text-employer-600 flex items-center justify-center">
+                <Building2 className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-extrabold text-[#0B0F19]">
+                  Employer Interview Invitations & Scheduled Slots
+                </h3>
+                <p className="text-xs text-[#0B0F19]/50">
+                  Confirmed through Jadeer Employer Portal
+                </p>
+              </div>
+            </div>
+            <span className="text-[11px] font-bold text-employer-700 bg-employer-100 px-3 py-1 rounded-full border border-employer-300/60">
+              {employerInterviews.length} Confirmed Session{employerInterviews.length > 1 ? 's' : ''}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {employerInterviews.map((interview) => (
+              <div
+                key={interview.id}
+                className="p-4 rounded-2xl bg-employer-50/40 border border-employer-200/60 flex flex-col justify-between gap-3"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-bold text-employer-800 uppercase tracking-wider">
+                      {interview.company}
+                    </span>
+                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-white text-employer-700 border border-employer-200">
+                      {interview.type} Interview
+                    </span>
+                  </div>
+                  <p className="text-sm font-extrabold text-[#0B0F19]">{interview.role}</p>
+                  <div className="flex items-center gap-3 mt-2 text-xs font-bold text-[#0B0F19]/70">
+                    <span className="flex items-center gap-1">
+                      <CalendarIcon className="w-3.5 h-3.5 text-employer-600" />
+                      {interview.date}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-employer-600" />
+                      {interview.timeSlot}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-employer-200/40">
+                  <span className="text-[11px] text-[#0B0F19]/45 font-medium">{interview.timezone}</span>
+                  <a
+                    href={interview.meetingLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-employer-500 text-white text-xs font-bold hover:bg-employer-600 shadow-sm transition-colors"
+                  >
+                    <Video className="w-3.5 h-3.5" />
+                    Join Call
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Reschedule Status Notification Banner ────────────────────── */}
       {rescheduleStatus === 'pending' && (
@@ -423,7 +501,7 @@ export default function HumanInterviewPage() {
                     <Video className="w-3.5 h-3.5 text-[#6E8F75]" />
                     Format:
                   </span>
-                  <span className="font-bold text-[#0B0F19]">Live 1-on-1 Video & Code Review</span>
+                  <span className="font-bold text-[#0B0F19]">Live 1-to-1 Video & Code Review</span>
                 </div>
               </div>
 

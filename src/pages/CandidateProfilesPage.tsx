@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useSearchParams, Link } from 'react-router-dom';
+import { useInterviewSchedule } from '@/contexts/InterviewScheduleContext';
+import { useCompanyProfile } from '@/contexts/CompanyProfileContext';
 import {
   User,
   MapPin,
@@ -18,11 +21,16 @@ import {
   Save,
   CheckCircle2,
   Upload,
+  Calendar,
+  ArrowLeft,
+  Bot,
+  Code2,
 } from 'lucide-react';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    JADEER — COMPREHENSIVE CANDIDATE PROFILE
-   Static overview with quick inline editing mode (no multi-step wizard restart).
+   Static overview with quick inline editing mode and dynamic cross-portal
+   candidate evidence dossier loading.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ── Inline Brand Icons ─────────────────────────────────────────────────── */
@@ -42,15 +50,21 @@ function LinkedInIcon({ className }: { className?: string }) {
   );
 }
 
-interface ProfileState {
+export interface CandidateData {
+  id: string;
+  candidateCode: string;
   fullName: string;
+  initials: string;
   title: string;
   location: string;
   email: string;
   bio: string;
+  matchScore: number;
+  aiScore: number;
   githubUrl: string;
   linkedinUrl: string;
   portfolioUrl: string;
+  resumeFileName: string;
   skills: {
     languages: string[];
     systems: string[];
@@ -63,34 +77,178 @@ interface ProfileState {
   };
 }
 
-const initialProfile: ProfileState = {
-  fullName: 'Ahmad Al-Hassan',
-  title: 'Junior Backend & Systems Engineer',
-  location: 'Riyadh, Saudi Arabia',
-  email: 'ahmad.hassan@example.com',
-  bio: 'Junior Software Engineer specialized in low-latency backend systems, asynchronous socket multiplexing with Linux epoll, and modern C++20 object-oriented architecture. Passionate about high-throughput distributed architectures, zero-cost abstractions, and rigorous memory safety with RAII.',
-  githubUrl: 'https://github.com/ahmad-alhassan-dev',
-  linkedinUrl: 'https://linkedin.com/in/ahmad-al-hassan',
-  portfolioUrl: 'https://ahmadhassan.dev',
-  skills: {
-    languages: ['C++20', 'C', 'Python', 'SQL', 'Bash'],
-    systems: ['Linux epoll', 'POSIX Sockets', 'gRPC', 'Redis Sentinel', 'RAII & Smart Pointers', 'vtable / CRTP'],
-    tools: ['CMake', 'Valgrind / Memcheck', 'Docker', 'Git', 'GitHub Actions', 'GDB'],
+export const candidateDatabase: Record<string, CandidateData> = {
+  'JAD-8492': {
+    id: 'app-1',
+    candidateCode: 'JAD-8492',
+    fullName: 'Ahmad Al-Hassan',
+    initials: 'AH',
+    title: 'Junior Backend & Systems Engineer',
+    location: 'Riyadh, Saudi Arabia',
+    email: 'ahmad.hassan@example.com',
+    bio: 'Junior Software Engineer specialized in low-latency backend systems, asynchronous socket multiplexing with Linux epoll, and modern C++20 object-oriented architecture. Passionate about high-throughput distributed architectures, zero-cost abstractions, and rigorous memory safety with RAII.',
+    matchScore: 96,
+    aiScore: 95,
+    githubUrl: 'https://github.com/ahmad-alhassan-dev',
+    linkedinUrl: 'https://linkedin.com/in/ahmad-al-hassan',
+    portfolioUrl: 'https://ahmadhassan.dev',
+    resumeFileName: 'Ahmad_Al-Hassan_Resume.pdf',
+    skills: {
+      languages: ['C++20', 'C', 'Python', 'SQL', 'Bash'],
+      systems: ['Linux epoll', 'POSIX Sockets', 'gRPC', 'Redis Sentinel', 'RAII & Smart Pointers', 'vtable / CRTP'],
+      tools: ['CMake', 'Valgrind / Memcheck', 'Docker', 'Git', 'GitHub Actions', 'GDB'],
+    },
+    education: {
+      degree: 'B.S. in Software Engineering (Honors)',
+      institution: 'King Saud University (KSU)',
+      graduationYear: 'Class of 2025',
+    },
   },
-  education: {
-    degree: 'B.S. in Software Engineering (Honors)',
-    institution: 'King Saud University (KSU)',
-    graduationYear: 'Class of 2025',
+  'JAD-9204': {
+    id: 'app-4',
+    candidateCode: 'JAD-9204',
+    fullName: 'Sara Fahad',
+    initials: 'SF',
+    title: 'Mid-Level Full-Stack Engineer',
+    location: 'Riyadh, Saudi Arabia',
+    email: 'sara.fahad@example.com',
+    bio: 'Full-Stack Engineer with strong production experience designing React client applications, Node.js GraphQL backends, and robust TypeScript microservices. Proficient with distributed state and cloud caching.',
+    matchScore: 92,
+    aiScore: 94,
+    githubUrl: 'https://github.com/sarafahad-dev',
+    linkedinUrl: 'https://linkedin.com/in/sara-fahad',
+    portfolioUrl: 'https://sarafahad.io',
+    resumeFileName: 'Sara_Fahad_Senior_Resume.pdf',
+    skills: {
+      languages: ['TypeScript', 'JavaScript', 'Python', 'SQL', 'HTML5/CSS3'],
+      systems: ['React 19', 'Next.js App Router', 'Node.js', 'GraphQL', 'PostgreSQL', 'TailwindCSS'],
+      tools: ['AWS Lambda', 'Docker', 'Playwright', 'Git', 'Vite / Turbopack'],
+    },
+    education: {
+      degree: 'B.S. in Computer Science',
+      institution: 'Princess Nourah University (PNU)',
+      graduationYear: 'Class of 2024',
+    },
+  },
+  'JAD-7731': {
+    id: 'app-6',
+    candidateCode: 'JAD-7731',
+    fullName: 'Rayan Al-Ghamdi',
+    initials: 'RG',
+    title: 'Embedded Systems & IoT Firmware Intern',
+    location: 'Dammam, Saudi Arabia',
+    email: 'rayan.ghamdi@example.com',
+    bio: 'Embedded software engineer focused on low-level firmware, ARM Cortex microcontrollers, FreeRTOS task scheduling, and serial bus protocols (I2C, SPI, UART).',
+    matchScore: 93,
+    aiScore: 90,
+    githubUrl: 'https://github.com/rayan-embedded',
+    linkedinUrl: 'https://linkedin.com/in/rayan-al-ghamdi',
+    portfolioUrl: 'https://rayanghamdi.tech',
+    resumeFileName: 'Rayan_AlGhamdi_Firmware_CV.pdf',
+    skills: {
+      languages: ['C', 'C++', 'ARM Assembly', 'Python'],
+      systems: ['FreeRTOS', 'STM32', 'ESP32', 'I2C / SPI / UART', 'Low-Power Sleep Modes'],
+      tools: ['Keil µVision', 'Logic Analyzers', 'Git', 'PlatformIO', 'JTAG / OpenOCD'],
+    },
+    education: {
+      degree: 'B.S. in Computer Engineering',
+      institution: 'King Fahd University of Petroleum & Minerals (KFUPM)',
+      graduationYear: 'Class of 2026',
+    },
+  },
+  'JAD-6382': {
+    id: 'app-2',
+    candidateCode: 'JAD-6382',
+    fullName: 'Mohammed Khalid',
+    initials: 'MK',
+    title: 'Junior Backend Engineer (Go & Cloud)',
+    location: 'Jeddah, Saudi Arabia',
+    email: 'mohammed.khalid@example.com',
+    bio: 'Backend developer focused on concurrency in Go, distributed message brokers with Kafka, and REST/gRPC API gateways.',
+    matchScore: 89,
+    aiScore: 88,
+    githubUrl: 'https://github.com/mkhalid-backend',
+    linkedinUrl: 'https://linkedin.com/in/mohammed-khalid',
+    portfolioUrl: 'https://mkhalid.dev',
+    resumeFileName: 'Mohammed_Khalid_Backend.pdf',
+    skills: {
+      languages: ['Go (Golang)', 'SQL', 'Python', 'Bash'],
+      systems: ['gRPC', 'PostgreSQL', 'Apache Kafka', 'Redis Caching', 'Docker'],
+      tools: ['Git', 'Prometheus', 'Grafana', 'Linux Systems', 'GitHub Actions'],
+    },
+    education: {
+      degree: 'B.S. in Information Technology',
+      institution: 'King Abdulaziz University (KAU)',
+      graduationYear: 'Class of 2025',
+    },
+  },
+  'JAD-5129': {
+    id: 'app-7',
+    candidateCode: 'JAD-5129',
+    fullName: 'Nora Rashid',
+    initials: 'NR',
+    title: 'Mid-Level Data Engineer (Spark & Snowflake)',
+    location: 'Riyadh, Saudi Arabia',
+    email: 'nora.rashid@example.com',
+    bio: 'Data Engineer experienced with building high-throughput ETL data pipelines, distributed Spark transformations, and dimensional modeling.',
+    matchScore: 88,
+    aiScore: 87,
+    githubUrl: 'https://github.com/nora-data-eng',
+    linkedinUrl: 'https://linkedin.com/in/nora-rashid',
+    portfolioUrl: 'https://norarashid.data',
+    resumeFileName: 'Nora_Rashid_Data_Engineer.pdf',
+    skills: {
+      languages: ['Python', 'SQL', 'Scala', 'Bash'],
+      systems: ['Apache Spark', 'Snowflake', 'Apache Kafka', 'Airflow', 'PostgreSQL'],
+      tools: ['dbt', 'AWS S3', 'Docker', 'Git', 'Terraform'],
+    },
+    education: {
+      degree: 'B.S. in Computer Science',
+      institution: 'King Saud University (KSU)',
+      graduationYear: 'Class of 2024',
+    },
   },
 };
 
 export default function CandidateProfilesPage() {
-  const [profile, setProfile] = useState<ProfileState>(initialProfile);
+  const [searchParams] = useSearchParams();
+  const queryId = searchParams.get('id');
+  const queryName = searchParams.get('name');
+  const isFromEmployer = searchParams.get('from') === 'employer';
+  const jobId = searchParams.get('jobId');
+
+  const { scheduleInterview } = useInterviewSchedule();
+  const { companyProfile } = useCompanyProfile();
+  const [scheduledDone, setScheduledDone] = useState(false);
+
+  // Resolve Candidate from database or fallback to JAD-8492
+  const matchedCandidate = useMemo(() => {
+    if (queryId && candidateDatabase[queryId]) return candidateDatabase[queryId];
+    // Match by app-id or by name
+    const foundById = Object.values(candidateDatabase).find((c) => c.id === queryId || c.candidateCode === queryId);
+    if (foundById) return foundById;
+    if (queryName) {
+      const foundByName = Object.values(candidateDatabase).find((c) =>
+        c.fullName.toLowerCase().includes(queryName.toLowerCase()) ||
+        queryName.toLowerCase().includes(c.fullName.toLowerCase())
+      );
+      if (foundByName) return foundByName;
+    }
+    return candidateDatabase['JAD-8492'];
+  }, [queryId, queryName]);
+
+  const [profile, setProfile] = useState<CandidateData>(matchedCandidate);
   const [isEditing, setIsEditing] = useState(false);
-  const [draft, setDraft] = useState<ProfileState>(initialProfile);
+  const [draft, setDraft] = useState<CandidateData>(matchedCandidate);
   const [newSkillInput, setNewSkillInput] = useState('');
   const [newSkillCategory, setNewSkillCategory] = useState<'languages' | 'systems' | 'tools'>('languages');
   const [showSavedToast, setShowSavedToast] = useState(false);
+
+  // Update profile when matchedCandidate changes
+  useMemo(() => {
+    setProfile(matchedCandidate);
+    setDraft(matchedCandidate);
+  }, [matchedCandidate]);
 
   const handleStartEdit = () => {
     setDraft(JSON.parse(JSON.stringify(profile)));
@@ -130,8 +288,77 @@ export default function CandidateProfilesPage() {
     }));
   };
 
+  const handleEmployerSchedule = () => {
+    scheduleInterview({
+      candidateId: profile.candidateCode,
+      candidateName: profile.fullName,
+      candidateInitials: profile.initials,
+      role: profile.title,
+      company: companyProfile.companyName || 'Jadeer Verified Employer',
+      date: '2026-09-03',
+      timeSlot: '11:00 AM',
+      timezone: 'Asia/Riyadh (GMT+3)',
+      meetingLink: `https://meet.jadeer.io/interview-${profile.candidateCode.toLowerCase()}`,
+      type: 'human',
+      scheduledBy: 'employer',
+      notes: `Direct interview scheduled from Candidate Live Dossier (${profile.fullName})`,
+    });
+    setScheduledDone(true);
+    setTimeout(() => setScheduledDone(false), 3000);
+  };
+
   return (
     <div className="space-y-7 animate-[fade-in_0.4s_ease] pb-14">
+
+      {/* ── Employer Cross-Portal Navigation & Telemetry Banner ────────── */}
+      {isFromEmployer && (
+        <div className="bg-[#0B0F19] text-white rounded-3xl p-5 sm:p-6 border border-white/[0.08] shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Link
+                to={jobId ? '/employer/listings' : '/employer/dashboard'}
+                className="inline-flex items-center gap-1 text-xs font-bold text-[#6E8F75] hover:text-white transition-colors"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                {jobId ? 'Back to Job Applicants' : 'Back to Employer Dashboard'}
+              </Link>
+              <span className="text-white/20">•</span>
+              <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-400">
+                Verified Candidate Dossier
+              </span>
+            </div>
+            <h2 className="text-lg font-extrabold text-white">
+              Live Evaluation Telemetry for <span className="text-[#6E8F75]">{profile.fullName}</span>
+            </h2>
+            <p className="text-xs text-white/50">
+              Evaluated across Adaptive AI Assessment, Systems Telemetry, and Tamper-Proof Evidence.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="text-right hidden sm:block">
+              <p className="text-[10px] font-bold text-white/40 uppercase tracking-wider">AI Evaluation</p>
+              <p className="text-lg font-black text-[#6E8F75]">{profile.aiScore}%</p>
+            </div>
+
+            <button
+              onClick={handleEmployerSchedule}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#6E8F75] text-white text-xs font-bold hover:bg-[#5d7d64] shadow-md transition-all active:scale-95"
+            >
+              <Calendar className="w-4 h-4" />
+              <span>Schedule Interview</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Schedule success toast */}
+      {scheduledDone && (
+        <div className="p-3.5 rounded-2xl bg-success-50 border border-success-200 text-success-700 text-xs font-bold flex items-center gap-2 animate-[fade-in_0.2s_ease]">
+          <CheckCircle2 className="w-4 h-4 text-success-600" />
+          <span>Interview scheduled and instantly synced with {profile.fullName}'s candidate dashboard!</span>
+        </div>
+      )}
 
       {/* ═══════════════════════════════════════════════════════════════
          PROFILE HEADER CARD WITH INLINE EDIT TRIGGER
@@ -143,7 +370,7 @@ export default function CandidateProfilesPage() {
           <div className="flex items-start gap-4 sm:gap-5 flex-1">
             <div className="relative">
               <div className="w-16 h-16 sm:w-22 sm:h-22 rounded-3xl bg-[#6E8F75] text-white flex items-center justify-center text-xl sm:text-2xl font-bold ring-4 ring-[#6E8F75]/15 shadow-md shrink-0">
-                AH
+                {profile.initials}
               </div>
               <span className="absolute bottom-1 right-1 w-3.5 h-3.5 rounded-full bg-[#10b981] ring-2 ring-white" />
             </div>
@@ -157,7 +384,10 @@ export default function CandidateProfilesPage() {
                       Verified Profile
                     </span>
                     <span className="text-xs font-semibold px-2.5 py-0.5 rounded-lg bg-[#0B0F19]/[0.04] text-[#0B0F19]/60">
-                      ID: JAD-8492
+                      ID: {profile.candidateCode}
+                    </span>
+                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      {profile.matchScore}% Match Telemetry
                     </span>
                   </div>
 
@@ -225,40 +455,42 @@ export default function CandidateProfilesPage() {
             </div>
           </div>
 
-          {/* Top Right: Edit Mode Controls */}
-          <div className="flex items-center gap-2 self-start lg:self-center shrink-0">
-            {!isEditing ? (
-              <button
-                id="edit-profile-btn"
-                onClick={handleStartEdit}
-                className="
-                  inline-flex items-center gap-2 px-5 py-3 rounded-2xl
-                  bg-[#6E8F75] text-white text-xs font-bold
-                  hover:bg-[#5d7d64] hover:shadow-[0_4px_16px_rgba(110,143,117,0.3)]
-                  transition-all duration-200 shadow-sm cursor-pointer active:scale-95
-                "
-              >
-                <Edit3 className="w-4 h-4" />
-                <span>Edit Profile</span>
-              </button>
-            ) : (
-              <div className="flex items-center gap-2">
+          {/* Top Right: Edit Mode Controls (Hidden when in employer view) */}
+          {!isFromEmployer && (
+            <div className="flex items-center gap-2 self-start lg:self-center shrink-0">
+              {!isEditing ? (
                 <button
-                  onClick={handleCancelEdit}
-                  className="px-4 py-2.5 rounded-xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-xs font-semibold text-[#0B0F19]/60 hover:text-[#0B0F19] transition-colors"
+                  id="edit-profile-btn"
+                  onClick={handleStartEdit}
+                  className="
+                    inline-flex items-center gap-2 px-5 py-3 rounded-2xl
+                    bg-[#6E8F75] text-white text-xs font-bold
+                    hover:bg-[#5d7d64] hover:shadow-[0_4px_16px_rgba(110,143,117,0.3)]
+                    transition-all duration-200 shadow-sm cursor-pointer active:scale-95
+                  "
                 >
-                  Cancel
+                  <Edit3 className="w-4 h-4" />
+                  <span>Edit Profile</span>
                 </button>
-                <button
-                  onClick={handleSaveEdit}
-                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#6E8F75] text-white text-xs font-bold hover:bg-[#5d7d64] transition-all shadow-md"
-                >
-                  <Save className="w-3.5 h-3.5" />
-                  <span>Save Changes</span>
-                </button>
-              </div>
-            )}
-          </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleCancelEdit}
+                    className="px-4 py-2.5 rounded-xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-xs font-semibold text-[#0B0F19]/60 hover:text-[#0B0F19] transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveEdit}
+                    className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#6E8F75] text-white text-xs font-bold hover:bg-[#5d7d64] transition-all shadow-md"
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                    <span>Save Changes</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Live Saved Confirmation Notification */}

@@ -1,35 +1,28 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useUserRole, type UserRole } from '@/contexts/UserRoleContext';
+import { Link } from 'react-router-dom';
 import {
   ArrowRight,
   ChevronRight,
   Menu,
   X,
   BrainCircuit,
-  FolderGit2,
   FileCheck2,
   ShieldCheck,
-  Sparkles,
-  CheckCircle2,
-  Code2,
   Terminal,
-  Cpu,
   GraduationCap,
   Users,
   Calendar,
-  MessageCircle,
   Video,
-  BookOpen,
-  ArrowLeftRight,
-  Star,
+  Building2,
+  Zap,
+  Check,
 } from 'lucide-react';
 import { BrandLogo } from '@/components/common';
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   JADEER LANDING PAGE — USER-SEGMENTED EXPERIENCE
-   Two-phase hero: Role Selection → Role-Specific Content
-   Students = Mentorship & Consultation | Graduates = Technical Evaluation
+   JADEER LANDING PAGE — UNIFIED TALENT CERTIFICATION PLATFORM
+   Single 'Join as Talent' entry point uniting students & graduates:
+   Adaptive AI Assessments • 1-on-1 Mentor Calibration • Evidence Dossiers
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ── Navigation Links ───────────────────────────────────────────────────── */
@@ -38,6 +31,7 @@ const navLinks = [
   { label: 'How It Works', href: '#how-it-works' },
   { label: 'Validation Pipeline', href: '#pipeline' },
   { label: 'Evidence Dossier', href: '#evidence' },
+  { label: 'Mentorship', href: '#mentorship' },
 ];
 
 /* ── Navbar Component ───────────────────────────────────────────────────── */
@@ -52,13 +46,6 @@ function Navbar() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  useEffect(() => {
-    document.body.style.overflow = mobileOpen ? 'hidden' : '';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [mobileOpen]);
-
   return (
     <nav
       id="navbar"
@@ -71,10 +58,10 @@ function Navbar() {
       <div className="mx-auto max-w-7xl px-6 sm:px-10 lg:px-12">
         <div className="flex h-[76px] items-center justify-between">
 
-          {/* ── Official Brand Logo in Light Theme ──────────────────── */}
+          {/* ── Brand Logo in Light Theme ──────────────────────────── */}
           <BrandLogo size="md" href="/" textColor="light" />
 
-          {/* ── Desktop Nav Links (Pure White / Light Cream) ────────── */}
+          {/* ── Desktop Nav Links ──────────────────────────────────── */}
           <div className="hidden md:flex items-center gap-2">
             {navLinks.map((link) => (
               <a
@@ -87,7 +74,6 @@ function Navbar() {
                 "
               >
                 {link.label}
-                {/* Subtle animated green underline */}
                 <span
                   className="
                     absolute bottom-0.5 left-4 right-4 h-[2px] bg-[#6E8F75]
@@ -100,12 +86,12 @@ function Navbar() {
           </div>
 
           {/* ── Desktop Actions ────────────────────────────────────── */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-3">
             <Link
               to="/signin"
               id="nav-signin"
               className="
-                px-4 py-2 text-[14.5px] font-semibold text-white/85
+                px-3.5 py-2 text-[14.5px] font-semibold text-white/85
                 transition-colors duration-200 hover:text-white
               "
             >
@@ -114,9 +100,9 @@ function Navbar() {
 
             <Link
               to="/signup"
-              id="nav-get-verified"
+              id="nav-join-talent"
               className="
-                inline-flex items-center gap-2 px-6 py-2.5
+                inline-flex items-center gap-2 px-5 py-2.5
                 bg-[#6E8F75] text-white text-[14px] font-bold
                 rounded-full transition-all duration-300
                 hover:bg-[#5d7d64] hover:-translate-y-0.5
@@ -124,7 +110,8 @@ function Navbar() {
                 active:translate-y-0 active:scale-[0.98] shadow-sm
               "
             >
-              Get Started
+              <span>Join as Talent</span>
+              <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
 
@@ -163,6 +150,13 @@ function Navbar() {
 
           <div className="pt-4 border-t border-white/[0.08] flex flex-col gap-2.5">
             <Link
+              to="/employer"
+              onClick={() => setMobileOpen(false)}
+              className="w-full text-center py-3 text-sm font-bold text-white rounded-2xl bg-white/[0.06] hover:bg-white/10"
+            >
+              For Employers
+            </Link>
+            <Link
               to="/signin"
               onClick={() => setMobileOpen(false)}
               className="w-full text-center py-3 text-sm font-bold text-white rounded-2xl bg-white/[0.06] hover:bg-white/10"
@@ -174,7 +168,7 @@ function Navbar() {
               onClick={() => setMobileOpen(false)}
               className="w-full text-center py-3 text-sm font-bold text-white bg-[#6E8F75] rounded-2xl shadow-sm"
             >
-              Get Started
+              Join as Talent →
             </Link>
           </div>
         </div>
@@ -183,17 +177,16 @@ function Navbar() {
   );
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   ROLE SELECTION SCREEN
-   Two premium animated cards: Student vs. Graduate
-   ══════════════════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════════════════
+   1. UNIFIED HERO SECTION (SINGLE ENTRY POINT)
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-function RoleSelectionHero({ onSelect }: { onSelect: (role: UserRole) => void }) {
+function UnifiedHeroSection() {
   return (
-    <section className="relative overflow-hidden pt-44 sm:pt-52 pb-28 sm:pb-36">
-      {/* Subtle Engineering Technical Grid */}
+    <section className="relative overflow-hidden pt-40 sm:pt-48 pb-24 sm:pb-32 lg:pb-36">
+      {/* Subtle Engineering Grid Background */}
       <div
-        className="absolute inset-0 pointer-events-none opacity-60"
+        className="absolute inset-0 pointer-events-none opacity-50"
         style={{
           backgroundImage: `
             linear-gradient(to right, rgba(11, 15, 25, 0.04) 1px, transparent 1px),
@@ -205,648 +198,177 @@ function RoleSelectionHero({ onSelect }: { onSelect: (role: UserRole) => void })
         }}
       />
 
-      {/* Diffused Radial Glow */}
+      {/* Diffused Dual Glow */}
       <div
-        className="absolute top-28 left-1/2 -translate-x-1/2 w-[760px] h-[520px] rounded-full pointer-events-none blur-3xl opacity-40"
+        className="absolute top-24 left-1/2 -translate-x-1/2 w-[850px] h-[550px] rounded-full pointer-events-none blur-3xl opacity-35"
         style={{
-          background: 'radial-gradient(circle at center, rgba(110,143,117,0.22) 0%, rgba(11,15,25,0.06) 50%, transparent 75%)',
+          background: 'radial-gradient(circle at center, rgba(110,143,117,0.25) 0%, rgba(0,86,214,0.08) 45%, transparent 75%)',
         }}
       />
 
       <div className="relative mx-auto max-w-7xl px-6 sm:px-10 lg:px-12">
-        <div className="mx-auto max-w-3xl text-center space-y-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-14 items-center">
 
-          {/* Eyebrow Pill Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-[#0B0F19]/[0.08] shadow-[0_2px_8px_rgba(0,0,0,0.02)] animate-[fade-in_0.5s_ease]">
-            <span className="w-2 h-2 rounded-full bg-[#6E8F75] animate-pulse" />
-            <span className="text-xs font-extrabold text-[#0B0F19]/75 uppercase tracking-wider">
-              Choose Your Path • Jadeer Platform
-            </span>
-          </div>
+          {/* Left Column: Headline & Unified Actions */}
+          <div className="lg:col-span-7 space-y-7 sm:space-y-8 text-center lg:text-left">
+            {/* Eyebrow Pill */}
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-[#0B0F19]/[0.08] shadow-[0_2px_8px_rgba(0,0,0,0.02)] animate-[fade-in_0.5s_ease]">
+              <span className="w-2 h-2 rounded-full bg-[#6E8F75] animate-pulse" />
+              <span className="text-xs font-extrabold text-[#0B0F19]/75 uppercase tracking-wider">
+                Single Talent Portal • Engineering Certification
+              </span>
+            </div>
 
-          {/* Main Headline */}
-          <h1
-            className="
-              text-[clamp(2.5rem,5.5vw,4.25rem)] font-extrabold text-[#0B0F19]
-              leading-[1.12] tracking-tight
-              animate-[slide-up_0.6s_var(--ease-spring)_0.1s_both]
-            "
-          >
-            Welcome to{' '}
-            <span className="relative inline-block text-[#6E8F75]">
-              Jadeer.
-              <span className="absolute bottom-1 left-0 right-0 h-[3px] bg-[#6E8F75]/30 rounded-full" />
-            </span>
-          </h1>
-
-          {/* Subtitle */}
-          <p
-            className="
-              mx-auto max-w-2xl text-[16.5px] sm:text-[19px] text-[#0B0F19]/55
-              leading-relaxed font-normal
-              animate-[slide-up_0.6s_var(--ease-spring)_0.2s_both]
-            "
-          >
-            Tell us where you are in your journey so we can show you the most relevant experience.
-          </p>
-
-          {/* ── Role Selection Cards ───────────────────────────────────── */}
-          <div
-            className="
-              pt-4 grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6 max-w-2xl mx-auto
-              animate-[slide-up_0.6s_var(--ease-spring)_0.3s_both]
-            "
-          >
-            {/* Student Card */}
-            <button
-              id="role-select-student"
-              onClick={() => onSelect('student')}
+            {/* Main Headline */}
+            <h1
               className="
-                group relative bg-white rounded-3xl p-7 sm:p-8
-                border-2 border-[#0B0F19]/[0.06]
-                shadow-[0_8px_32px_rgba(0,0,0,0.03)]
-                hover:border-[#6E8F75]/40 hover:-translate-y-1.5
-                hover:shadow-[0_20px_60px_rgba(110,143,117,0.15)]
-                transition-all duration-400 ease-out
-                text-left cursor-pointer
-                animate-[card-entrance_0.5s_var(--ease-spring)_0.35s_both]
+                text-[clamp(2.5rem,5vw,4.15rem)] font-extrabold text-[#0B0F19]
+                leading-[1.14] tracking-tight
+                animate-[slide-up_0.6s_var(--ease-spring)_0.1s_both]
               "
             >
-              {/* Decorative corner glow */}
-              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-student-50 to-transparent rounded-tr-3xl rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              Certify your engineering depth with{' '}
+              <span className="relative inline-block text-[#6E8F75]">
+                verifiable proof.
+                <span className="absolute bottom-1 left-0 right-0 h-[3px] bg-[#6E8F75]/30 rounded-full" />
+              </span>
+            </h1>
 
-              <div className="relative space-y-4">
-                <div className="w-14 h-14 rounded-2xl bg-student-50 border border-student-100 text-student-500 flex items-center justify-center group-hover:scale-110 group-hover:shadow-[0_8px_20px_rgba(0,86,214,0.15)] transition-all duration-300">
-                  <GraduationCap className="w-7 h-7 animate-[icon-spin-in_0.4s_ease_0.5s_both]" />
-                </div>
-
-                <div className="space-y-1.5">
-                  <h3 className="text-xl font-extrabold text-[#0B0F19] group-hover:text-student-600 transition-colors">
-                    I'm a Student
-                  </h3>
-                  <p className="text-[13.5px] text-[#0B0F19]/55 leading-relaxed">
-                    Get career guidance through <strong className="text-[#0B0F19]/75">1-on-1 mentor consultations</strong>, explore industry paths, and prepare for your first role.
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {['Mentor Sessions', 'Career Guidance', 'Interview Prep'].map((tag) => (
-                    <span
-                      key={tag}
-                      className="px-2.5 py-0.5 rounded-lg bg-student-50 text-[10.5px] font-semibold text-student-500 border border-student-100/60"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="flex items-center gap-1.5 text-[13px] font-bold text-student-500 pt-2 group-hover:gap-2.5 transition-all duration-300">
-                  <span>Start as Student</span>
-                  <ArrowRight className="w-4 h-4" />
-                </div>
-              </div>
-            </button>
-
-            {/* Graduate Card */}
-            <button
-              id="role-select-graduate"
-              onClick={() => onSelect('graduate')}
+            {/* Sub-headline */}
+            <p
               className="
-                group relative bg-white rounded-3xl p-7 sm:p-8
-                border-2 border-[#0B0F19]/[0.06]
-                shadow-[0_8px_32px_rgba(0,0,0,0.03)]
-                hover:border-[#6E8F75]/40 hover:-translate-y-1.5
-                hover:shadow-[0_20px_60px_rgba(110,143,117,0.15)]
-                transition-all duration-400 ease-out
-                text-left cursor-pointer
-                animate-[card-entrance_0.5s_var(--ease-spring)_0.45s_both]
+                text-[16px] sm:text-[18px] text-[#0B0F19]/65
+                leading-[1.7] max-w-2xl mx-auto lg:mx-0 font-normal
+                animate-[slide-up_0.6s_var(--ease-spring)_0.2s_both]
               "
             >
-              {/* Decorative corner glow */}
-              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-[#f0f5f1] to-transparent rounded-tr-3xl rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              Whether you are a university student seeking industry mentorship or a graduate targeting full-time engineering roles, Jadeer evaluates your code depth through adaptive AI assessments, mentor calibration, and live evidence dossiers.
+            </p>
 
-              <div className="relative space-y-4">
-                <div className="w-14 h-14 rounded-2xl bg-[#f0f5f1] border border-[#dce8de] text-[#6E8F75] flex items-center justify-center group-hover:scale-110 group-hover:shadow-[0_8px_20px_rgba(110,143,117,0.15)] transition-all duration-300">
-                  <Code2 className="w-7 h-7 animate-[icon-spin-in_0.4s_ease_0.6s_both]" />
-                </div>
-
-                <div className="space-y-1.5">
-                  <h3 className="text-xl font-extrabold text-[#0B0F19] group-hover:text-[#6E8F75] transition-colors">
-                    I'm a Graduate
-                  </h3>
-                  <p className="text-[13.5px] text-[#0B0F19]/55 leading-relaxed">
-                    Validate your skills through <strong className="text-[#0B0F19]/75">AI-powered technical evaluations</strong>, build verified evidence, and get matched with companies.
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {['AI Interview', 'Project Work', 'Job Matching'].map((tag) => (
-                    <span
-                      key={tag}
-                      className="px-2.5 py-0.5 rounded-lg bg-[#f0f5f1] text-[10.5px] font-semibold text-[#6E8F75] border border-[#dce8de]/60"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="flex items-center gap-1.5 text-[13px] font-bold text-[#6E8F75] pt-2 group-hover:gap-2.5 transition-all duration-300">
-                  <span>Start as Graduate</span>
-                  <ArrowRight className="w-4 h-4" />
-                </div>
-              </div>
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   ROLE-SPECIFIC HERO SECTIONS
-   ══════════════════════════════════════════════════════════════════════════ */
-
-function StudentHeroSection() {
-  const { userRole } = useUserRole();
-
-  return (
-    <section className="relative overflow-hidden pt-44 sm:pt-52 pb-28 sm:pb-36">
-      {/* Technical Grid */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-60"
-        style={{
-          backgroundImage: `
-            linear-gradient(to right, rgba(11, 15, 25, 0.04) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(11, 15, 25, 0.04) 1px, transparent 1px)
-          `,
-          backgroundSize: '36px 36px',
-          maskImage: 'radial-gradient(ellipse 70% 60% at 50% 35%, #000 30%, transparent 80%)',
-          WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 35%, #000 30%, transparent 80%)',
-        }}
-      />
-
-      {/* Diffused Blue Glow for student */}
-      <div
-        className="absolute top-28 left-1/2 -translate-x-1/2 w-[760px] h-[520px] rounded-full pointer-events-none blur-3xl opacity-35"
-        style={{
-          background: 'radial-gradient(circle at center, rgba(0,86,214,0.18) 0%, rgba(11,15,25,0.04) 50%, transparent 75%)',
-        }}
-      />
-
-      <div className="relative mx-auto max-w-7xl px-6 sm:px-10 lg:px-12">
-        <div className="mx-auto max-w-3xl text-center space-y-8">
-
-
-          {/* Student Eyebrow */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-student-50 border border-student-100 shadow-[0_2px_8px_rgba(0,86,214,0.06)] animate-[fade-in_0.5s_ease]">
-            <GraduationCap className="w-3.5 h-3.5 text-student-500" />
-            <span className="text-xs font-extrabold text-student-600/80 uppercase tracking-wider">
-              Student Mentorship Program • Cairo, EG
-            </span>
-          </div>
-
-          {/* Main Headline */}
-          <h1
-            className="
-              text-[clamp(2.5rem,5.5vw,4.25rem)] font-extrabold text-[#0B0F19]
-              leading-[1.12] tracking-tight
-              animate-[slide-up_0.6s_var(--ease-spring)_0.1s_both]
-            "
-          >
-            Connect with industry mentors for{' '}
-            <span className="relative inline-block text-student-500">
-              career guidance.
-              <span className="absolute bottom-1 left-0 right-0 h-[3px] bg-student-400/30 rounded-full" />
-            </span>
-          </h1>
-
-          {/* Subtitle */}
-          <p
-            className="
-              mx-auto max-w-2xl text-[16.5px] sm:text-[19px] text-[#0B0F19]/55
-              leading-relaxed font-normal
-              animate-[slide-up_0.6s_var(--ease-spring)_0.2s_both]
-            "
-          >
-            Book 1-on-1 consultation sessions with senior engineers from top tech companies. Get personalized career advice, code reviews, and interview preparation.
-          </p>
-
-          {/* Dual Action CTAs */}
-          <div
-            className="
-              pt-2 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5
-              animate-[slide-up_0.6s_var(--ease-spring)_0.3s_both]
-            "
-          >
-            <Link
-              to="/signup"
-              id="hero-cta-student-book"
+            {/* ── Single Unified CTAs ── */}
+            <div
               className="
-                inline-flex items-center gap-2.5 px-8 py-4
-                bg-student-500 text-white text-[15px] font-bold
-                rounded-full transition-all duration-300
-                hover:bg-student-600 hover:-translate-y-0.5
-                hover:shadow-[0_14px_32px_rgba(0,86,214,0.3)]
-                active:translate-y-0 active:scale-[0.98]
-                w-full sm:w-auto justify-center shadow-md
+                flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2
+                animate-[slide-up_0.6s_var(--ease-spring)_0.3s_both]
               "
             >
-              <Calendar className="w-4.5 h-4.5" />
-              Book a Consultation
-            </Link>
-
-            <Link
-              to="/signin"
-              id="hero-cta-student-signin"
-              className="
-                inline-flex items-center gap-2 px-8 py-4
-                bg-white text-[#0B0F19] text-[15px] font-bold
-                rounded-full border border-[#0B0F19]/[0.08]
-                transition-all duration-300
-                hover:bg-[#FAF9F6] hover:border-[#0B0F19]/20 hover:-translate-y-0.5
-                hover:shadow-[0_8px_24px_rgba(0,0,0,0.04)]
-                active:translate-y-0 active:scale-[0.98]
-                w-full sm:w-auto justify-center shadow-sm
-              "
-            >
-              Explore Mentors
-            </Link>
-          </div>
-
-          {/* Trust Pillars — Student */}
-          <div
-            className="
-              pt-12 sm:pt-16 flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-14
-              border-t border-[#0B0F19]/[0.05]
-              animate-[fade-in_0.7s_ease_0.4s_both]
-            "
-          >
-            {[
-              { value: '1-on-1 Sessions', label: 'With Senior Industry Engineers' },
-              { value: '6+ Mentors', label: 'Across All Tech Domains' },
-              { value: '100% Free', label: 'No Cost Consultation Program' },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center gap-3.5 text-left">
-                <div className="h-10 w-[3px] rounded-full bg-student-400/30" />
-                <div>
-                  <p className="text-[15px] font-extrabold text-[#0B0F19]">
-                    {item.value}
-                  </p>
-                  <p className="text-xs text-[#0B0F19]/45">
-                    {item.label}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ── Graduate Hero ──────────────────────────────────────────────────────── */
-
-function GraduateHeroSection() {
-  return (
-    <section className="relative overflow-hidden pt-44 sm:pt-52 pb-28 sm:pb-36">
-      {/* Technical Grid */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-60"
-        style={{
-          backgroundImage: `
-            linear-gradient(to right, rgba(11, 15, 25, 0.04) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(11, 15, 25, 0.04) 1px, transparent 1px)
-          `,
-          backgroundSize: '36px 36px',
-          maskImage: 'radial-gradient(ellipse 70% 60% at 50% 35%, #000 30%, transparent 80%)',
-          WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 35%, #000 30%, transparent 80%)',
-        }}
-      />
-
-      {/* Diffused Green Glow for graduate */}
-      <div
-        className="absolute top-28 left-1/2 -translate-x-1/2 w-[760px] h-[520px] rounded-full pointer-events-none blur-3xl opacity-40"
-        style={{
-          background: 'radial-gradient(circle at center, rgba(110,143,117,0.22) 0%, rgba(11,15,25,0.06) 50%, transparent 75%)',
-        }}
-      />
-
-      <div className="relative mx-auto max-w-7xl px-6 sm:px-10 lg:px-12">
-        <div className="mx-auto max-w-3xl text-center space-y-8">
-
-          {/* Graduate Eyebrow */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-[#0B0F19]/[0.08] shadow-[0_2px_8px_rgba(0,0,0,0.02)] animate-[fade-in_0.5s_ease]">
-            <span className="w-2 h-2 rounded-full bg-[#6E8F75] animate-pulse" />
-            <span className="text-xs font-extrabold text-[#0B0F19]/75 uppercase tracking-wider">
-              Talent Validation Standard • Cairo, EG
-            </span>
-          </div>
-
-          {/* Main Headline */}
-          <h1
-            className="
-              text-[clamp(2.5rem,5.5vw,4.25rem)] font-extrabold text-[#0B0F19]
-              leading-[1.12] tracking-tight
-              animate-[slide-up_0.6s_var(--ease-spring)_0.1s_both]
-            "
-          >
-            Transforming candidate potential into{' '}
-            <span className="relative inline-block text-[#6E8F75]">
-              verified performance.
-              <span className="absolute bottom-1 left-0 right-0 h-[3px] bg-[#6E8F75]/30 rounded-full" />
-            </span>
-          </h1>
-
-          {/* Subtitle */}
-          <p
-            className="
-              mx-auto max-w-2xl text-[16.5px] sm:text-[19px] text-[#0B0F19]/55
-              leading-relaxed font-normal
-              animate-[slide-up_0.6s_var(--ease-spring)_0.2s_both]
-            "
-          >
-            Jadeer replaces subjective resumes and generic coding quizzes with supervised industry projects, AI-powered conversational assessments, and cryptographically verified evidence.
-          </p>
-
-          {/* Dual Action CTAs */}
-          <div
-            className="
-              pt-2 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5
-              animate-[slide-up_0.6s_var(--ease-spring)_0.3s_both]
-            "
-          >
-            <Link
-              to="/signup"
-              id="hero-cta-candidate"
-              className="
-                inline-flex items-center gap-2.5 px-8 py-4
-                bg-[#6E8F75] text-white text-[15px] font-bold
-                rounded-full transition-all duration-300
-                hover:bg-[#5d7d64] hover:-translate-y-0.5
-                hover:shadow-[0_14px_32px_rgba(110,143,117,0.3)]
-                active:translate-y-0 active:scale-[0.98]
-                w-full sm:w-auto justify-center shadow-md
-              "
-            >
-              Start Validation Journey
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-
-            <Link
-              to="/signin"
-              id="hero-cta-signin"
-              className="
-                inline-flex items-center gap-2 px-8 py-4
-                bg-white text-[#0B0F19] text-[15px] font-bold
-                rounded-full border border-[#0B0F19]/[0.08]
-                transition-all duration-300
-                hover:bg-[#FAF9F6] hover:border-[#0B0F19]/20 hover:-translate-y-0.5
-                hover:shadow-[0_8px_24px_rgba(0,0,0,0.04)]
-                active:translate-y-0 active:scale-[0.98]
-                w-full sm:w-auto justify-center shadow-sm
-              "
-            >
-              Sign In to Portal
-            </Link>
-          </div>
-
-          {/* Trust Pillars — Graduate */}
-          <div
-            className="
-              pt-12 sm:pt-16 flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-14
-              border-t border-[#0B0F19]/[0.05]
-              animate-[fade-in_0.7s_ease_0.4s_both]
-            "
-          >
-            {[
-              { value: 'AI Adaptive', label: 'Architecture & OOP Evaluation' },
-              { value: 'Supervised', label: 'Production Industry Pods' },
-              { value: '100% Certified', label: 'Cryptographic Evidence Dossier' },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center gap-3.5 text-left">
-                <div className="h-10 w-[3px] rounded-full bg-[#6E8F75]/30" />
-                <div>
-                  <p className="text-[15px] font-extrabold text-[#0B0F19]">
-                    {item.value}
-                  </p>
-                  <p className="text-xs text-[#0B0F19]/45">
-                    {item.label}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   ROLE-SPECIFIC MIDDLE SECTIONS
-   ══════════════════════════════════════════════════════════════════════════ */
-
-/* ── Student: Mentorship Standard Section ───────────────────────────────── */
-
-function StudentStandardSection() {
-  const pillars = [
-    {
-      num: '01',
-      title: '1-on-1 Mentor Consultations',
-      desc: 'Book private video sessions with senior engineers from companies like Microsoft, Google, and Amazon. Get personalized career guidance tailored to your goals.',
-      icon: Video,
-      badge: 'Live Sessions',
-    },
-    {
-      num: '02',
-      title: 'Career Path Exploration',
-      desc: 'Discover which engineering specialization fits you best — backend, frontend, ML, DevOps, or systems — through guided conversations with industry professionals.',
-      icon: BookOpen,
-      badge: 'Guided Discovery',
-    },
-    {
-      num: '03',
-      title: 'Interview & Portfolio Preparation',
-      desc: 'Practice mock interviews, get code reviews on your projects, and build a portfolio strategy that stands out to hiring managers.',
-      icon: Star,
-      badge: 'Career Ready',
-    },
-  ];
-
-  return (
-    <section id="how-it-works" className="py-24 sm:py-32 relative">
-      <div className="mx-auto max-w-7xl px-6 sm:px-10 lg:px-12">
-        <div className="text-center max-w-2xl mx-auto mb-16 sm:mb-20 space-y-3">
-          <span className="text-xs font-extrabold uppercase tracking-widest text-student-500">
-            The Mentorship Framework
-          </span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B0F19] tracking-tight">
-            How Jadeer guides students
-          </h2>
-          <p className="text-sm sm:text-base text-[#0B0F19]/55 leading-relaxed">
-            A three-pillar mentorship program designed to bridge the gap between academia and industry.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {pillars.map((pillar) => {
-            const Icon = pillar.icon;
-            return (
-              <div
-                key={pillar.num}
+              <Link
+                to="/signup"
+                id="hero-join-talent-btn"
                 className="
-                  bg-white rounded-3xl p-8 sm:p-10
-                  border border-[#0B0F19]/[0.05]
-                  shadow-[0_20px_50px_-20px_rgba(0,0,0,0.03)]
-                  flex flex-col justify-between space-y-6
-                  hover:border-student-300/40 hover:-translate-y-1
-                  hover:shadow-[0_25px_60px_-15px_rgba(0,86,214,0.1)]
-                  transition-all duration-300 group
+                  w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4
+                  bg-[#0B0F19] text-white text-[15px] font-bold rounded-2xl
+                  transition-all duration-300 hover:bg-[#1A2433] hover:-translate-y-0.5
+                  hover:shadow-[0_12px_28px_rgba(11,15,25,0.22)] active:scale-[0.98] shadow-md
                 "
               >
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="w-12 h-12 rounded-2xl bg-student-50 border border-student-100 text-student-500 flex items-center justify-center font-extrabold group-hover:bg-student-500 group-hover:text-white transition-colors">
-                      <Icon className="w-6 h-6" />
+                <span>Join as Talent</span>
+                <ArrowRight className="w-4.5 h-4.5 text-[#6E8F75]" />
+              </Link>
+
+              <Link
+                to="/signin"
+                id="hero-signin-btn"
+                className="
+                  w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-4
+                  border-2 border-[#0B0F19]/[0.12] bg-white text-[#0B0F19]
+                  text-[15px] font-bold rounded-2xl transition-all duration-300
+                  hover:border-[#0B0F19]/30 hover:bg-[#FAF9F6] hover:-translate-y-0.5
+                  active:scale-[0.98] shadow-xs
+                "
+              >
+                <span>Sign In to Portal</span>
+              </Link>
+            </div>
+
+            {/* Unified Micro-Badges Bar */}
+            <div className="pt-3 flex justify-center lg:justify-start">
+              <div className="inline-flex flex-wrap items-center justify-center gap-3 sm:gap-4 px-5 py-3 rounded-2xl bg-white/90 border border-[#0B0F19]/[0.07] shadow-xs text-xs font-semibold text-[#0B0F19]/70">
+                <span className="flex items-center gap-1.5">
+                  <BrainCircuit className="w-3.5 h-3.5 text-[#6E8F75]" />
+                  Adaptive AI Code Radar
+                </span>
+                <span className="text-[#0B0F19]/20 hidden sm:inline">•</span>
+                <span className="flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-blue-500" />
+                  1-on-1 Mentor Calibration
+                </span>
+                <span className="text-[#0B0F19]/20 hidden sm:inline">•</span>
+                <span className="flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  Single User Architecture
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Live Candidate Dossier Preview */}
+          <div className="lg:col-span-5 flex justify-center lg:justify-end items-center">
+            <div className="w-full max-w-[440px] bg-white rounded-3xl p-6 sm:p-7 border border-[#0B0F19]/[0.08] shadow-[0_20px_50px_-15px_rgba(0,0,0,0.06)] space-y-5 relative overflow-hidden">
+              <div className="h-1.5 w-full bg-gradient-to-r from-[#6E8F75] via-blue-500 to-[#6E8F75] absolute top-0 left-0" />
+
+              {/* Dossier Header */}
+              <div className="flex items-center justify-between pt-1">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0B0F19] to-[#1E2C42] text-white flex items-center justify-center font-bold text-sm shadow-sm">
+                    AH
+                  </div>
+                  <div>
+                    <h3 className="text-base font-extrabold text-[#0B0F19]">Ahmad Al-Hassan</h3>
+                    <p className="text-xs text-[#0B0F19]/50 font-medium">Backend & Systems Track • KFUPM</p>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-extrabold">
+                  92% Verified
+                </span>
+              </div>
+
+              {/* Competency Telemetry Bars */}
+              <div className="space-y-3 p-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.04]">
+                <span className="text-[10.5px] font-bold uppercase tracking-wider text-[#0B0F19]/45 block">
+                  Synchronized Telemetry:
+                </span>
+                <div className="space-y-2">
+                  <div>
+                    <div className="flex justify-between text-xs font-semibold text-[#0B0F19]/80 mb-1">
+                      <span>C++20 & Memory Layout (RAII)</span>
+                      <span className="text-[#6E8F75] font-extrabold">95%</span>
                     </div>
-                    <span className="text-xs font-mono font-extrabold text-[#0B0F19]/25">
-                      {pillar.num}
-                    </span>
+                    <div className="w-full h-2 rounded-full bg-white border border-[#0B0F19]/[0.06] overflow-hidden">
+                      <div className="h-full rounded-full bg-[#6E8F75]" style={{ width: '95%' }} />
+                    </div>
                   </div>
 
-                  <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-student-500 bg-student-50 px-2.5 py-0.5 rounded-md">
-                    {pillar.badge}
-                  </span>
-
-                  <h3 className="text-xl font-bold text-[#0B0F19] leading-snug">
-                    {pillar.title}
-                  </h3>
-
-                  <p className="text-[14px] text-[#0B0F19]/60 leading-relaxed">
-                    {pillar.desc}
-                  </p>
-                </div>
-
-                <div className="pt-4 border-t border-[#0B0F19]/[0.04] flex items-center text-xs font-bold text-student-500 group-hover:text-student-600 transition-colors">
-                  <span>Learn more</span>
-                  <ChevronRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
+                  <div>
+                    <div className="flex justify-between text-xs font-semibold text-[#0B0F19]/80 mb-1">
+                      <span>System Design & Distributed Queues</span>
+                      <span className="text-blue-500 font-extrabold">88%</span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-white border border-[#0B0F19]/[0.06] overflow-hidden">
+                      <div className="h-full rounded-full bg-blue-500" style={{ width: '88%' }} />
+                    </div>
+                  </div>
                 </div>
               </div>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
 
-/* ── Student: Value Proposition Section ──────────────────────────────────── */
+              {/* Mentor Calibration Pill */}
+              <div className="p-3.5 rounded-2xl bg-[#0B0F19]/[0.02] border border-[#0B0F19]/[0.05] flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <GraduationCap className="w-4 h-4 text-blue-500" />
+                  <span className="text-[#0B0F19]/70 font-medium">1-to-1 Mentor Calibrated</span>
+                </div>
+                <span className="font-bold text-[#0B0F19]">Eng. Sara @ Instabug</span>
+              </div>
 
-function StudentAdvantageSection() {
-  const advantages = [
-    {
-      title: 'No More Uncertainty',
-      desc: 'Stop guessing what companies want. Get direct advice from engineers doing the hiring at top tech companies.',
-      icon: ShieldCheck,
-    },
-    {
-      title: 'Real Industry Connections',
-      desc: 'Build meaningful relationships with senior engineers who can guide your career trajectory and open doors.',
-      icon: Users,
-    },
-    {
-      title: 'Structured Career Roadmap',
-      desc: 'Leave every session with clear action items, learning paths, and milestones tailored to your goals.',
-      icon: Terminal,
-    },
-  ];
-
-  return (
-    <section id="pipeline" className="py-24 sm:py-32 bg-white border-y border-[#0B0F19]/[0.04]">
-      <div className="mx-auto max-w-7xl px-6 sm:px-10 lg:px-12">
-        <div className="max-w-3xl mx-auto text-center space-y-4 mb-16">
-          <span className="text-xs font-extrabold uppercase tracking-widest text-student-500">
-            Built for CS Students & Career Changers
-          </span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B0F19] tracking-tight">
-            Navigate your career with confidence.
-          </h2>
-          <p className="text-[15px] sm:text-base text-[#0B0F19]/60 leading-relaxed">
-            Get the guidance that university career centers can't provide — from engineers who've walked the path.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {advantages.map((adv) => {
-            const Icon = adv.icon;
-            return (
-              <div
-                key={adv.title}
-                className="p-8 rounded-3xl bg-[#FAF9F6] border border-[#0B0F19]/[0.04] space-y-4"
+              {/* Direct CTA */}
+              <Link
+                to="/signup"
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-[#6E8F75] text-white text-xs font-bold hover:bg-[#5d7d64] transition-all"
               >
-                <div className="w-11 h-11 rounded-2xl bg-white border border-[#0B0F19]/[0.06] text-student-500 flex items-center justify-center font-bold">
-                  <Icon className="w-5 h-5" />
-                </div>
-                <h3 className="text-lg font-bold text-[#0B0F19]">
-                  {adv.title}
-                </h3>
-                <p className="text-[13.5px] text-[#0B0F19]/60 leading-relaxed">
-                  {adv.desc}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ── Student: Final CTA ─────────────────────────────────────────────────── */
-
-function StudentFinalCtaSection() {
-  return (
-    <section id="evidence" className="py-24 sm:py-32 relative">
-      <div className="mx-auto max-w-7xl px-6 sm:px-10 lg:px-12">
-        <div className="bg-white rounded-3xl p-10 sm:p-16 border border-[#0B0F19]/[0.05] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.03)] text-center max-w-4xl mx-auto space-y-8">
-          <div className="space-y-3">
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B0F19] tracking-tight">
-              Ready to connect with your first mentor?
-            </h2>
-            <p className="text-sm sm:text-base text-[#0B0F19]/55 max-w-xl mx-auto leading-relaxed">
-              Browse our curated network of industry mentors, book your first free consultation session, and start building your career roadmap today.
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              to="/signup"
-              className="
-                w-full sm:w-auto px-8 py-4 rounded-full
-                bg-student-500 text-white text-sm font-bold
-                hover:bg-student-600 hover:-translate-y-0.5
-                hover:shadow-[0_12px_28px_rgba(0,86,214,0.28)]
-                active:translate-y-0 active:scale-[0.98]
-                transition-all duration-300 shadow-md
-              "
-            >
-              Create Student Account
-            </Link>
-
-            <Link
-              to="/signin"
-              className="
-                w-full sm:w-auto px-8 py-4 rounded-full
-                bg-[#FAF9F6] text-[#0B0F19] text-sm font-bold
-                border border-[#0B0F19]/[0.08]
-                hover:bg-white hover:border-[#0B0F19]/20 hover:-translate-y-0.5
-                transition-all duration-300
-              "
-            >
-              Sign In to Existing Account
-            </Link>
+                <span>Create Your Verified Dossier</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -854,30 +376,32 @@ function StudentFinalCtaSection() {
   );
 }
 
-/* ── Graduate: Standard Section (Original) ──────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   2. THREE-STAGE VALIDATION ARCHITECTURE
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-function GraduateStandardSection() {
+function ValidationArchitectureSection() {
   const pillars = [
     {
       num: '01',
-      title: 'Adaptive AI Technical Interview',
-      desc: 'Deep conversational text and voice assessment evaluating internal memory layout, OOP design patterns, vtable overhead, and exception safety in real time.',
+      title: 'Adaptive AI Technical Assessment',
+      desc: 'Conversational voice and code evaluation tailored dynamically for your stage—evaluating memory safety, OOP polymorphism, and systems problem solving.',
       icon: BrainCircuit,
       badge: 'Cognitive Calibration',
     },
     {
       num: '02',
-      title: 'Supervised Project Execution',
-      desc: 'Candidates are assigned to real-world software modules (e.g. Distributed Task Queues), building production pull requests reviewed by Senior Tech Mentors.',
-      icon: FolderGit2,
-      badge: 'Production Pods',
+      title: '1-to-1 Mentor Calibration & Pods',
+      desc: 'Book personalized guidance and receive code reviews from Senior Engineers at Microsoft, Amazon, Google, Instabug, and Valeo.',
+      icon: Users,
+      badge: 'Expert Review',
     },
     {
       num: '03',
       title: 'Verified Evidence Dossier',
-      desc: 'Companies receive verifiable code commits, Valgrind leak reports, and rubric-backed mentor statements rather than unverified resumes.',
+      desc: 'Generate undeniable skill proof containing real code commits, telemetry breakdowns, and verified statements to unlock direct hiring.',
       icon: FileCheck2,
-      badge: 'PDF Export Ready',
+      badge: 'Direct Inbound',
     },
   ];
 
@@ -892,7 +416,7 @@ function GraduateStandardSection() {
             How Jadeer certifies competence
           </h2>
           <p className="text-sm sm:text-base text-[#0B0F19]/55 leading-relaxed">
-            A three-stage pipeline designed to transition engineers from theoretical knowledge to verifiable industry performance.
+            A unified pipeline designed to transition developers from theoretical knowledge to verifiable industry performance.
           </p>
         </div>
 
@@ -935,10 +459,13 @@ function GraduateStandardSection() {
                   </p>
                 </div>
 
-                <div className="pt-4 border-t border-[#0B0F19]/[0.04] flex items-center text-xs font-bold text-[#6E8F75] group-hover:text-[#5d7d64] transition-colors">
-                  <span>Learn more</span>
+                <Link
+                  to="/signup"
+                  className="pt-4 border-t border-[#0B0F19]/[0.04] flex items-center text-xs font-bold text-[#6E8F75] group-hover:text-[#5d7d64] transition-colors"
+                >
+                  <span>Start Validation</span>
                   <ChevronRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
-                </div>
+                </Link>
               </div>
             );
           })}
@@ -948,23 +475,25 @@ function GraduateStandardSection() {
   );
 }
 
-/* ── Graduate: Value Proposition Section (Original) ─────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   3. VALUE PROPOSITION & ADVANTAGE SECTION
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-function GraduateAdvantageSection() {
+function TalentAdvantageSection() {
   const advantages = [
     {
       title: 'Evidence Beats Guesswork',
-      desc: 'Never struggle with "years of experience" requirements again. Your Jadeer dossier proves you have solved real systems problems.',
+      desc: 'Never struggle with "years of experience" filters. Your Jadeer dossier proves you have solved real systems problems with benchmarked metrics.',
       icon: ShieldCheck,
     },
     {
-      title: 'Live Senior Mentorship',
-      desc: 'Receive code reviews from Principal Engineers at top tech companies, sharpening your architectural decision-making.',
+      title: '1-to-1 Senior Mentorship',
+      desc: 'Receive architectural guidance and mock interview feedback from Principal Engineers at top tech enterprises.',
       icon: GraduationCap,
     },
     {
-      title: 'Direct Interview Inbound',
-      desc: 'Companies skip preliminary screening rounds and send 1-on-1 technical interview requests directly to your email.',
+      title: 'Direct Inbound Interviews',
+      desc: 'Vetted partner employers skip superficial CV screening rounds and send interview invitations directly to your inbox.',
       icon: Terminal,
     },
   ];
@@ -974,13 +503,13 @@ function GraduateAdvantageSection() {
       <div className="mx-auto max-w-7xl px-6 sm:px-10 lg:px-12">
         <div className="max-w-3xl mx-auto text-center space-y-4 mb-16">
           <span className="text-xs font-extrabold uppercase tracking-widest text-[#6E8F75]">
-            Built for Junior Engineers & Students
+            Built for Students & Junior Engineers
           </span>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B0F19] tracking-tight">
             Get hired on proven merit, not pedigree.
           </h2>
           <p className="text-[15px] sm:text-base text-[#0B0F19]/60 leading-relaxed">
-            Transition smoothly from university projects to production-grade engineering with verified code contributions and mentor calibration.
+            Transition smoothly from university projects into production-grade software engineering with calibrated proof.
           </p>
         </div>
 
@@ -990,9 +519,9 @@ function GraduateAdvantageSection() {
             return (
               <div
                 key={adv.title}
-                className="p-8 rounded-3xl bg-[#FAF9F6] border border-[#0B0F19]/[0.04] space-y-4"
+                className="p-8 rounded-3xl bg-[#FAF9F6] border border-[#0B0F19]/[0.04] space-y-4 hover:border-[#6E8F75]/30 transition-colors"
               >
-                <div className="w-11 h-11 rounded-2xl bg-white border border-[#0B0F19]/[0.06] text-[#6E8F75] flex items-center justify-center font-bold">
+                <div className="w-11 h-11 rounded-2xl bg-white border border-[#0B0F19]/[0.06] text-[#6E8F75] flex items-center justify-center font-bold shadow-2xs">
                   <Icon className="w-5 h-5" />
                 </div>
                 <h3 className="text-lg font-bold text-[#0B0F19]">
@@ -1010,9 +539,51 @@ function GraduateAdvantageSection() {
   );
 }
 
-/* ── Graduate: Final CTA (Original) ─────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   4. EMPLOYER CALLOUT SECTION
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-function GraduateFinalCtaSection() {
+function EmployerCalloutSection() {
+  return (
+    <section className="py-16 sm:py-20 relative">
+      <div className="mx-auto max-w-7xl px-6 sm:px-10 lg:px-12">
+        <div className="p-8 sm:p-10 rounded-3xl bg-[#0B0F19] text-white border border-white/[0.08] shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="space-y-2 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-xs font-bold text-[#6E8F75]">
+              <Building2 className="w-3.5 h-3.5" />
+              <span>For Companies & Hiring Managers</span>
+            </div>
+            <h3 className="text-2xl font-extrabold text-white">
+              Looking to hire pre-calibrated engineering talent?
+            </h3>
+            <p className="text-sm text-white/65 leading-relaxed">
+              Explore verified candidate evidence dossiers, inspect automated code quality telemetry, and schedule 1-click interviews.
+            </p>
+          </div>
+
+          <Link
+            to="/employer"
+            className="
+              inline-flex items-center gap-2.5 px-6 py-3.5 rounded-2xl
+              bg-[#6E8F75] text-white text-sm font-bold shrink-0
+              hover:bg-[#5d7d64] hover:shadow-[0_8px_20px_rgba(110,143,117,0.35)]
+              transition-all
+            "
+          >
+            <span>Explore Employer Portal</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   5. UNIFIED FINAL CTA SECTION
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function UnifiedFinalCtaSection() {
   return (
     <section id="evidence" className="py-24 sm:py-32 relative">
       <div className="mx-auto max-w-7xl px-6 sm:px-10 lg:px-12">
@@ -1022,13 +593,14 @@ function GraduateFinalCtaSection() {
               Ready to validate your engineering capabilities?
             </h2>
             <p className="text-sm sm:text-base text-[#0B0F19]/55 max-w-xl mx-auto leading-relaxed">
-              Create your candidate profile, take your adaptive AI assessment, and build verifiable proof of your technical depth.
+              Create your unified talent account, take your adaptive AI assessment, and build verifiable proof of your technical depth.
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               to="/signup"
+              id="final-join-talent-btn"
               className="
                 w-full sm:w-auto px-8 py-4 rounded-full
                 bg-[#6E8F75] text-white text-sm font-bold
@@ -1038,7 +610,7 @@ function GraduateFinalCtaSection() {
                 transition-all duration-300 shadow-md
               "
             >
-              Create Candidate Account
+              Join as Talent
             </Link>
 
             <Link
@@ -1070,7 +642,11 @@ function Footer() {
         <p>© {new Date().getFullYear()} Jadeer Talent Validation Platform. Cairo, EG. All rights reserved.</p>
         <div className="flex items-center gap-6">
           <Link to="/signin" className="hover:text-[#0B0F19] transition-colors">Sign In</Link>
-          <Link to="/signup" className="hover:text-[#0B0F19] transition-colors">Sign Up</Link>
+          <Link to="/signup" className="hover:text-[#0B0F19] transition-colors">Join as Talent</Link>
+          <Link to="/employer" className="hover:text-[#6E8F75] transition-colors">For Employers</Link>
+          <Link to="/admin/signin" className="hover:text-[#6E8F75] font-semibold transition-colors flex items-center gap-1 text-[11px] text-[#0B0F19]/60">
+            <span>Admin</span>
+          </Link>
         </div>
       </div>
     </footer>
@@ -1078,53 +654,18 @@ function Footer() {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   LANDING PAGE — COMPOSED WITH ROLE AWARENESS
+   LANDING PAGE — UNIFIED TALENT ENTRY
    ══════════════════════════════════════════════════════════════════════════ */
 
 export default function LandingPage() {
-  const { userRole, setUserRole, clearUserRole } = useUserRole();
-
-  useEffect(() => {
-    clearUserRole();
-  }, [clearUserRole]);
-
-  const handleSelectRole = (role: UserRole) => {
-    setUserRole(role);
-    // Smooth scroll to top when switching
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   return (
     <div className="min-h-screen bg-[#FAF9F6] text-[#0B0F19] selection:bg-[#6E8F75]/20 selection:text-[#0B0F19]">
       <Navbar />
-
-      {/* Phase 1: No role selected → Show selection cards */}
-      {!userRole && (
-        <div key="selection" className="animate-[cross-fade-in_0.4s_ease]">
-          <RoleSelectionHero onSelect={handleSelectRole} />
-        </div>
-      )}
-
-      {/* Phase 2: Student path */}
-      {userRole === 'student' && (
-        <div key="student" className="animate-[cross-fade-in_0.4s_ease]">
-          <StudentHeroSection />
-          <StudentStandardSection />
-          <StudentAdvantageSection />
-          <StudentFinalCtaSection />
-        </div>
-      )}
-
-      {/* Phase 2: Graduate path */}
-      {userRole === 'graduate' && (
-        <div key="graduate" className="animate-[cross-fade-in_0.4s_ease]">
-          <GraduateHeroSection />
-          <GraduateStandardSection />
-          <GraduateAdvantageSection />
-          <GraduateFinalCtaSection />
-        </div>
-      )}
-
+      <UnifiedHeroSection />
+      <ValidationArchitectureSection />
+      <TalentAdvantageSection />
+      <EmployerCalloutSection />
+      <UnifiedFinalCtaSection />
       <Footer />
     </div>
   );

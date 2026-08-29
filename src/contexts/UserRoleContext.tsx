@@ -1,9 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   JADEER — USER ROLE CONTEXT
-   Manages the selected user type (student | graduate) with localStorage
-   persistence. Provides role state and methods to all components.
+   JADEER — USER ROLE CONTEXT & ONE-TIME TRACK BINDING
+   ─────────────────────────────────────────────────────────────────────────
+   Manages user type (student | graduate) and enforces one-time immutable
+   technical track binding upon initial account registration.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 export type UserRole = 'student' | 'graduate';
@@ -14,9 +15,14 @@ export interface UserRoleContextType {
   clearUserRole: () => void;
   isStudent: boolean;
   isGraduate: boolean;
+  // One-Time Track Binding
+  lockedTrack: string | null;
+  isTrackLocked: boolean;
+  bindTrack: (track: string) => void;
 }
 
 const STORAGE_KEY = 'jadeer-user-role';
+const TRACK_LOCK_KEY = 'jadeer-locked-track';
 
 const UserRoleContext = createContext<UserRoleContextType | undefined>(undefined);
 
@@ -29,6 +35,14 @@ export function UserRoleProvider({ children }: { children: React.ReactNode }) {
       // localStorage unavailable
     }
     return null;
+  });
+
+  const [lockedTrack, setLockedTrackState] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(TRACK_LOCK_KEY) || null;
+    } catch {
+      return null;
+    }
   });
 
   const setUserRole = useCallback((role: UserRole) => {
@@ -49,6 +63,17 @@ export function UserRoleProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const bindTrack = useCallback((track: string) => {
+    const trimmed = track.trim();
+    if (!trimmed) return;
+    setLockedTrackState(trimmed);
+    try {
+      localStorage.setItem(TRACK_LOCK_KEY, trimmed);
+    } catch {
+      // localStorage unavailable
+    }
+  }, []);
+
   return (
     <UserRoleContext.Provider
       value={{
@@ -57,6 +82,9 @@ export function UserRoleProvider({ children }: { children: React.ReactNode }) {
         clearUserRole,
         isStudent: userRole === 'student',
         isGraduate: userRole === 'graduate',
+        lockedTrack,
+        isTrackLocked: Boolean(lockedTrack),
+        bindTrack,
       }}
     >
       {children}

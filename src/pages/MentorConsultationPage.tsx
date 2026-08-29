@@ -23,7 +23,7 @@ import {
 /* ═══════════════════════════════════════════════════════════════════════════
    JADEER — MENTOR CONSULTATION PAGE
    Browse, filter, and discover industry mentors. View profiles, specialties,
-   availability, and book 1-on-1 sessions.
+   availability, and book 1-to-1 sessions.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ── Specialty Filter Tags ──────────────────────────────────────────────── */
@@ -72,7 +72,7 @@ const allMentors: Mentor[] = [
     sessionsCompleted: 87,
     nextAvailable: 'Today, 5:00 PM',
     available: true,
-    hourlyRate: 'Free',
+    hourlyRate: '$45 / session',
     languages: ['Arabic', 'English'],
   },
   {
@@ -89,7 +89,7 @@ const allMentors: Mentor[] = [
     sessionsCompleted: 124,
     nextAvailable: 'Tomorrow, 10:00 AM',
     available: true,
-    hourlyRate: 'Free',
+    hourlyRate: '$40 / session',
     languages: ['Arabic', 'English'],
   },
   {
@@ -106,7 +106,7 @@ const allMentors: Mentor[] = [
     sessionsCompleted: 56,
     nextAvailable: 'Fri, Aug 29',
     available: false,
-    hourlyRate: 'Free',
+    hourlyRate: '$55 / session',
     languages: ['Arabic', 'English', 'French'],
   },
   {
@@ -123,7 +123,7 @@ const allMentors: Mentor[] = [
     sessionsCompleted: 79,
     nextAvailable: 'Today, 7:00 PM',
     available: true,
-    hourlyRate: 'Free',
+    hourlyRate: '$35 / session',
     languages: ['Arabic', 'English'],
   },
   {
@@ -140,7 +140,7 @@ const allMentors: Mentor[] = [
     sessionsCompleted: 143,
     nextAvailable: 'Tomorrow, 2:00 PM',
     available: true,
-    hourlyRate: 'Free',
+    hourlyRate: '$50 / session',
     languages: ['Arabic', 'English'],
   },
   {
@@ -157,7 +157,7 @@ const allMentors: Mentor[] = [
     sessionsCompleted: 167,
     nextAvailable: 'Sat, Aug 30',
     available: true,
-    hourlyRate: 'Free',
+    hourlyRate: '$60 / session',
     languages: ['Arabic', 'English'],
   },
 ];
@@ -240,7 +240,7 @@ export default function MentorConsultationPage() {
           Find Your <span className="text-student-500">Industry Mentor</span>
         </h1>
         <p className="text-[15px] text-[#0B0F19]/55 max-w-xl leading-relaxed">
-          Connect 1-on-1 with experienced engineers from top tech companies. Get personalized career guidance, code reviews, and interview preparation.
+          Connect 1-to-1 with experienced engineers from top tech companies. Get personalized career guidance, code reviews, and interview preparation.
         </p>
       </div>
 

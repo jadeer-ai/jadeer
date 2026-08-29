@@ -1,0 +1,423 @@
+// Prisma Schema for Jadeer Platform — Phase 1
+// Core tables: Users, Profiles, Job Listings, Applications & Telemetry
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ENUMS
+// ═══════════════════════════════════════════════════════════════════════════
+
+enum UserRole {
+  STUDENT
+  GRADUATE
+  EMPLOYER
+  ADMIN
+}
+
+enum AuthProvider {
+  EMAIL
+  GOOGLE
+  GITHUB
+}
+
+enum SoftwareTrack {
+  SOFTWARE_ENGINEERING
+  BACKEND
+  FRONTEND
+  FULLSTACK
+  EMBEDDED_SYSTEMS
+  MOBILE
+  DEVOPS
+  DATA_ENGINEERING
+  AI_ML
+  CYBERSECURITY
+}
+
+enum SeniorityLevel {
+  INTERN
+  JUNIOR
+  MID_LEVEL
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+  FREELANCE
+}
+
+enum LocationType {
+  ON_SITE
+  HYBRID
+  REMOTE
+}
+
+enum JobStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  CLOSED
+}
+
+enum ApplicationStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  AI_INTERVIEW
+  HUMAN_INTERVIEW
+  PROJECT_ASSESSMENT
+  SHORTLISTED
+  HIRED
+  REJECTED
+}
+
+enum EvaluatorType {
+  AI
+  HUMAN
+  SYSTEM
+}
+
+enum CandidateType {
+  STUDENT
+  GRADUATE
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 1. USERS & PROFILES (Single Table Architecture)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Unified authentication and identity record for all platform users.
+/// Stored in a single users table with role and candidate_type discriminators.
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  passwordHash  String?
+  role          UserRole
+  candidateType CandidateType? @map("candidate_type")
+  authProvider  AuthProvider   @default(EMAIL)
+  isVerified    Boolean        @default(false)
+  isActive      Boolean        @default(true)
+  lastLoginAt   DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  // ── Relations ──────────────────────────────────────────────────────
+  studentProfile StudentProfile?
+  companyProfile CompanyProfile?
+
+  @@index([email])
+  @@index([role])
+  @@index([candidateType])
+  @@map("users")
+}
+
+/// Extended profile for students and graduates.
+/// One-to-one with User (role = STUDENT | GRADUATE).
+model StudentProfile {
+  id              String        @id @default(cuid())
+  userId          String        @unique
+  fullName        String
+  university      String?
+  graduationYear  Int?
+  softwareTrack   SoftwareTrack?
+  bio             String?
+  resumeUrl       String?
+  githubUrl       String?
+  linkedinUrl     String?
+  portfolioUrl    String?
+  avatarUrl       String?
+  city            String?
+  country         String?       @default("Saudi Arabia")
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // ── Relations ──────────────────────────────────────────────────────
+  user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applications          Application[]
+  consultations         ConsultationSession[]
+  assessmentSubmissions AssessmentSubmission[]
+
+  @@index([softwareTrack])
+  @@index([userId])
+  @@map("student_profiles")
+}
+
+/// Extended profile for employer companies.
+/// One-to-one with User (role = EMPLOYER).
+model CompanyProfile {
+  id                            String      @id @default(cuid())
+  userId                        String      @unique
+  companyName                   String
+  companyInitials               String?
+  industry                      String?
+  companySize                   String?
+  location                      String?
+  workModel                     LocationType @default(ON_SITE)
+  website                       String?
+  commercialRegistrationNumber  String?
+  isCRVerified                  Boolean     @default(false)
+  contactName                   String?
+  contactRole                   String?
+  logoUrl                       String?
+  createdAt                     DateTime    @default(now())
+  updatedAt                     DateTime    @updatedAt
+
+  // ── Relations ──────────────────────────────────────────────────────
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobListings JobListing[]
+
+  @@index([companyName])
+  @@index([userId])
+  @@map("company_profiles")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 2. JOB LISTINGS
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Job posting created by an employer, scoped to software engineering domains.
+model JobListing {
+  id                      String         @id @default(cuid())
+  companyId               String
+  title                   String
+  softwareTrack           SoftwareTrack
+  seniorityLevel          SeniorityLevel
+  employmentType          EmploymentType @default(FULL_TIME)
+  locationType            LocationType   @default(ON_SITE)
+  location                String?
+  description             String
+  responsibilities        String?
+  requirements            String?
+  skills                  String[]       // PostgreSQL array of skill tags
+  status                  JobStatus      @default(DRAFT)
+  minimumMatchScore       Int            @default(70)
+  deadline                DateTime?
+  enableAIInterview       Boolean        @default(true)
+  enableProjectAssessment Boolean        @default(true)
+  publishedAt             DateTime?
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime       @updatedAt
+
+  // ── Relations ──────────────────────────────────────────────────────
+  company      CompanyProfile @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  applications Application[]
+
+  @@index([companyId])
+  @@index([softwareTrack])
+  @@index([status])
+  @@index([seniorityLevel])
+  @@map("job_listings")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 3. APPLICATIONS & TELEMETRY
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Links a candidate to a job listing with assessment telemetry.
+model Application {
+  id                    String            @id @default(cuid())
+  candidateId           String
+  jobListingId          String
+  status                ApplicationStatus @default(SUBMITTED)
+  coverNote             String?
+
+  // ── Telemetry Scores (0–100 scale) ─────────────────────────────────
+  matchScore            Float?            // Overall match percentage
+  aiInterviewScore      Float?            // AI interview assessment
+  projectScore          Float?            // Project/take-home evaluation
+  humanInterviewScore   Float?            // 1-to-1 calibration interview
+  overallTelemetryScore Float?            // Weighted composite score
+
+  appliedAt             DateTime          @default(now())
+  reviewedAt            DateTime?
+  updatedAt             DateTime          @updatedAt
+
+  // ── Relations ──────────────────────────────────────────────────────
+  candidate           StudentProfile      @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  jobListing          JobListing          @relation(fields: [jobListingId], references: [id], onDelete: Cascade)
+  telemetrySnapshots  TelemetrySnapshot[]
+
+  @@unique([candidateId, jobListingId]) // One application per candidate per job
+  @@index([candidateId])
+  @@index([jobListingId])
+  @@index([status])
+  @@map("applications")
+}
+
+/// Granular, point-in-time assessment breakdown for a single application.
+/// Each row captures one evaluation dimension (e.g., "Problem Solving", "System Design").
+model TelemetrySnapshot {
+  id              String        @id @default(cuid())
+  applicationId   String
+  dimension       String        // e.g., "Problem Solving", "Code Quality", "Communication"
+  score           Float         // Achieved score
+  maxScore        Float         @default(100)
+  evaluatorType   EvaluatorType @default(AI)
+  notes           String?
+  recordedAt      DateTime      @default(now())
+
+  // ── Relations ──────────────────────────────────────────────────────
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@index([dimension])
+  @@map("telemetry_snapshots")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 4. ASSESSMENTS & CODING CHALLENGES
+// ═══════════════════════════════════════════════════════════════════════════
+
+enum AssessmentType {
+  CODING_CHALLENGE
+  SYSTEM_DESIGN
+  CODE_REVIEW
+  TECHNICAL_QUIZ
+}
+
+enum AssessmentDifficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum AssessmentStatus {
+  ACTIVE
+  DRAFT
+  ARCHIVED
+}
+
+/// Technical assessment created by platform administrators.
+model Assessment {
+  id               String               @id @default(cuid())
+  title            String
+  description      String
+  softwareTrack    SoftwareTrack
+  type             AssessmentType       @default(CODING_CHALLENGE)
+  difficulty       AssessmentDifficulty @default(INTERMEDIATE)
+  status           AssessmentStatus     @default(ACTIVE)
+  timeLimitMinutes Int                  @default(60)
+  passingScore     Int                  @default(75)
+  problemStatement String               @db.Text
+  starterCode      String               @db.Text
+  language         String               @default("TypeScript")
+  rubric           Json                 // Evaluation dimensions and weights
+  tags             String[]             // Array of domain tags
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  // ── Relations ──────────────────────────────────────────────────────
+  testCases   AssessmentTestCase[]
+  submissions AssessmentSubmission[]
+
+  @@index([softwareTrack])
+  @@index([difficulty])
+  @@index([status])
+  @@map("assessments")
+}
+
+/// Automated test cases for assessment code execution.
+model AssessmentTestCase {
+  id             String     @id @default(cuid())
+  assessmentId   String
+  input          String     @db.Text
+  expectedOutput String     @db.Text
+  isHidden       Boolean    @default(false)
+  explanation    String?
+  weight         Int        @default(20)
+
+  // ── Relations ──────────────────────────────────────────────────────
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  @@index([assessmentId])
+  @@map("assessment_test_cases")
+}
+
+/// Candidate technical assessment attempts and telemetry progress.
+model AssessmentSubmission {
+  id                String          @id @default(cuid())
+  candidateId       String
+  assessmentId      String
+  status            String          @default("COMPLETED") // IN_PROGRESS, COMPLETED, EVALUATED
+  score             Float?
+  passed            Boolean         @default(false)
+  codeSolution      String?         @db.Text
+  testCasesPassed   Int             @default(0)
+  totalTestCases    Int             @default(0)
+  executionTimeMs   Int?
+  feedbackSummary   String?         @db.Text
+  submittedAt       DateTime        @default(now())
+  evaluatedAt       DateTime?
+
+  // ── Relations ──────────────────────────────────────────────────────
+  candidate  StudentProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  assessment Assessment     @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  @@index([candidateId])
+  @@index([assessmentId])
+  @@map("assessment_submissions")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 5. CONSULTATIONS & MENTOR SESSIONS
+// ═══════════════════════════════════════════════════════════════════════════
+
+enum ConsultationStatus {
+  PENDING_APPROVAL
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum ConsultationTopic {
+  CAREER_ROADMAP
+  SYSTEM_DESIGN
+  CODE_REVIEW
+  MOCK_INTERVIEW
+  RESUME_CALIBRATION
+  PORTFOLIO_CRITIQUE
+}
+
+/// 1-on-1 mentor guidance & career roadmap consultation session.
+model ConsultationSession {
+  id              String             @id @default(cuid())
+  studentId       String
+  studentName     String
+  studentEmail    String
+  studentTrack    SoftwareTrack
+  mentorId        String
+  mentorName      String
+  mentorTitle     String
+  mentorCompany   String
+  topic           ConsultationTopic  @default(CAREER_ROADMAP)
+  topicTitle      String
+  notes           String?            @db.Text
+  scheduledAt     DateTime
+  durationMinutes Int                @default(45)
+  meetingLink     String?
+  status          ConsultationStatus @default(PENDING_APPROVAL)
+  rating          Int?
+  feedback        String?            @db.Text
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  // ── Relations ──────────────────────────────────────────────────────
+  student StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([mentorId])
+  @@index([studentTrack])
+  @@index([status])
+  @@map("consultation_sessions")
+}
+
+
+

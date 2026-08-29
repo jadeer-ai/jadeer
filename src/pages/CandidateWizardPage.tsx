@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, type DragEvent, type ChangeEvent } from 'react';
 import { BrandLogo } from '@/components/common';
 import { useUserRole } from '@/contexts/UserRoleContext';
+import { useCandidateJourney } from '@/contexts/CandidateJourneyContext';
 import {
   User,
   Code2,
@@ -17,6 +18,7 @@ import {
   Globe,
   Sparkles,
   CheckCircle2,
+  Lock,
 } from 'lucide-react';
 
 /* ── Inline Brand Icons ─────────────────────────────────────────────────── */
@@ -216,7 +218,7 @@ function BasicProfileStep({
   data: WizardFormData;
   onChange: (patch: Partial<WizardFormData>) => void;
 }) {
-  const { isStudent } = useUserRole();
+  const { isStudent, lockedTrack } = useUserRole();
 
   const inputClass = `
     w-full h-[48px] px-4 rounded-xl
@@ -236,6 +238,24 @@ function BasicProfileStep({
         <p className="text-[14px] text-[#0B0F19]/45 leading-relaxed">
           This information helps us personalize your validation journey and build your professional profile.
         </p>
+      </div>
+
+      {/* Bound Technical Track Notification */}
+      <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <Lock className="w-4 h-4 text-amber-600 shrink-0" />
+          <div>
+            <p className="text-xs font-bold text-amber-900">
+              Bound Technical Track: <span className="underline">{lockedTrack || 'Software Engineering'}</span>
+            </p>
+            <p className="text-[11px] text-amber-800/70">
+              Locked permanently upon registration to anchor your AI telemetry, evaluations, and Evidence Dossier.
+            </p>
+          </div>
+        </div>
+        <span className="text-[10px] font-bold text-amber-800 bg-amber-200/60 px-2 py-0.5 rounded-md uppercase tracking-wider shrink-0 border border-amber-300/40">
+          Locked
+        </span>
       </div>
 
       {/* Avatar + Name row */}
@@ -707,6 +727,48 @@ function ResumeUploadStep({
         </p>
       </div>
 
+      {/* Mandatory Requirements Status Alert */}
+      <div className={`p-4 rounded-2xl border transition-all duration-200 ${
+        data.resumeFile && (data.githubUrl.trim() || data.linkedinUrl.trim())
+          ? isStudent ? 'bg-student-500/5 border-student-500/20' : 'bg-[#6E8F75]/10 border-[#6E8F75]/20'
+          : 'bg-amber-500/5 border-amber-500/20'
+      }`}>
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-[12px] font-bold text-[#0B0F19]/70 uppercase tracking-wider">
+            Mandatory Onboarding Gate
+          </span>
+          <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
+            data.resumeFile && (data.githubUrl.trim() || data.linkedinUrl.trim())
+              ? isStudent ? 'bg-student-500 text-white' : 'bg-[#6E8F75] text-white'
+              : 'bg-amber-500 text-white'
+          }`}>
+            {data.resumeFile && (data.githubUrl.trim() || data.linkedinUrl.trim()) ? 'All Requirements Met ✓' : 'Action Required'}
+          </span>
+        </div>
+        <div className="space-y-1.5 text-[12.5px]">
+          <div className="flex items-center gap-2">
+            {data.resumeFile ? (
+              <CheckCircle2 className={`w-4 h-4 shrink-0 ${isStudent ? 'text-student-500' : 'text-[#6E8F75]'}`} />
+            ) : (
+              <span className="w-4 h-4 rounded-full border border-amber-500/50 text-amber-600 flex items-center justify-center text-[10px] font-bold shrink-0">1</span>
+            )}
+            <span className={data.resumeFile ? 'font-medium text-[#0B0F19]/85' : 'text-[#0B0F19]/60'}>
+              Resume / CV file uploaded (PDF, DOCX) <span className="text-red-500 font-bold">*</span>
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            {data.githubUrl.trim() || data.linkedinUrl.trim() ? (
+              <CheckCircle2 className={`w-4 h-4 shrink-0 ${isStudent ? 'text-student-500' : 'text-[#6E8F75]'}`} />
+            ) : (
+              <span className="w-4 h-4 rounded-full border border-amber-500/50 text-amber-600 flex items-center justify-center text-[10px] font-bold shrink-0">2</span>
+            )}
+            <span className={data.githubUrl.trim() || data.linkedinUrl.trim() ? 'font-medium text-[#0B0F19]/85' : 'text-[#0B0F19]/60'}>
+              At least one verified profile link (GitHub or LinkedIn) <span className="text-red-500 font-bold">*</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
       {/* AI analysis hint */}
       <div className={`flex items-start gap-3 px-4 py-3.5 rounded-xl border
         ${isStudent ? 'bg-student-50 border-student-100' : 'bg-[#6E8F75]/[0.06] border-[#6E8F75]/10'}
@@ -719,9 +781,14 @@ function ResumeUploadStep({
 
       {/* ── Resume Drag & Drop Zone ──────────────────────────────── */}
       <div>
-        <label className="block text-[13px] font-semibold text-[#0B0F19]/60 mb-2">
-          Resume / CV
-        </label>
+        <div className="flex items-center justify-between mb-2">
+          <label className="text-[13px] font-semibold text-[#0B0F19]/70 flex items-center gap-1">
+            Resume / CV <span className="text-red-500 font-bold">*</span>
+          </label>
+          <span className={`text-[11px] font-medium ${data.resumeFile ? 'text-[#6E8F75]' : 'text-amber-600'}`}>
+            {data.resumeFile ? 'Uploaded ✓' : 'Required'}
+          </span>
+        </div>
 
         {!data.resumeFile ? (
           <div
@@ -830,10 +897,15 @@ function ResumeUploadStep({
 
       {/* ── GitHub ───────────────────────────────────────────────── */}
       <div>
-        <label htmlFor="wiz-github" className="flex items-center gap-2 text-[13px] font-semibold text-[#0B0F19]/60 mb-1.5">
-          <GitHubIcon className="w-3.5 h-3.5" />
-          GitHub Profile
-        </label>
+        <div className="flex items-center justify-between mb-1.5">
+          <label htmlFor="wiz-github" className="flex items-center gap-2 text-[13px] font-semibold text-[#0B0F19]/70">
+            <GitHubIcon className="w-3.5 h-3.5" />
+            GitHub Profile <span className="text-red-500 font-bold">*</span>
+          </label>
+          <span className={`text-[11px] font-medium ${data.githubUrl.trim() ? 'text-[#6E8F75]' : 'text-amber-600'}`}>
+            {data.githubUrl.trim() ? 'Verified Link ✓' : 'Required (or LinkedIn)'}
+          </span>
+        </div>
         <div className="relative">
           <GitHubIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#0B0F19]/20" />
           <input
@@ -849,10 +921,17 @@ function ResumeUploadStep({
 
       {/* ── LinkedIn ─────────────────────────────────────────────── */}
       <div>
-        <label htmlFor="wiz-linkedin" className="flex items-center gap-2 text-[13px] font-semibold text-[#0B0F19]/60 mb-1.5">
-          <LinkedInIcon className="w-3.5 h-3.5" />
-          LinkedIn Profile
-        </label>
+        <div className="flex items-center justify-between mb-1.5">
+          <label htmlFor="wiz-linkedin" className="flex items-center gap-2 text-[13px] font-semibold text-[#0B0F19]/70">
+            <LinkedInIcon className="w-3.5 h-3.5" />
+            LinkedIn Profile
+          </label>
+          {data.linkedinUrl.trim() && (
+            <span className="text-[11px] font-medium text-[#6E8F75]">
+              Verified Link ✓
+            </span>
+          )}
+        </div>
         <div className="relative">
           <LinkedInIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#0B0F19]/20" />
           <input
@@ -950,6 +1029,7 @@ function CompletionView() {
 
 export default function CandidateWizard({ embedded = false }: { embedded?: boolean }) {
   const { isStudent } = useUserRole();
+  const { completeOnboarding } = useCandidateJourney();
   const [currentStep, setCurrentStep] = useState(0);
   const [direction, setDirection] = useState<'forward' | 'backward'>('forward');
   const [isAnimating, setIsAnimating] = useState(false);
@@ -966,8 +1046,11 @@ export default function CandidateWizard({ embedded = false }: { embedded?: boole
         return formData.fullName.trim() !== '' && formData.title.trim() !== '';
       case 1:
         return formData.selectedSkills.length >= 1;
-      case 2:
-        return true; // Resources are optional
+      case 2: {
+        const hasResume = formData.resumeFile !== null;
+        const hasLinks = formData.githubUrl.trim() !== '' || formData.linkedinUrl.trim() !== '';
+        return hasResume && hasLinks;
+      }
       default:
         return false;
     }
@@ -976,6 +1059,9 @@ export default function CandidateWizard({ embedded = false }: { embedded?: boole
   const goNext = () => {
     if (isAnimating) return;
     if (currentStep === STEPS.length - 1) {
+      if (!isStudent) {
+        completeOnboarding();
+      }
       setIsComplete(true);
       return;
     }
@@ -1071,6 +1157,7 @@ export default function CandidateWizard({ embedded = false }: { embedded?: boole
                 id="wizard-next"
                 onClick={goNext}
                 disabled={!canProceed()}
+                title={!canProceed() && currentStep === 2 ? 'Upload your resume and provide at least one profile link to complete onboarding' : undefined}
                 className={`
                   inline-flex items-center gap-2 px-6 py-3 rounded-xl
                   text-[14px] font-semibold transition-all duration-300

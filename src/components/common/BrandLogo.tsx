@@ -54,7 +54,7 @@ export default function BrandLogo({
   size = 'md',
   showText = true,
   textColor = 'dark',
-  href,
+  href = '/',
   className = '',
   imgClassName = '',
 }: BrandLogoProps) {

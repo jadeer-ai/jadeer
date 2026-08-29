@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { useUserRole } from '@/contexts/UserRoleContext';
+import { useCandidateJourney } from '@/contexts/CandidateJourneyContext';
 import { BrandLogo } from '@/components/common';
 import {
   LayoutDashboard,
@@ -15,9 +16,11 @@ import {
   Sparkles,
   Users,
   Calendar,
+  CalendarCheck,
   BookOpen,
   ArrowLeftRight,
   GraduationCap,
+  Lock,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -30,7 +33,7 @@ interface NavItem {
   badge?: string;
 }
 
-/* Graduate (Candidate) Navigation — existing items */
+/* Graduate (Candidate) Navigation — pipeline + standalone consultations */
 const graduateNavItems: NavItem[] = [
   { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
   { label: 'My Profile', path: '/candidates/profiles', icon: User },
@@ -38,16 +41,36 @@ const graduateNavItems: NavItem[] = [
   { label: 'Human Interview', path: '/candidates/human-interview', icon: UserCheck },
   { label: 'Project Workspace', path: '/projects/workspace', icon: GitBranch },
   { label: 'Evidence Portfolio', path: '/candidates/portfolio', icon: FileBarChart },
+  { label: '1-on-1 Consultations', path: '/consultations', icon: CalendarCheck },
+  { label: 'Book Consultation', path: '/consultations/book', icon: Calendar },
   { label: 'Job Matches', path: '/candidates/jobs', icon: Briefcase, badge: '3 Matches' },
   { label: 'Settings', path: '/settings', icon: Settings },
 ];
 
-/* Student Navigation — mentorship-focused items */
+/* Un-onboarded Graduate Navigation */
+const graduateUnonboardedNavItems: NavItem[] = [
+  { label: 'Profile Setup', path: '/candidates/wizard', icon: Sparkles, badge: 'Required' },
+  { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+  { label: 'AI Interview', path: '/candidates/ai-interview', icon: MessageSquareCode },
+  { label: 'Project Workspace', path: '/projects/workspace', icon: GitBranch },
+  { label: 'Evidence Portfolio', path: '/candidates/portfolio', icon: FileBarChart },
+  { label: '1-on-1 Consultations', path: '/consultations', icon: CalendarCheck },
+  { label: 'Book Consultation', path: '/consultations/book', icon: Calendar },
+  { label: 'Job Matches', path: '/candidates/jobs', icon: Briefcase },
+  { label: 'Settings', path: '/settings', icon: Settings },
+];
+
+/* Student Navigation — unified validation pipeline + standalone consultations */
 const studentNavItems: NavItem[] = [
   { label: 'Dashboard', path: '/student/dashboard', icon: LayoutDashboard },
-  { label: 'Find Mentors', path: '/student/mentors', icon: Users, badge: '6 Online' },
-  { label: 'Book Session', path: '/student/book-session', icon: Calendar },
-  { label: 'Career Resources', path: '/student/mentors', icon: BookOpen },
+  { label: 'My Profile', path: '/candidates/profiles', icon: User },
+  { label: 'AI Interview', path: '/candidates/ai-interview', icon: MessageSquareCode, badge: 'Step 1' },
+  { label: 'Human Interview', path: '/candidates/human-interview', icon: UserCheck },
+  { label: 'Project Workspace', path: '/projects/workspace', icon: GitBranch },
+  { label: 'Evidence Portfolio', path: '/candidates/portfolio', icon: FileBarChart },
+  { label: '1-on-1 Consultations', path: '/consultations', icon: CalendarCheck },
+  { label: 'Book Consultation', path: '/consultations/book', icon: Calendar },
+  { label: 'Job Matches', path: '/candidates/jobs', icon: Briefcase },
   { label: 'Settings', path: '/settings', icon: Settings },
 ];
 
@@ -56,10 +79,20 @@ const studentNavItems: NavItem[] = [
 export default function Sidebar() {
   const { isCollapsed, isMobileOpen, toggleCollapse, closeMobile } = useSidebar();
   const { userRole, isStudent, clearUserRole } = useUserRole();
+  const { isOnboarded, isRouteUnlocked, getRouteLockReason } = useCandidateJourney();
   const location = useLocation();
 
-  const navItems = isStudent ? studentNavItems : graduateNavItems;
-  const portalLabel = isStudent ? 'Student Portal' : 'Graduate Portal';
+  const navItems = isStudent
+    ? studentNavItems
+    : isOnboarded
+    ? graduateNavItems
+    : graduateUnonboardedNavItems;
+
+  const portalLabel = isStudent
+    ? 'Student Portal'
+    : isOnboarded
+    ? 'Graduate Portal'
+    : 'Candidate Onboarding';
 
   return (
     <>
@@ -103,11 +136,37 @@ export default function Sidebar() {
           )}
 
           {navItems.map((item) => {
+            const isUnlocked = isStudent || isRouteUnlocked(item.path);
+            const lockReason = isStudent ? undefined : getRouteLockReason(item.path);
+
             const isActive =
               location.pathname === item.path ||
+              (item.path === '/candidates/wizard' && location.pathname === '/wizard') ||
               (item.path === '/dashboard' && location.pathname === '/') ||
               (item.path === '/student/dashboard' && location.pathname === '/');
             const Icon = item.icon;
+
+            if (!isUnlocked) {
+              return (
+                <div
+                  key={item.label}
+                  title={isCollapsed ? `${item.label} (Locked - Complete onboarding)` : lockReason}
+                  className={`
+                    flex items-center gap-3 px-3.5 py-2.5 rounded-xl
+                    text-[14px] font-medium text-white/30 cursor-not-allowed select-none
+                    ${isCollapsed ? 'justify-center px-0' : ''}
+                  `}
+                >
+                  <Icon className="w-[18px] h-[18px] shrink-0 text-white/20" />
+                  {!isCollapsed && (
+                    <span className="truncate flex-1">{item.label}</span>
+                  )}
+                  {!isCollapsed && (
+                    <Lock className="w-3.5 h-3.5 text-white/30 shrink-0" />
+                  )}
+                </div>
+              );
+            }
 
             return (
               <Link

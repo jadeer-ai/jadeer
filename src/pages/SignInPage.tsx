@@ -1,6 +1,10 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useUserRole } from '@/contexts/UserRoleContext';
+import { useUserRole, type UserRole } from '@/contexts/UserRoleContext';
+import { useCandidateJourney } from '@/contexts/CandidateJourneyContext';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
+import { useCompanyProfile } from '@/contexts/CompanyProfileContext';
+import { AuthService } from '@/services/authService';
 import {
   Eye,
   EyeOff,
@@ -10,64 +14,74 @@ import {
   Lock,
   Mail,
   Sparkles,
+  AlertCircle,
+  Clock,
+  KeyRound,
+  Building2,
+  GraduationCap,
+  Briefcase,
 } from 'lucide-react';
 import { BrandLogo } from '@/components/common';
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   JADEER — CANDIDATE SIGN IN PAGE
-   Minimalist, high-end editorial authentication experience.
+   JADEER — UNIFIED SIGN IN PAGE WITH ROLE-BASED ROUTING
+   ─────────────────────────────────────────────────────────────────────────
+   Single entry authentication with automatic role detection (Admin,
+   Employer, Graduate, Student) and security rate limiting.
    ═══════════════════════════════════════════════════════════════════════════ */
-
-/* ── Inline Social Brand Icons ──────────────────────────────────────────── */
-function GoogleIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none">
-      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
-      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05" />
-      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335" />
-    </svg>
-  );
-}
-
-function LinkedInIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-    </svg>
-  );
-}
-
-function GitHubIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z" />
-    </svg>
-  );
-}
 
 export default function SignInPage() {
   const navigate = useNavigate();
-  const { isStudent } = useUserRole();
-  const [email, setEmail] = useState('ahmad.hassan@example.com');
-  const [password, setPassword] = useState('JadeerVerified2026!');
+  const { isStudent, setUserRole } = useUserRole();
+  const { isOnboarded, completeOnboarding } = useCandidateJourney();
+  const { login: adminLogin } = useAdminAuth();
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [rateLimitSeconds, setRateLimitSeconds] = useState<number | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setError(null);
+    setRateLimitSeconds(null);
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      navigate(isStudent ? '/student/dashboard' : '/dashboard');
-    }, 600);
+
+    // Call unified authentication service
+    const result = await AuthService.login(email, password);
+    setIsLoading(false);
+
+    if (!result.success) {
+      setError(result.error || 'Authentication failed. Please verify credentials.');
+      if (result.statusCode === 429 && result.remainingCooldownSeconds) {
+        setRateLimitSeconds(result.remainingCooldownSeconds);
+      }
+      return;
+    }
+
+    // Role-based authentication synchronization
+    if (result.role === 'ADMIN') {
+      adminLogin(email, password);
+      navigate(result.redirectUrl || '/admin/dashboard');
+    } else if (result.role === 'EMPLOYER') {
+      navigate(result.redirectUrl || '/employer/dashboard');
+    } else if (result.role === 'STUDENT') {
+      setUserRole('student');
+      navigate(result.redirectUrl || '/student/dashboard');
+    } else {
+      // Graduate Candidate
+      setUserRole('graduate');
+      completeOnboarding();
+      navigate(result.redirectUrl || '/dashboard');
+    }
   };
 
   const primaryColorClass = isStudent ? 'text-student-500' : 'text-[#6E8F75]';
   const primaryBgClass = isStudent ? 'bg-student-500 hover:bg-student-600' : 'bg-[#6E8F75] hover:bg-[#5d7d64]';
   const focusRingClass = isStudent ? 'focus:border-student-500 focus:ring-student-500/15' : 'focus:border-[#6E8F75] focus:ring-[#6E8F75]/15';
-  const primaryHoverColorClass = isStudent ? 'hover:text-student-600' : 'hover:text-[#5d7d64]';
   const headerLinkColorClass = isStudent ? 'text-student-500 hover:text-student-600' : 'text-[#6E8F75] hover:text-[#5d7d64]';
   const badgeBgBorderClass = isStudent ? 'bg-student-500/10 border-student-500/20' : 'bg-[#6E8F75]/10 border-[#6E8F75]/20';
   const checkboxAccentClass = isStudent ? 'text-student-500 focus:ring-student-500' : 'text-[#6E8F75] focus:ring-[#6E8F75]';
@@ -75,7 +89,6 @@ export default function SignInPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF9F6] flex flex-col justify-between text-[#0B0F19] selection:bg-[#6E8F75]/20 selection:text-[#0B0F19]">
-
       {/* ── Top Navigation Header ───────────────────────────────────── */}
       <header className="w-full max-w-7xl mx-auto px-6 sm:px-10 py-6 flex items-center justify-between">
         <BrandLogo size="md" href="/" textColor="dark" />
@@ -99,7 +112,7 @@ export default function SignInPage() {
             <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border ${badgeBgBorderClass} mb-1`}>
               <ShieldCheck className={`w-3.5 h-3.5 ${primaryColorClass}`} />
               <span className={`text-[11px] font-bold ${primaryColorClass} uppercase tracking-wider`}>
-                {isStudent ? 'Student Portal' : 'Candidate Portal'}
+                Unified Authentication
               </span>
             </div>
 
@@ -107,19 +120,31 @@ export default function SignInPage() {
               Welcome back
             </h1>
             <p className="text-xs sm:text-[13.5px] text-[#0B0F19]/55 leading-relaxed">
-              {isStudent 
-                ? 'Sign in to access your dashboard, contact mentors, and explore career guidance resources.' 
-                : 'Sign in to access your AI assessments, active projects, and verified Evidence Portfolio.'
-              }
+              Sign in with your registered credentials. Your role will be verified securely to load your designated workspace.
             </p>
           </div>
+
+          {/* Error Alert */}
+          {error && (
+            <div className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs animate-[fade-in_0.2s_ease]">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold">{error}</p>
+                {rateLimitSeconds && (
+                  <p className="text-[11px] text-rose-600 mt-1 flex items-center gap-1 font-mono">
+                    <Clock className="w-3 h-3" /> Cooldown active: {rateLimitSeconds}s remaining
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email Field */}
             <div className="space-y-1.5">
               <label className="text-xs font-bold uppercase tracking-wider text-[#0B0F19]/60">
-                Email Address
+                Registered Email
               </label>
               <div className="relative">
                 <input
@@ -127,7 +152,7 @@ export default function SignInPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  placeholder="engineer@domain.com"
+                  placeholder="name@domain.com"
                   className={`w-full h-11 px-3.5 pl-10 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-sm text-[#0B0F19] font-medium focus:bg-white focus:outline-none transition-all ${focusRingClass}`}
                 />
                 <Mail className="w-4 h-4 text-[#0B0F19]/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -164,7 +189,7 @@ export default function SignInPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#0B0F19]/40 hover:text-[#0B0F19] transition-colors"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#0B0F19]/40 hover:text-[#0B0F19] transition-colors cursor-pointer"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -184,7 +209,7 @@ export default function SignInPage() {
               </label>
             </div>
 
-            {/* Submit Button (Luxurious Hover-Lift) */}
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={isLoading}
@@ -192,69 +217,28 @@ export default function SignInPage() {
                 w-full py-3.5 rounded-2xl text-white text-sm font-bold
                 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]
                 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-md mt-2
-                ${primaryBgClass} ${shadowClass}
+                ${primaryBgClass} ${shadowClass} disabled:opacity-50
               `}
             >
               {isLoading ? (
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                  Verifying Credentials...
+                  Verifying RBAC Permissions...
                 </span>
               ) : (
                 <>
-                  <span>Sign In to Dashboard</span>
+                  <span>Sign In to Designated Portal</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </button>
           </form>
-
-          {/* Divider */}
-          <div className="relative flex items-center justify-center">
-            <div className="w-full border-t border-[#0B0F19]/[0.06]" />
-            <span className="absolute bg-white px-3 text-[11px] font-semibold text-[#0B0F19]/40 uppercase tracking-wider">
-              Or continue with
-            </span>
-          </div>
-
-          {/* Social Logins */}
-          <div className="grid grid-cols-3 gap-2.5">
-            <button
-              type="button"
-              onClick={() => navigate(isStudent ? '/student/dashboard' : '/dashboard')}
-              className="flex items-center justify-center py-2.5 rounded-xl border border-[#0B0F19]/[0.08] hover:bg-[#FAF9F6] hover:border-[#0B0F19]/20 transition-all text-xs font-semibold"
-              title="Sign in with Google"
-            >
-              <GoogleIcon className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate(isStudent ? '/student/dashboard' : '/dashboard')}
-              className="flex items-center justify-center py-2.5 rounded-xl border border-[#0B0F19]/[0.08] hover:bg-[#FAF9F6] hover:border-[#0B0F19]/20 transition-all text-xs font-semibold"
-              title="Sign in with LinkedIn"
-            >
-              <LinkedInIcon className="w-4 h-4 text-[#0077b5]" />
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate(isStudent ? '/student/dashboard' : '/dashboard')}
-              className="flex items-center justify-center py-2.5 rounded-xl border border-[#0B0F19]/[0.08] hover:bg-[#FAF9F6] hover:border-[#0B0F19]/20 transition-all text-xs font-semibold"
-              title="Sign in with GitHub"
-            >
-              <GitHubIcon className="w-4 h-4 text-[#0B0F19]" />
-            </button>
-          </div>
-        </div>
-
-        {/* Demo Fast Track Hint */}
-        <div className="mt-4 p-3 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.04] text-center text-[11.5px] text-[#0B0F19]/50">
-          <span className={`font-semibold ${primaryColorClass}`}>Demo Access:</span> Credentials are pre-filled for {isStudent ? 'CS Student Ahmad Al-Hassan' : 'Junior Candidate Ahmad Al-Hassan'}.
         </div>
       </main>
 
       {/* ── Footer ─────────────────────────────────────────────────── */}
       <footer className="w-full max-w-7xl mx-auto px-6 py-6 text-center text-xs text-[#0B0F19]/40">
-        © {new Date().getFullYear()} Jadeer Talent Validation Platform. Cryptographically Secured.
+        © {new Date().getFullYear()} Jadeer Talent Validation Platform. Cryptographically Secured & RBAC Protected.
       </footer>
     </div>
   );

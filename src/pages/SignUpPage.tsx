@@ -59,13 +59,36 @@ const passwordRules: PasswordRule[] = [
   { label: 'One uppercase letter', test: (pw) => /[A-Z]/.test(pw) },
 ];
 
+const softwareTracks = [
+  'Backend Development',
+  'Frontend Development',
+  'Full-Stack Engineering',
+  'Embedded Systems & IoT',
+  'Mobile Development',
+  'DevOps & Cloud Infrastructure',
+  'Data Engineering & Analytics',
+  'AI / Machine Learning',
+  'Cybersecurity & Systems',
+];
+
 export default function SignUpPage() {
   const navigate = useNavigate();
-  const { isStudent } = useUserRole();
+  const { userRole, setUserRole, bindTrack } = useUserRole();
+  const [candidateType, setCandidateType] = useState<'student' | 'graduate'>(
+    userRole === 'student' ? 'student' : 'graduate'
+  );
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
+  const [selectedTrack, setSelectedTrack] = useState(softwareTracks[0]);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+
+  const isStudent = candidateType === 'student';
+
+  const handleRoleToggle = (type: 'student' | 'graduate') => {
+    setCandidateType(type);
+    setUserRole(type);
+  };
 
   const ruleResults = useMemo(
     () => passwordRules.map((r) => ({ ...r, passed: r.test(password) })),
@@ -78,7 +101,9 @@ export default function SignUpPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (isFormValid) {
-      navigate(isStudent ? '/wizard' : '/candidates/wizard');
+      setUserRole(candidateType);
+      bindTrack(selectedTrack);
+      navigate('/candidates/wizard');
     }
   };
 
@@ -118,25 +143,67 @@ export default function SignUpPage() {
       </header>
 
       {/* ── Central Floating Card Container ─────────────────────────── */}
-      <main className="relative z-10 w-full max-w-[500px] mx-auto px-5 py-4 my-auto animate-[fade-in_0.4s_ease]">
-        <div className="bg-white rounded-3xl p-8 sm:p-10 border border-[#0B0F19]/[0.05] shadow-[0_24px_70px_-20px_rgba(0,0,0,0.04)] space-y-6">
+      <main className="relative z-10 w-full max-w-[520px] mx-auto px-5 py-4 my-auto animate-[fade-in_0.4s_ease]">
+        <div className="bg-white rounded-3xl p-7 sm:p-9 border border-[#0B0F19]/[0.05] shadow-[0_24px_70px_-20px_rgba(0,0,0,0.04)] space-y-6">
 
           {/* Heading */}
           <div className="text-center space-y-2">
             <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border ${badgeBgBorderClass} mb-1`}>
               <ShieldCheck className={`w-3.5 h-3.5 ${primaryColorClass}`} />
               <span className={`text-[11px] font-bold ${primaryColorClass} uppercase tracking-wider`}>
-                {isStudent ? 'Student Registration' : 'Candidate Registration'}
+                Unified Talent Registration
               </span>
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B0F19] tracking-tight">
-              Create your account
+              Create your talent account
             </h1>
-            <p className="text-xs sm:text-[13.5px] text-[#0B0F19]/55 leading-relaxed max-w-sm mx-auto">
-              {isStudent 
-                ? 'Join Jadeer to explore career roadmaps, access custom resources, and receive 1-on-1 mentorship.' 
-                : 'Join Jadeer to take AI assessments, build real-world software modules, and earn verified skill proof.'
+            <p className="text-xs sm:text-[13px] text-[#0B0F19]/55 leading-relaxed max-w-sm mx-auto">
+              Join Jadeer's single talent network to validate skills, book mentor sessions, and unlock direct hiring pipelines.
+            </p>
+          </div>
+
+          {/* ── MANDATORY CANDIDATE TYPE SELECTION TOGGLE ────────────── */}
+          <div className="space-y-1.5 pt-1">
+            <label className="block text-xs font-bold uppercase tracking-wider text-[#0B0F19]/60">
+              I am joining as <span className="text-rose-500">*</span>
+            </label>
+            <div className="grid grid-cols-2 gap-2.5 p-1.5 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.07]">
+              <button
+                type="button"
+                id="toggle-candidate-student"
+                onClick={() => handleRoleToggle('student')}
+                className={`
+                  flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer
+                  ${isStudent
+                    ? 'bg-student-500 text-white shadow-sm'
+                    : 'bg-transparent text-[#0B0F19]/60 hover:text-[#0B0F19] hover:bg-white/60'
+                  }
+                `}
+              >
+                <span>🎓 University Student</span>
+              </button>
+
+              <button
+                type="button"
+                id="toggle-candidate-graduate"
+                onClick={() => handleRoleToggle('graduate')}
+                className={`
+                  flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer
+                  ${!isStudent
+                    ? 'bg-[#6E8F75] text-white shadow-sm'
+                    : 'bg-transparent text-[#0B0F19]/60 hover:text-[#0B0F19] hover:bg-white/60'
+                  }
+                `}
+              >
+                <span>🚀 Graduate Engineer</span>
+              </button>
+            </div>
+
+            <p className="text-[11px] text-[#0B0F19]/45 italic pt-0.5">
+              {isStudent
+                ? '• Tailors AI assessments for university internship benchmarks & mentor guidance.'
+                : '• Calibrates AI assessments for junior & full-time engineering hiring gates.'
               }
             </p>
           </div>
@@ -160,6 +227,36 @@ export default function SignUpPage() {
                 placeholder="Ahmad Al-Hassan"
                 className={`w-full h-11 px-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-sm text-[#0B0F19] font-medium focus:bg-white focus:outline-none transition-all placeholder:text-[#0B0F19]/30 ${focusRingClass}`}
               />
+            </div>
+
+            {/* Technical Domain / Track (One-time Binding) */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label
+                  htmlFor="tech-track"
+                  className="block text-xs font-bold uppercase tracking-wider text-[#0B0F19]/60"
+                >
+                  Technical Track
+                </label>
+                <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200/50">
+                  Locked upon signup
+                </span>
+              </div>
+              <select
+                id="tech-track"
+                value={selectedTrack}
+                onChange={(e) => setSelectedTrack(e.target.value)}
+                className={`w-full h-11 px-3.5 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-sm text-[#0B0F19] font-medium focus:bg-white focus:outline-none transition-all ${focusRingClass}`}
+              >
+                {softwareTracks.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+              <p className="text-[10.5px] text-[#0B0F19]/45 leading-tight">
+                Your technical track is permanently bound to anchor your AI evaluation and evidence dossier.
+              </p>
             </div>
 
             {/* Email */}

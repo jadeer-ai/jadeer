@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUserRole } from '@/contexts/UserRoleContext';
+import { useCandidateJourney } from '@/contexts/CandidateJourneyContext';
 import {
   Settings,
   Mail,
@@ -24,6 +25,7 @@ import {
 
 export default function SettingsPage() {
   const { isStudent, clearUserRole } = useUserRole();
+  const { resetOnboarding } = useCandidateJourney();
   const navigate = useNavigate();
 
   // Account state
@@ -150,7 +152,7 @@ export default function SettingsPage() {
                 </span>
               </div>
               <p className="text-xs text-[#0B0F19]/60 leading-relaxed">
-                Receive instant email alerts when hiring companies review your Evidence Dossier and send 1-on-1 technical interview invitations.
+                Receive instant email alerts when hiring companies review your Evidence Dossier and send 1-to-1 technical interview invitations.
               </p>
             </div>
 
@@ -317,6 +319,26 @@ export default function SettingsPage() {
         </div>
 
         <form onSubmit={handleUpdateAccount} className="space-y-5">
+          {/* Locked Technical Track Badge */}
+          <div className="p-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-700 flex items-center justify-center font-bold shrink-0">
+                <Lock className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-[#0B0F19]">
+                  Technical Domain: <span className={isStudent ? 'text-student-600' : 'text-[#6E8F75]'}>{useUserRole().lockedTrack || 'Backend Development'}</span>
+                </p>
+                <p className="text-[11px] text-[#0B0F19]/50">
+                  Locked permanently upon account verification to anchor AI telemetry and project evaluations.
+                </p>
+              </div>
+            </div>
+            <span className="text-[10px] font-bold text-amber-800 bg-amber-100/80 px-2.5 py-1 rounded-full uppercase tracking-wider self-start sm:self-auto shrink-0 border border-amber-200/50">
+              Immutable Track
+            </span>
+          </div>
+
           {/* Email field */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
@@ -442,6 +464,7 @@ export default function SettingsPage() {
             type="button"
             onClick={() => {
               clearUserRole();
+              resetOnboarding();
               navigate('/');
             }}
             className="

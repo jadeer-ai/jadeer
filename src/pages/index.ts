@@ -17,3 +17,18 @@ export {
   ReadinessPage,
 } from './PlaceholderPages';
 
+/* Employer Portal */
+export { default as EmployerLandingPage } from './employer/EmployerLandingPage';
+export { default as EmployerSignInPage } from './employer/EmployerSignInPage';
+export { default as EmployerSignUpPage } from './employer/EmployerSignUpPage';
+export { default as EmployerDashboardPage } from './employer/EmployerDashboardPage';
+export { default as EmployerPostJobPage } from './employer/EmployerPostJobPage';
+export { default as EmployerListingsPage } from './employer/EmployerListingsPage';
+
+/* Admin Portal */
+export { default as AdminSignInPage } from './admin/AdminSignInPage';
+export { default as AdminDashboardPage } from './admin/AdminDashboardPage';
+
+
+
+

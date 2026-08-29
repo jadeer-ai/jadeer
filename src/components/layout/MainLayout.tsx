@@ -1,12 +1,14 @@
 import { Outlet, useLocation, Navigate } from 'react-router-dom';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { useUserRole } from '@/contexts/UserRoleContext';
+import { useCandidateJourney } from '@/contexts/CandidateJourneyContext';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 
 export default function MainLayout() {
   const { isCollapsed } = useSidebar();
   const { isStudent } = useUserRole();
+  const { isOnboarded } = useCandidateJourney();
   const location = useLocation();
   const path = location.pathname;
 
@@ -22,9 +24,21 @@ export default function MainLayout() {
       return <Navigate to="/student/dashboard" replace />;
     }
   } else {
+    // Graduate Portal Checks
     const isStudentPath = path.startsWith('/student/');
     if (isStudentPath) {
-      return <Navigate to="/dashboard" replace />;
+      return <Navigate to={isOnboarded ? "/dashboard" : "/candidates/wizard"} replace />;
+    }
+
+    // Graduate Onboarding Gating Guard
+    const isAllowedPreOnboarding =
+      path === '/candidates/wizard' ||
+      path === '/wizard' ||
+      path === '/settings' ||
+      path === '/candidates/settings';
+
+    if (!isOnboarded && !isAllowedPreOnboarding) {
+      return <Navigate to="/candidates/wizard" replace />;
     }
   }
 

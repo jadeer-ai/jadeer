@@ -464,7 +464,7 @@ export default function BookSessionPage() {
                   <Video className="w-4 h-4 text-student-500" />
                   <div>
                     <p className="text-[11px] text-[#0B0F19]/40 font-medium">Format</p>
-                    <p className="font-bold text-[#0B0F19]">Video Call</p>
+                    <p className="font-bold text-[#0B0F19]">1-to-1 Video Call</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2.5 text-[13px]">

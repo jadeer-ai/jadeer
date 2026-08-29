@@ -25,7 +25,7 @@
   --color-primary-900: #2a3e30;
   --color-primary-950: #1a2a1f;
 
-  /* Student Accent: Deep Ocean Blue (#0056D6) */
+  /* Student Accent: Vibrant Ocean Blue (#0056D6 / hover: #0048B5) */
   --color-student-50:  #E6EEFB;
   --color-student-100: #BFCFF2;
   --color-student-200: #80A3E8;
@@ -36,6 +36,18 @@
   --color-student-700: #003A94;
   --color-student-800: #002C73;
   --color-student-900: #001F52;
+
+  /* Employer Accent: Warm Amber/Gold (#D97706) */
+  --color-employer-50:  #FFFBEB;
+  --color-employer-100: #FEF3C7;
+  --color-employer-200: #FDE68A;
+  --color-employer-300: #FCD34D;
+  --color-employer-400: #FBBF24;
+  --color-employer-500: #D97706;
+  --color-employer-600: #B45309;
+  --color-employer-700: #92400E;
+  --color-employer-800: #78350F;
+  --color-employer-900: #451A03;
 
   /* Accent: Deep Navy (text / headings) */
   --color-navy-950: #050810;
