@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Show, UserButton } from '@clerk/react';
+import { SignedIn, SignedOut, UserButton } from '@clerk/clerk-react';
 import {
   ArrowRight,
   ChevronRight,
@@ -101,7 +101,7 @@ function Navbar() {
 
             <div className="h-4 w-px bg-white/20 mx-0.5" />
 
-            <Show when="signed-out">
+            <SignedOut>
               <Link
                 to="/signin"
                 id="nav-signin"
@@ -128,9 +128,9 @@ function Navbar() {
                 <span>Join as Talent</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
-            </Show>
+            </SignedOut>
 
-            <Show when="signed-in">
+            <SignedIn>
               <Link
                 to="/dashboard"
                 id="nav-dashboard"
@@ -144,7 +144,7 @@ function Navbar() {
               <div className="flex items-center pl-1">
                 <UserButton />
               </div>
-            </Show>
+            </SignedIn>
           </div>
 
           {/* ── Mobile Menu Toggle ─────────────────────────────────── */}
@@ -190,7 +190,7 @@ function Navbar() {
               For Companies
             </Link>
 
-            <Show when="signed-out">
+            <SignedOut>
               <Link
                 to="/signin"
                 onClick={() => setMobileOpen(false)}
@@ -205,9 +205,9 @@ function Navbar() {
               >
                 Join as Talent →
               </Link>
-            </Show>
+            </SignedOut>
 
-            <Show when="signed-in">
+            <SignedIn>
               <div className="flex items-center justify-between py-2.5 px-3 rounded-2xl bg-white/[0.06]">
                 <Link
                   to="/dashboard"
@@ -218,7 +218,7 @@ function Navbar() {
                 </Link>
                 <UserButton />
               </div>
-            </Show>
+            </SignedIn>
           </div>
         </div>
       </div>

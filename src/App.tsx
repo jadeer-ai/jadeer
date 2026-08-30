@@ -1,4 +1,5 @@
 import { RouterProvider } from 'react-router-dom';
+import { ClerkProvider } from '@clerk/clerk-react';
 import { SidebarProvider } from '@/contexts/SidebarContext';
 import { CandidateJourneyProvider } from '@/contexts/CandidateJourneyContext';
 import { UserRoleProvider } from '@/contexts/UserRoleContext';
@@ -7,21 +8,29 @@ import { CompanyProfileProvider } from '@/contexts/CompanyProfileContext';
 import { AdminAuthProvider } from '@/contexts/AdminAuthContext';
 import router from '@/router';
 
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+
+if (!PUBLISHABLE_KEY) {
+  throw new Error("Missing Publishable Key");
+}
+
 export default function App() {
   return (
-    <UserRoleProvider>
-      <CandidateJourneyProvider>
-        <InterviewScheduleProvider>
-          <CompanyProfileProvider>
-            <AdminAuthProvider>
-              <SidebarProvider>
-                <RouterProvider router={router} />
-              </SidebarProvider>
-            </AdminAuthProvider>
-          </CompanyProfileProvider>
-        </InterviewScheduleProvider>
-      </CandidateJourneyProvider>
-    </UserRoleProvider>
+    <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
+      <UserRoleProvider>
+        <CandidateJourneyProvider>
+          <InterviewScheduleProvider>
+            <CompanyProfileProvider>
+              <AdminAuthProvider>
+                <SidebarProvider>
+                  <RouterProvider router={router} />
+                </SidebarProvider>
+              </AdminAuthProvider>
+            </CompanyProfileProvider>
+          </InterviewScheduleProvider>
+        </CandidateJourneyProvider>
+      </UserRoleProvider>
+    </ClerkProvider>
   );
 }
 
