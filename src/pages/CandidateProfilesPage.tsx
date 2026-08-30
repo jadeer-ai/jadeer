@@ -847,7 +847,55 @@ export default function CandidateProfilesPage() {
             )}
           </div>
 
-          {/* 2. Uploaded Resume Artifact */}
+          {/* 2. Verified by Jadeer Badges & Telemetry */}
+          <div className="bg-white rounded-3xl p-6 border border-[#0B0F19]/[0.06] shadow-[0_2px_16px_rgba(0,0,0,0.02)] space-y-4">
+            <div className="flex items-center justify-between border-b border-[#0B0F19]/[0.05] pb-2.5">
+              <h2 className="text-sm font-extrabold text-[#0B0F19] flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-[#6E8F75]" />
+                <span>Verified by Jadeer</span>
+              </h2>
+              <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                {userProfile.assessmentScore || 94}% Overall Rating
+              </span>
+            </div>
+
+            <div className="space-y-2.5">
+              {(userProfile.verifiedBadges || ['Verified Backend Engineer', 'Jadeer AI Technical Badge']).map((badge) => (
+                <div
+                  key={badge}
+                  className="flex items-center justify-between p-3 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.05] hover:border-[#6E8F75]/30 transition-all"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-7 h-7 rounded-xl bg-[#6E8F75]/10 text-[#6E8F75] flex items-center justify-center shrink-0">
+                      <Award className="w-4 h-4" />
+                    </div>
+                    <span className="text-xs font-extrabold text-[#0B0F19] truncate">{badge}</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md shrink-0">
+                    Verified
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Assessment History Snippet */}
+            {userProfile.assessmentsHistory && userProfile.assessmentsHistory.length > 0 && (
+              <div className="pt-2 border-t border-[#0B0F19]/[0.05] space-y-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#0B0F19]/40">Recent Evaluation</p>
+                <div className="p-2.5 rounded-xl bg-[#FAF9F6] border border-[#0B0F19]/[0.04] text-xs space-y-1">
+                  <div className="flex items-center justify-between font-bold text-[#0B0F19]">
+                    <span className="truncate">{userProfile.assessmentsHistory[0].title}</span>
+                    <span className="text-emerald-600 shrink-0 ml-1">{userProfile.assessmentsHistory[0].score}%</span>
+                  </div>
+                  <p className="text-[10px] text-[#0B0F19]/40">
+                    Completed {userProfile.assessmentsHistory[0].completedAt} • {userProfile.assessmentsHistory[0].challengesCompleted}/{userProfile.assessmentsHistory[0].totalChallenges} Challenges Passed
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 3. Uploaded Resume Artifact */}
           <div className="bg-white rounded-3xl p-6 border border-[#0B0F19]/[0.06] shadow-[0_2px_16px_rgba(0,0,0,0.02)] space-y-3">
             <h2 className="text-sm font-extrabold text-[#0B0F19] border-b border-[#0B0F19]/[0.05] pb-2.5">
               Verified Resume
@@ -858,7 +906,7 @@ export default function CandidateProfilesPage() {
                 <FileText className="w-5 h-5 text-[#6E8F75] shrink-0" />
                 <div className="min-w-0">
                   <p className="text-[12.5px] font-bold text-[#0B0F19] truncate">
-                    Ahmad_Al-Hassan_Resume.pdf
+                    {userProfile.resumeFileName || 'Ahmad_Al-Hassan_Resume.pdf'}
                   </p>
                   <p className="text-[10px] text-[#0B0F19]/40">
                     1.4 MB • Analyzed by Jadeer AI

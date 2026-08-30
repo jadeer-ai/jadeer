@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useUserProfile } from '@/contexts/UserProfileContext';
 import {
   Briefcase,
   Building2,
@@ -149,10 +150,34 @@ const initialApplications: ApplicationItem[] = [
 ];
 
 export default function JobMatchesPage() {
+  const { profile: userProfile, addJobApplication } = useUserProfile();
   const [jobMatches, setJobMatches] = useState<JobMatch[]>(initialJobMatches);
-  const [applications, setApplications] = useState<ApplicationItem[]>(initialApplications);
+  const [localApplications, setLocalApplications] = useState<ApplicationItem[]>(initialApplications);
   const [applyingJobId, setApplyingJobId] = useState<string | null>(null);
   const [appliedToast, setAppliedToast] = useState<string | null>(null);
+
+  // Merge userProfile.applications with initialApplications
+  const combinedApplications: ApplicationItem[] = [
+    ...(userProfile.applications || []).map((app) => ({
+      id: app.id,
+      role: app.jobTitle,
+      company: app.companyName,
+      companyInitials: app.companyName
+        .split(' ')
+        .map((w) => w[0])
+        .filter(Boolean)
+        .slice(0, 2)
+        .join('')
+        .toUpperCase() || 'JP',
+      companyBg: 'bg-[#6E8F75]',
+      location: 'Riyadh, Saudi Arabia (Hybrid)',
+      appliedDate: `Applied ${app.appliedDate}`,
+      status: (app.status === 'Interview Scheduled' ? 'Interview Requested' : app.status === 'Technical Screening' ? 'Shortlisted' : 'Under Review') as ApplicationItem['status'],
+      emailNote: app.status === 'Interview Scheduled' ? 'Details sent to your email' : undefined,
+      lastUpdateNote: `Match Rating ${app.matchScore}% • Verified dossier JAD-8492 submitted to hiring portal.`,
+    })),
+    ...localApplications,
+  ];
 
   const handleApply = (job: JobMatch) => {
     setApplyingJobId(job.id);
@@ -162,7 +187,16 @@ export default function JobMatchesPage() {
         prev.map((j) => (j.id === job.id ? { ...j, isApplied: true } : j))
       );
 
-      // Add to Applications list
+      // Persist to userProfile context and localStorage
+      addJobApplication({
+        jobId: job.id,
+        jobTitle: job.role,
+        companyName: job.company,
+        status: 'Under Review',
+        matchScore: job.matchScore,
+      });
+
+      // Add to local state
       const newApp: ApplicationItem = {
         id: `app-${Date.now()}`,
         role: job.role,
@@ -174,7 +208,7 @@ export default function JobMatchesPage() {
         status: 'Applied',
         lastUpdateNote: 'Application and verified Evidence Portfolio delivered to hiring portal.',
       };
-      setApplications((prev) => [newApp, ...prev]);
+      setLocalApplications((prev) => [newApp, ...prev]);
 
       setApplyingJobId(null);
       setAppliedToast(`Applied to ${job.role} at ${job.company} with your verified portfolio!`);
@@ -237,7 +271,7 @@ export default function JobMatchesPage() {
 
             <div className="p-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.05] text-center min-w-[110px]">
               <p className="text-2xl font-extrabold text-[#0B0F19]">
-                {applications.length}
+                {combinedApplications.length}
               </p>
               <p className="text-[11px] font-semibold text-[#0B0F19]/40 uppercase tracking-wider">
                 Active Apps
@@ -394,13 +428,13 @@ export default function JobMatchesPage() {
           </div>
 
           <span className="text-xs font-bold text-[#0B0F19]/60 bg-white border border-[#0B0F19]/[0.08] px-3 py-1 rounded-full">
-            {applications.length} Active Applications
+            {combinedApplications.length} Active Applications
           </span>
         </div>
 
         {/* Applications List */}
         <div className="space-y-3.5">
-          {applications.map((app) => {
+          {combinedApplications.map((app) => {
             const isInterviewRequested = app.status === 'Interview Requested';
 
             return (

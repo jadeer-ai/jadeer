@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useUserProfile } from '@/contexts/UserProfileContext';
 import {
   Sparkles,
   Send,
@@ -17,6 +19,11 @@ import {
   Play,
   RotateCcw,
   Sliders,
+  ShieldCheck,
+  Award,
+  PlaySquare,
+  ArrowRight,
+  RefreshCw,
 } from 'lucide-react';
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -78,6 +85,9 @@ const initialMessages: Message[] = [
 ];
 
 export default function AIInterviewPage() {
+  const navigate = useNavigate();
+  const { addAssessmentResult, profile: userProfile } = useUserProfile();
+
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [inputValue, setInputValue] = useState('');
   const [isRecording, setIsRecording] = useState(false);
@@ -85,8 +95,42 @@ export default function AIInterviewPage() {
   const [isMuted, setIsMuted] = useState(false);
   const [copiedCodeId, setCopiedCodeId] = useState<string | null>(null);
   const [isAiThinking, setIsAiThinking] = useState(false);
+
+  /* Test Runner State & Modal */
+  const [isRunningTests, setIsRunningTests] = useState(false);
+  const [testResults, setTestResults] = useState<Array<{ name: string; passed: boolean; duration: string }>>([
+    { name: 'Virtual Destructor Pointer Dispatch', passed: true, duration: '12ms' },
+    { name: 'RAII Smart Pointer Scope Cleanup', passed: true, duration: '8ms' },
+    { name: 'Template Inlining & Zero-Cost CRTP', passed: true, duration: '15ms' },
+  ]);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [claimedBadge, setClaimedBadge] = useState<string | null>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<number | null>(null);
+
+  const handleRunTests = () => {
+    setIsRunningTests(true);
+    setTimeout(() => {
+      setIsRunningTests(false);
+    }, 1200);
+  };
+
+  const handleCompleteAssessment = () => {
+    const badgeName = 'Verified Backend Engineer';
+    addAssessmentResult({
+      title: 'C++ Systems & Memory Safety Assessment',
+      category: 'Backend Systems & C++',
+      score: 96,
+      maxScore: 100,
+      passed: true,
+      badgeEarned: badgeName,
+      challengesCompleted: 5,
+      totalChallenges: 5,
+    });
+    setClaimedBadge(badgeName);
+    setShowCompletionModal(true);
+  };
 
   // Auto-scroll to bottom of conversation
   const scrollToBottom = () => {
@@ -198,14 +242,33 @@ export default function AIInterviewPage() {
             </h2>
           </div>
 
-          {/* Right: Timer, Model, Audio Mute */}
-          <div className="flex items-center gap-3 self-start lg:self-center">
+          {/* Right: Timer, Test Runner & Claim Badge Action */}
+          <div className="flex flex-wrap items-center gap-3 self-start lg:self-center">
             {/* Session Timer */}
             <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#FAF9F6] border border-[#0B0F19]/[0.06] text-xs font-semibold text-[#0B0F19]">
               <Clock className="w-4 h-4 text-[#6E8F75]" />
               <span>18:42</span>
               <span className="text-[#0B0F19]/30">/ 30:00</span>
             </div>
+
+            {/* Run Tests Button */}
+            <button
+              onClick={handleRunTests}
+              disabled={isRunningTests}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0B0F19] text-white text-xs font-bold hover:bg-[#1a2332] transition-colors shadow-sm"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-[#82a78a] ${isRunningTests ? 'animate-spin' : ''}`} />
+              <span>{isRunningTests ? 'Executing Test Suite...' : 'Run Test Suite'}</span>
+            </button>
+
+            {/* Complete & Submit Assessment Button */}
+            <button
+              onClick={handleCompleteAssessment}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#6E8F75] text-white text-xs font-bold hover:bg-[#5d7d64] hover:shadow-[0_4px_16px_rgba(110,143,117,0.3)] transition-all shadow-sm active:scale-95"
+            >
+              <Award className="w-4 h-4" />
+              <span>Submit & Claim Badge</span>
+            </button>
 
             {/* AI Audio Toggle */}
             <button
@@ -225,18 +288,18 @@ export default function AIInterviewPage() {
           </div>
         </div>
 
-        {/* Competency Focus Chips */}
-        <div className="flex items-center gap-2 overflow-x-auto pt-4 mt-4 border-t border-[#0B0F19]/[0.05] scrollbar-none text-xs">
-          <span className="font-bold text-[#0B0F19]/40 uppercase tracking-wider text-[11px] shrink-0 mr-1">
-            Focus Areas:
-          </span>
-          {['Virtual Tables & VPtr', 'Polymorphic Destructors', 'CRTP vs Dynamic Dispatch', 'RAII & Smart Pointers'].map((chip) => (
-            <span
-              key={chip}
-              className="shrink-0 px-3 py-1 rounded-lg bg-[#FAF9F6] border border-[#0B0F19]/[0.06] text-[#0B0F19]/70 font-medium"
-            >
-              {chip}
-            </span>
+        {/* Live Test Suite Indicators */}
+        <div className="mt-4 pt-4 border-t border-[#0B0F19]/[0.05] grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          {testResults.map((t) => (
+            <div key={t.name} className="flex items-center justify-between p-2.5 rounded-xl bg-[#FAF9F6] border border-[#0B0F19]/[0.05] text-xs">
+              <span className="flex items-center gap-2 font-medium text-[#0B0F19]/80 truncate">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span className="truncate">{t.name}</span>
+              </span>
+              <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md shrink-0 font-bold">
+                {t.duration}
+              </span>
+            </div>
           ))}
         </div>
       </div>
@@ -482,6 +545,60 @@ export default function AIInterviewPage() {
           </div>
         </div>
       </div>
+
+      {/* ═══════════════════════════════════════════════════════════════
+         COMPLETION & BADGE CLAIM MODAL
+         ═══════════════════════════════════════════════════════════════ */}
+      {showCompletionModal && (
+        <div className="fixed inset-0 z-50 bg-[#0B0F19]/60 backdrop-blur-sm flex items-center justify-center p-4 animate-[fade-in_0.2s_ease]">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-[#0B0F19]/[0.08] shadow-2xl space-y-6 text-center animate-[scale-in_0.25s_var(--ease-spring)]">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-[#6E8F75]/10 text-[#6E8F75] ring-4 ring-[#6E8F75]/20 shadow-md">
+              <ShieldCheck className="w-10 h-10" />
+            </div>
+
+            <div className="space-y-2">
+              <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-extrabold uppercase tracking-wider border border-emerald-200">
+                Evaluation Passed • 96% Rating
+              </span>
+              <h2 className="text-2xl font-extrabold text-[#0B0F19] tracking-tight">
+                Verified Badge Earned!
+              </h2>
+              <p className="text-xs text-[#0B0F19]/60 leading-relaxed max-w-sm mx-auto">
+                Congratulations Ahmad! Your C++ Memory Safety & Systems evaluation results have been verified and persisted to your profile context.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.06] flex items-center justify-between text-left">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[#0B0F19]/45">Newly Unlocked Badge</p>
+                <p className="text-sm font-extrabold text-[#0B0F19] flex items-center gap-1.5 mt-0.5">
+                  <Award className="w-4 h-4 text-[#6E8F75]" />
+                  {claimedBadge}
+                </p>
+              </div>
+              <span className="text-xs font-mono font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-lg">
+                Synced to Profile
+              </span>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <button
+                onClick={() => navigate('/profiles')}
+                className="w-full py-3 rounded-2xl bg-[#6E8F75] text-white text-xs font-bold hover:bg-[#5d7d64] transition-all shadow-md flex items-center justify-center gap-2"
+              >
+                <span>View Verified Candidate Dossier</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setShowCompletionModal(false)}
+                className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-xs font-semibold text-[#0B0F19]/70 hover:text-[#0B0F19] transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

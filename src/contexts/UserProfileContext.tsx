@@ -9,6 +9,30 @@ import { useUser } from '@clerk/clerk-react';
    localStorage for real-time, persistent, instant UI reactivity.
    ═══════════════════════════════════════════════════════════════════════════ */
 
+export interface AssessmentRecord {
+  id: string;
+  title: string;
+  category: string;
+  score: number;
+  maxScore: number;
+  passed: boolean;
+  completedAt: string;
+  badgeEarned?: string;
+  challengesCompleted: number;
+  totalChallenges: number;
+}
+
+export interface JobApplicationRecord {
+  id: string;
+  jobId: string;
+  jobTitle: string;
+  companyName: string;
+  logoUrl?: string;
+  appliedDate: string;
+  status: 'Under Review' | 'Technical Screening' | 'Interview Scheduled' | 'Offer Extended' | 'Rejected';
+  matchScore: number;
+}
+
 export interface CustomUserProfile {
   fullName: string;
   email: string;
@@ -27,6 +51,13 @@ export interface CustomUserProfile {
   portfolioUrl: string;
   phone?: string;
   resumeFileName?: string;
+  /* Assessment & Badge Telemetry */
+  assessmentScore?: number;
+  completedAssessmentsCount?: number;
+  verifiedBadges?: string[];
+  assessmentsHistory?: AssessmentRecord[];
+  /* Job Applications */
+  applications?: JobApplicationRecord[];
 }
 
 const STORAGE_KEY = 'jadeer-custom-profile';
@@ -49,6 +80,64 @@ const DEFAULT_PROFILE: CustomUserProfile = {
   portfolioUrl: 'https://ahmadhassan.dev',
   phone: '+966 50 123 4567',
   resumeFileName: 'Ahmad_AlHassan_Software_Engineer.pdf',
+  assessmentScore: 94,
+  completedAssessmentsCount: 2,
+  verifiedBadges: ['Verified Backend Engineer', 'Jadeer AI Technical Badge', 'System Design Verified'],
+  assessmentsHistory: [
+    {
+      id: 'eval-001',
+      title: 'C++ Systems & Memory Safety Assessment',
+      category: 'Backend & Low-Level Systems',
+      score: 94,
+      maxScore: 100,
+      passed: true,
+      completedAt: '2026-08-28',
+      badgeEarned: 'Verified Backend Engineer',
+      challengesCompleted: 5,
+      totalChallenges: 5,
+    },
+    {
+      id: 'eval-002',
+      title: 'Distributed Microservices & PostgreSQL Assessment',
+      category: 'Database & Architecture',
+      score: 92,
+      maxScore: 100,
+      passed: true,
+      completedAt: '2026-08-29',
+      badgeEarned: 'Jadeer AI Technical Badge',
+      challengesCompleted: 4,
+      totalChallenges: 4,
+    },
+  ],
+  applications: [
+    {
+      id: 'app-001',
+      jobId: 'job-101',
+      jobTitle: 'Junior Systems Software Engineer',
+      companyName: 'Lucidya Systems',
+      appliedDate: '2026-08-25',
+      status: 'Interview Scheduled',
+      matchScore: 96,
+    },
+    {
+      id: 'app-002',
+      jobId: 'job-102',
+      jobTitle: 'Backend Development Engineer (Go/Node)',
+      companyName: 'Lean Technologies',
+      appliedDate: '2026-08-20',
+      status: 'Technical Screening',
+      matchScore: 92,
+    },
+    {
+      id: 'app-003',
+      jobId: 'job-103',
+      jobTitle: 'Cloud Infrastructure & DevOps Intern',
+      companyName: 'Thiqah',
+      appliedDate: '2026-08-15',
+      status: 'Offer Extended',
+      matchScore: 98,
+    },
+  ],
 };
 
 export interface UserProfileContextType {
@@ -57,6 +146,9 @@ export interface UserProfileContextType {
   isProfileComplete: boolean;
   updateProfile: (patch: Partial<CustomUserProfile>) => void;
   resetProfile: () => void;
+  addAssessmentResult: (result: Omit<AssessmentRecord, 'id' | 'completedAt'>) => void;
+  updateApplicationStatus: (id: string, status: JobApplicationRecord['status']) => void;
+  addJobApplication: (application: Omit<JobApplicationRecord, 'id' | 'appliedDate'>) => void;
 }
 
 const UserProfileContext = createContext<UserProfileContextType | undefined>(undefined);
@@ -128,6 +220,70 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
     });
   }, []);
 
+  const addAssessmentResult = useCallback((result: Omit<AssessmentRecord, 'id' | 'completedAt'>) => {
+    setProfile((prev) => {
+      const id = `eval-${Date.now()}`;
+      const completedAt = new Date().toISOString().split('T')[0];
+      const newRecord: AssessmentRecord = { ...result, id, completedAt };
+
+      const updatedHistory = [newRecord, ...(prev.assessmentsHistory || [])];
+      const updatedBadges = new Set(prev.verifiedBadges || []);
+      if (result.badgeEarned) updatedBadges.add(result.badgeEarned);
+
+      // Compute average assessment score
+      const totalScores = updatedHistory.reduce((acc, curr) => acc + curr.score, 0);
+      const avgScore = Math.round(totalScores / updatedHistory.length);
+
+      const next: CustomUserProfile = {
+        ...prev,
+        assessmentScore: avgScore,
+        completedAssessmentsCount: updatedHistory.length,
+        verifiedBadges: Array.from(updatedBadges),
+        assessmentsHistory: updatedHistory,
+      };
+
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }, []);
+
+  const updateApplicationStatus = useCallback((id: string, status: JobApplicationRecord['status']) => {
+    setProfile((prev) => {
+      const updatedApps = (prev.applications || []).map((app) =>
+        app.id === id ? { ...app, status } : app
+      );
+      const next = { ...prev, applications: updatedApps };
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }, []);
+
+  const addJobApplication = useCallback((application: Omit<JobApplicationRecord, 'id' | 'appliedDate'>) => {
+    setProfile((prev) => {
+      const newApp: JobApplicationRecord = {
+        ...application,
+        id: `app-${Date.now()}`,
+        appliedDate: new Date().toISOString().split('T')[0],
+      };
+      const updatedApps = [newApp, ...(prev.applications || [])];
+      const next = { ...prev, applications: updatedApps };
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }, []);
+
   const resetProfile = useCallback(() => {
     setProfile(DEFAULT_PROFILE);
     try {
@@ -155,6 +311,9 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
         isProfileComplete,
         updateProfile,
         resetProfile,
+        addAssessmentResult,
+        updateApplicationStatus,
+        addJobApplication,
       }}
     >
       {children}

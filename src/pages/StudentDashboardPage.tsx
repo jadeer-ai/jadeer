@@ -199,11 +199,11 @@ export default function StudentDashboardPage() {
           </div>
           <div className="p-3.5 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.04]">
             <p className="text-[11px] font-bold uppercase tracking-wider text-[#0B0F19]/45">Telemetry Score</p>
-            <p className="text-base font-extrabold text-emerald-600 mt-0.5">88% Live Rating</p>
+            <p className="text-base font-extrabold text-emerald-600 mt-0.5">{userProfile.assessmentScore || 94}% Live Rating</p>
           </div>
           <div className="p-3.5 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.04]">
             <p className="text-[11px] font-bold uppercase tracking-wider text-[#0B0F19]/45">Internship Pipeline</p>
-            <p className="text-base font-extrabold text-employer-600 mt-0.5">3 Matches Ready</p>
+            <p className="text-base font-extrabold text-employer-600 mt-0.5">{(userProfile.applications || []).length || 3} Active Applications</p>
           </div>
         </div>
       </div>
@@ -541,13 +541,13 @@ export default function StudentDashboardPage() {
               {/* Verified Badges & Proof Chips */}
               <div className="space-y-2">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-[#0B0F19]/45 block">
-                  Synchronized Telemetry Badges:
+                  Verified Telemetry Badges:
                 </span>
                 <div className="flex flex-wrap gap-2">
-                  {['RAII Memory Safe', 'vtable Layout Verified', 'Async IO Ready', 'PostgreSQL Sharding'].map((b) => (
+                  {(userProfile.verifiedBadges || ['Verified Backend Engineer', 'Jadeer AI Technical Badge']).map((b) => (
                     <span
                       key={b}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white border border-[#0B0F19]/[0.06] text-[11px] font-bold text-[#0B0F19]/70 shadow-2xs"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-student-50/50 border border-student-500/20 text-[11px] font-bold text-student-700 shadow-2xs"
                     >
                       <CheckCircle2 className="w-3 h-3 text-student-500" />
                       {b}
