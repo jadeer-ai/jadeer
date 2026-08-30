@@ -28,16 +28,14 @@ import {
 import { BrandLogo } from '@/components/common';
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   JADEER LANDING PAGE — "DIGITAL HAVEN" EXPANSIVE ARCHITECTURAL EDITION
-   - Palette:
-     • Canvas: Soft Porcelain Off-White (#F0F2F4 / #F8FAFC)
-     • Surface: Crisp White (#FFFFFF) with soft clay-like shadows
-     • Text Primary: Deep Charcoal Navy (#172132)
-     • Text Secondary: Steel Denim Blue (#53789B)
-     • Accent (Action): Warm Terracotta / Copper (#C4846C) & Blush Peach (#D7ACA4)
-     • Muted / Borders: Slate Gray (#64748B / #E2E8F0)
-   - Atmosphere: Full-width daylight mental grid + low-contrast 3D enterprise skyline
-   - Full-width hero canvas with centered editorial typography & zero dark cards
+   JADEER LANDING PAGE — "DIGITAL HAVEN / THE BLANK CANVAS"
+   - Exact Reference Layout:
+     • Left-aligned expansive editorial hero typography
+     • Right-side atmospheric 3D monochromatic tech cityscape in daylight clouds
+     • Pure daylight palette: Porcelain #F0F2F4, Charcoal Navy #172132,
+       Steel Denim Blue #53789B, Warm Terracotta #C4846C, Slate Gray #64748B
+     • Complete removal of heavy dark right cards
+     • Clean porcelain feature cards & trust markers
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ── Navigation Links ───────────────────────────────────────────────────── */
@@ -47,98 +45,110 @@ const navLinks = [
   { label: 'Evidence Dossier', href: '#evidence' },
 ];
 
-/* ── Integrated 3D Enterprise Skyline & Mental Grid Background ───────────── */
-function EnterpriseSkylineGrid() {
+/* ── 3D Monochromatic Tech Cityscape & Atmospheric Clouds Canvas ─────────── */
+function AtmosphericCityscapeBackground() {
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
-      {/* 1. Deep Perspective Geometric Wireframe Grid */}
+      {/* 1. Underlying Architectural Grid Layer */}
       <div
-        className="absolute inset-0 opacity-[0.4]"
+        className="absolute inset-0 opacity-[0.35]"
         style={{
           backgroundImage: `
             linear-gradient(to right, rgba(83, 120, 155, 0.08) 1px, transparent 1px),
             linear-gradient(to bottom, rgba(83, 120, 155, 0.08) 1px, transparent 1px)
           `,
-          backgroundSize: '48px 48px',
+          backgroundSize: '44px 44px',
           maskImage: 'radial-gradient(ellipse 90% 70% at 50% 35%, #000 30%, transparent 80%)',
           WebkitMaskImage: 'radial-gradient(ellipse 90% 70% at 50% 35%, #000 30%, transparent 80%)',
         }}
       />
 
-      {/* 2. Stylized Full-Width 3D Monochromatic Tech Cityscape SVG */}
+      {/* 2. High-Precision 3D Isometric Enterprise Skyline SVG (Right-Anchored) */}
       <svg
-        className="absolute top-16 left-1/2 -translate-x-1/2 w-[1600px] h-[850px] opacity-[0.26] mix-blend-multiply"
-        viewBox="0 0 1600 850"
+        className="absolute top-8 right-0 w-[1100px] lg:w-[1350px] h-[820px] opacity-[0.35] mix-blend-multiply transition-opacity duration-1000"
+        viewBox="0 0 1350 820"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
         <g stroke="#53789B" strokeWidth="1">
-          {/* ── Far Horizon Silhouettes (Layer 1 - Deep Low Contrast) ── */}
-          <polygon points="80,500 160,450 240,500 160,550" fill="#FFFFFF" fillOpacity="0.7" />
-          <polygon points="80,500 160,550 160,700 80,650" fill="#53789B" fillOpacity="0.06" />
-          <polygon points="160,550 240,500 240,650 160,700" fill="#172132" fillOpacity="0.04" />
+          {/* ── Background Hub Silhouettes (Layer 1) ── */}
+          <polygon points="180,480 280,420 380,480 280,540" fill="#FFFFFF" fillOpacity="0.8" />
+          <polygon points="180,480 280,540 280,720 180,660" fill="#53789B" fillOpacity="0.08" />
+          <polygon points="280,540 380,480 380,660 280,720" fill="#172132" fillOpacity="0.05" />
 
-          <polygon points="200,420 300,360 400,420 300,480" fill="#FFFFFF" fillOpacity="0.8" />
-          <polygon points="200,420 300,480 300,720 200,660" fill="#53789B" fillOpacity="0.09" />
-          <polygon points="300,480 400,420 400,660 300,720" fill="#172132" fillOpacity="0.06" />
+          {/* ── Mid-Tower with Spire (Layer 2) ── */}
+          <polygon points="340,360 460,280 580,360 460,440" fill="#FFFFFF" fillOpacity="0.9" />
+          <polygon points="340,360 460,440 460,750 340,670" fill="#53789B" fillOpacity="0.14" />
+          <polygon points="460,440 580,360 580,670 460,750" fill="#172132" fillOpacity="0.09" />
+          {/* Spire with Telemetry Node */}
+          <line x1="460" y1="280" x2="460" y2="160" stroke="#C4846C" strokeWidth="1.8" strokeOpacity="0.75" />
+          <circle cx="460" cy="160" r="3.5" fill="#C4846C" />
+          <circle cx="460" cy="160" r="7" stroke="#C4846C" strokeWidth="0.8" strokeDasharray="2 2" />
 
-          {/* ── Mid-Left Headquarters Tower (Layer 2) ── */}
-          <polygon points="360,320 480,240 600,320 480,400" fill="#FFFFFF" fillOpacity="0.9" />
-          <polygon points="360,320 480,400 480,740 360,660" fill="#53789B" fillOpacity="0.14" />
-          <polygon points="480,400 600,320 600,660 480,740" fill="#172132" fillOpacity="0.08" />
-          {/* Architectural structural lines */}
-          <line x1="420" y1="280" x2="420" y2="700" strokeDasharray="3 3" strokeOpacity="0.35" />
-          <line x1="540" y1="360" x2="540" y2="700" strokeDasharray="3 3" strokeOpacity="0.35" />
-          <line x1="480" y1="240" x2="480" y2="150" stroke="#C4846C" strokeWidth="1.8" strokeOpacity="0.75" />
-          <circle cx="480" cy="150" r="3.5" fill="#C4846C" />
-
-          {/* ── Central Grand Enterprise Monolith (Layer 3 - Sovereign Center) ── */}
-          <polygon points="660,260 800,170 940,260 800,350" fill="#FFFFFF" fillOpacity="0.95" />
-          <polygon points="660,260 800,350 800,760 660,670" fill="#53789B" fillOpacity="0.18" />
-          <polygon points="800,350 940,260 940,670 800,760" fill="#172132" fillOpacity="0.12" />
-          {/* Multi-tier horizontal floor bands */}
-          <line x1="660" y1="350" x2="800" y2="440" strokeOpacity="0.35" />
-          <line x1="800" y1="440" x2="940" y2="350" strokeOpacity="0.35" />
-          <line x1="660" y1="440" x2="800" y2="530" strokeOpacity="0.35" />
-          <line x1="800" y1="530" x2="940" y2="440" strokeOpacity="0.35" />
-          <line x1="660" y1="530" x2="800" y2="620" strokeOpacity="0.35" />
-          <line x1="800" y1="620" x2="940" y2="530" strokeOpacity="0.35" />
-          {/* Glass atrium crown */}
-          <polygon points="730,215 800,170 870,215 800,260" fill="#D7ACA4" fillOpacity="0.25" stroke="#D7ACA4" />
+          {/* ── Central Grand Enterprise Monolith (Layer 3 - Sovereign Skyblock) ── */}
+          <polygon points="640,240 780,150 920,240 780,330" fill="#FFFFFF" fillOpacity="0.95" />
+          <polygon points="640,240 780,330 780,780 640,690" fill="#53789B" fillOpacity="0.18" />
+          <polygon points="780,330 920,240 920,690 780,780" fill="#172132" fillOpacity="0.12" />
+          {/* Horizontal floor tiers & glass banding */}
+          <line x1="640" y1="330" x2="780" y2="420" strokeOpacity="0.35" />
+          <line x1="780" y1="420" x2="920" y2="330" strokeOpacity="0.35" />
+          <line x1="640" y1="420" x2="780" y2="510" strokeOpacity="0.35" />
+          <line x1="780" y1="510" x2="920" y2="420" strokeOpacity="0.35" />
+          <line x1="640" y1="510" x2="780" y2="600" strokeOpacity="0.35" />
+          <line x1="780" y1="600" x2="920" y2="510" strokeOpacity="0.35" />
+          {/* Terracotta Glass Atrium Crown */}
+          <polygon points="710,195 780,150 850,195 780,240" fill="#D7ACA4" fillOpacity="0.25" stroke="#D7ACA4" />
 
           {/* ── Mid-Right Stepped Terraced Tower (Layer 2) ── */}
-          <polygon points="1000,310 1120,230 1240,310 1120,390" fill="#FFFFFF" fillOpacity="0.9" />
-          <polygon points="1000,310 1120,390 1120,730 1000,650" fill="#53789B" fillOpacity="0.15" />
-          <polygon points="1120,390 1240,310 1240,650 1120,730" fill="#172132" fillOpacity="0.09" />
-          {/* Terraced roof */}
-          <polygon points="1040,280 1120,225 1200,280 1120,335" fill="#C4846C" fillOpacity="0.2" stroke="#C4846C" />
+          <polygon points="980,290 1100,210 1220,290 1100,370" fill="#FFFFFF" fillOpacity="0.9" />
+          <polygon points="980,290 1100,370 1100,740 980,660" fill="#53789B" fillOpacity="0.15" />
+          <polygon points="1100,370 1220,290 1220,660 1100,740" fill="#172132" fillOpacity="0.09" />
+          {/* Terraced Roof */}
+          <polygon points="1020,260 1100,205 1180,260 1100,315" fill="#C4846C" fillOpacity="0.2" stroke="#C4846C" />
 
-          {/* ── Far Right Tech Hub (Layer 1) ── */}
-          <polygon points="1280,410 1380,350 1480,410 1380,470" fill="#FFFFFF" fillOpacity="0.85" />
-          <polygon points="1280,410 1380,470 1380,690 1280,630" fill="#53789B" fillOpacity="0.09" />
-          <polygon points="1380,470 1480,410 1480,630 1380,690" fill="#172132" fillOpacity="0.05" />
+          {/* ── Far Right Secondary Tower ── */}
+          <polygon points="1180,380 1270,320 1360,380 1270,440" fill="#FFFFFF" fillOpacity="0.85" />
+          <polygon points="1180,380 1270,440 1270,700 1180,640" fill="#53789B" fillOpacity="0.1" />
+          <polygon points="1270,440 1360,380 1360,640 1270,700" fill="#172132" fillOpacity="0.06" />
 
-          {/* ── Floating Isometric Data Prisms ── */}
-          <polygon points="560,160 610,130 660,160 610,190" fill="#FFFFFF" fillOpacity="0.75" stroke="#53789B" strokeWidth="0.8" />
-          <polygon points="940,150 990,120 1040,150 990,180" fill="#FFFFFF" fillOpacity="0.75" stroke="#C4846C" strokeWidth="0.8" />
-          <polygon points="250,260 290,235 330,260 290,285" fill="#FFFFFF" fillOpacity="0.65" stroke="#53789B" strokeWidth="0.8" />
-          <polygon points="1260,250 1300,225 1340,250 1300,275" fill="#FFFFFF" fillOpacity="0.65" stroke="#D7ACA4" strokeWidth="0.8" />
+          {/* ── Holographic 3D Wireframe Data Cubes Floating in Sky ── */}
+          {/* Cube 1 (Mid Left) */}
+          <polygon points="260,220 300,195 340,220 300,245" fill="#FFFFFF" fillOpacity="0.75" stroke="#53789B" strokeWidth="0.9" />
+          <polygon points="260,220 300,245 300,290 260,265" fill="#53789B" fillOpacity="0.1" stroke="#53789B" strokeWidth="0.9" />
+          <polygon points="300,245 340,220 340,265 300,290" fill="#172132" fillOpacity="0.06" stroke="#53789B" strokeWidth="0.9" />
+
+          {/* Cube 2 (Near Central Tower) */}
+          <polygon points="560,150 610,120 660,150 610,180" fill="#FFFFFF" fillOpacity="0.8" stroke="#C4846C" strokeWidth="1" />
+          <polygon points="560,150 610,180 610,230 560,200" fill="#C4846C" fillOpacity="0.12" stroke="#C4846C" strokeWidth="1" />
+          <polygon points="610,180 660,150 660,200 610,230" fill="#D7ACA4" fillOpacity="0.18" stroke="#C4846C" strokeWidth="1" />
+
+          {/* Cube 3 (Right High) */}
+          <polygon points="940,130 985,100 1030,130 985,160" fill="#FFFFFF" fillOpacity="0.75" stroke="#53789B" strokeWidth="0.9" />
+          <polygon points="940,130 985,160 985,205 940,175" fill="#53789B" fillOpacity="0.1" stroke="#53789B" strokeWidth="0.9" />
+          <polygon points="985,160 1030,130 1030,175 985,205" fill="#172132" fillOpacity="0.06" stroke="#53789B" strokeWidth="0.9" />
+
+          {/* Connected Network Nodes & Telemetry Beams */}
+          <line x1="300" y1="245" x2="460" y2="160" stroke="#53789B" strokeWidth="0.8" strokeDasharray="3 3" strokeOpacity="0.5" />
+          <line x1="460" y1="160" x2="610" y2="180" stroke="#C4846C" strokeWidth="0.8" strokeDasharray="3 3" strokeOpacity="0.6" />
+          <line x1="610" y1="180" x2="780" y2="150" stroke="#53789B" strokeWidth="0.8" strokeDasharray="3 3" strokeOpacity="0.5" />
+          <line x1="780" y1="150" x2="985" y2="160" stroke="#53789B" strokeWidth="0.8" strokeDasharray="3 3" strokeOpacity="0.5" />
         </g>
       </svg>
 
-      {/* 3. Volumetric Atmospheric Fog & Soft Gradient Blending */}
+      {/* 3. Soft Daylight Volumetric Fog & Left-Fading Gradient Mask */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           background: `
-            radial-gradient(ellipse 90% 55% at 50% 25%, rgba(215, 172, 164, 0.12) 0%, rgba(83, 120, 155, 0.08) 35%, transparent 75%),
-            linear-gradient(to bottom, rgba(240, 242, 244, 0) 0%, rgba(240, 242, 244, 0.45) 45%, #F0F2F4 85%, #F0F2F4 100%)
+            radial-gradient(ellipse 70% 60% at 85% 40%, rgba(83, 120, 155, 0.08) 0%, transparent 70%),
+            linear-gradient(to right, #F0F2F4 0%, #F0F2F4 35%, rgba(240, 242, 244, 0.65) 60%, rgba(240, 242, 244, 0.15) 100%),
+            linear-gradient(to bottom, rgba(240, 242, 244, 0) 0%, rgba(240, 242, 244, 0.4) 60%, #F0F2F4 95%, #F0F2F4 100%)
           `,
         }}
       />
 
-      {/* 4. Ambient Top Horizon Halo */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1100px] h-[380px] bg-gradient-to-b from-[#53789B]/10 via-[#D7ACA4]/10 to-transparent blur-3xl opacity-60 pointer-events-none" />
+      {/* 4. Ambient Top Horizon Daylight Halo */}
+      <div className="absolute top-0 right-0 w-[800px] h-[350px] bg-gradient-to-bl from-[#53789B]/10 via-[#D7ACA4]/10 to-transparent blur-3xl opacity-50 pointer-events-none" />
     </div>
   );
 }
@@ -161,7 +171,7 @@ function Navbar() {
         fixed top-0 left-0 right-0 z-50 transition-all duration-300
         ${scrolled
           ? 'bg-[#F0F2F4]/90 backdrop-blur-md border-b border-slate-200/80 shadow-[0_4px_20px_rgba(23,33,50,0.03)]'
-          : 'bg-transparent border-b border-slate-200/50'
+          : 'bg-transparent border-b border-slate-200/40'
         }
       `}
     >
@@ -171,15 +181,15 @@ function Navbar() {
           {/* ── Brand Logo ──────────────────────────────────────────── */}
           <BrandLogo size="md" href="/" textColor="dark" />
 
-          {/* ── Desktop Nav Links ──────────────────────────────────── */}
-          <div className="hidden md:flex items-center gap-1 bg-white/75 backdrop-blur-md px-4 py-1.5 rounded-full border border-slate-200/70 shadow-2xs">
+          {/* ── Center Frosted Pill Navigation Capsule ──────────────── */}
+          <div className="hidden md:flex items-center gap-6 bg-white/80 backdrop-blur-md px-8 py-2.5 rounded-full border border-slate-200/60 shadow-2xs">
             {navLinks.map((link) => (
               <a
                 key={link.label}
                 href={link.href}
                 className="
-                  px-3.5 py-1.5 text-[13.5px] font-semibold text-[#5A6472]
-                  transition-colors duration-200 hover:text-[#172132] rounded-full hover:bg-slate-100/80
+                  text-[13.5px] font-medium text-[#5A6472]
+                  transition-colors duration-200 hover:text-[#172132]
                 "
               >
                 {link.label}
@@ -188,27 +198,24 @@ function Navbar() {
           </div>
 
           {/* ── Desktop Actions ────────────────────────────────────── */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-4">
             <Link
               to="/employer"
               id="nav-for-companies"
               className="
-                px-3.5 py-2 text-[14px] font-semibold text-[#5A6472]
+                px-3 py-2 text-[14px] font-semibold text-[#5A6472]
                 transition-colors duration-200 hover:text-[#172132]
-                hover:bg-white/80 rounded-xl
               "
             >
               For Companies
             </Link>
-
-            <div className="h-4 w-px bg-slate-300 mx-0.5" />
 
             <SignedOut>
               <Link
                 to="/signin"
                 id="nav-signin"
                 className="
-                  px-3.5 py-2 text-[14px] font-semibold text-[#172132]
+                  px-3 py-2 text-[14px] font-semibold text-[#172132]
                   transition-colors duration-200 hover:text-[#53789B]
                 "
               >
@@ -219,7 +226,7 @@ function Navbar() {
                 to="/signup"
                 id="nav-join-talent"
                 className="
-                  inline-flex items-center gap-2 px-5 py-2.5
+                  inline-flex items-center gap-1.5 px-5 py-2.5
                   bg-[#C4846C] text-white text-[13.5px] font-bold
                   rounded-full transition-all duration-300
                   hover:bg-[#b3755e] hover:-translate-y-0.5
@@ -237,7 +244,7 @@ function Navbar() {
                 to="/dashboard"
                 id="nav-dashboard"
                 className="
-                  px-3.5 py-2 text-[14px] font-semibold text-[#172132]
+                  px-3 py-2 text-[14px] font-semibold text-[#172132]
                   transition-colors duration-200 hover:text-[#53789B]
                 "
               >
@@ -329,108 +336,87 @@ function Navbar() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   EXPANSIVE HERO SECTION: FULL-WIDTH CENTERED CANVAS
-   (Completely removes dark right card to allow typography & skyline to breathe)
+   EXPANSIVE HERO SECTION: LEFT-ALIGNED EDITORIAL WITH 3D DAYLIGHT SKYLINE
+   (Matching Reference Layout Exactly: Expansive, Atmospheric & Tranquil)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 function ExpansiveHeroSection() {
   return (
-    <section className="relative overflow-hidden pt-36 sm:pt-48 pb-20 sm:pb-32">
-      {/* Integrated 3D Cityscape & Mental Grid Background */}
-      <EnterpriseSkylineGrid />
+    <section className="relative overflow-hidden pt-36 sm:pt-44 pb-20 sm:pb-28">
+      {/* 3D Atmospheric Tech Skyline & Mental Grid Canvas */}
+      <AtmosphericCityscapeBackground />
 
-      <div className="relative mx-auto max-w-5xl px-6 sm:px-10 lg:px-12 text-center z-10 space-y-8 sm:space-y-10">
+      <div className="relative mx-auto max-w-7xl px-6 sm:px-10 lg:px-12 z-10">
+        <div className="max-w-2xl text-left space-y-7 sm:space-y-8">
 
-        {/* ── Pre-headline Eyebrow Badge ── */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 border border-slate-200/80 shadow-[0_2px_8px_rgba(0,0,0,0.03)] backdrop-blur-sm animate-[fade-in_0.5s_ease]">
-          <span className="w-2 h-2 rounded-full bg-[#C4846C] animate-pulse" />
-          <span className="text-[11px] sm:text-xs font-extrabold text-[#64748B] uppercase tracking-widest">
-            DIGITAL HAVEN • TECHNICAL VALIDATION MATRIX
-          </span>
-        </div>
-
-        {/* ── Main Expansive Headline ── */}
-        <div className="space-y-2 sm:space-y-3">
-          <h1 className="text-4xl sm:text-6xl lg:text-[4.25rem] font-extrabold leading-[1.12] tracking-tight text-[#172132]">
-            Your Mentality.{' '}
-            <span className="text-[#53789B]">Our Matrix.</span>
-            <br />
-            <span className="text-[#172132]">
-              Their{' '}
-              <span className="text-[#C4846C] relative inline-block">
-                Peace of Mind.
-                <svg
-                  className="absolute -bottom-2 sm:-bottom-3 left-0 w-full h-2.5 text-[#D7ACA4]/70"
-                  viewBox="0 0 100 12"
-                  preserveAspectRatio="none"
-                  fill="none"
-                >
-                  <path
-                    d="M0,8 Q50,0 100,8"
-                    stroke="currentColor"
-                    strokeWidth="3.5"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </span>
+          {/* ── Pre-headline Eyebrow Badge ── */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 border border-slate-200/80 shadow-[0_2px_8px_rgba(0,0,0,0.03)] backdrop-blur-sm">
+            <span className="w-2 h-2 rounded-full bg-[#C4846C]" />
+            <span className="text-[11px] sm:text-xs font-extrabold text-[#64748B] uppercase tracking-widest">
+              DIGITAL HAVEN • TECHNICAL VALIDATION MATRIX
             </span>
-          </h1>
-        </div>
-
-        {/* ── Refined Editorial Subtitle ── */}
-        <p className="text-base sm:text-lg lg:text-[19px] text-[#5A6472] leading-relaxed max-w-2xl mx-auto font-normal">
-          Whether you are a university student preparing for engineering benchmarks or a graduate targeting senior roles, Jadeer evaluates code depth through adaptive AI assessments, 1-to-1 Principal Architect defense, and verifiable evidence dossiers.
-        </p>
-
-        {/* ── Pillowy Dual Action Buttons ── */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
-          <Link
-            to="/signup"
-            id="hero-join-talent-btn"
-            className="
-              w-full sm:w-auto inline-flex items-center justify-center gap-3 px-9 py-4
-              bg-[#C4846C] text-white text-[15px] font-bold rounded-2xl
-              transition-all duration-300 hover:bg-[#b3755e] hover:-translate-y-0.5
-              hover:shadow-[0_14px_32px_rgba(196,132,108,0.34)] active:scale-[0.98] shadow-md
-            "
-          >
-            <span>Launch Candidate Assessment</span>
-            <ArrowRight className="w-4 h-4 text-white" />
-          </Link>
-
-          <Link
-            to="/signin"
-            id="hero-signin-btn"
-            className="
-              w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4
-              bg-white text-[#172132] border border-slate-200/90
-              text-[15px] font-bold rounded-2xl transition-all duration-300
-              hover:border-[#53789B]/40 hover:bg-[#F8FAFC] hover:-translate-y-0.5
-              active:scale-[0.98] shadow-2xs
-            "
-          >
-            <span>Access Candidate Portal</span>
-          </Link>
-        </div>
-
-        {/* ── Trust & Calibration Indicators ── */}
-        <div className="pt-6 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs font-semibold text-[#64748B]">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-[#53789B]" />
-            <span>Verified by Architects at Microsoft, Amazon & Meta</span>
           </div>
-          <span className="text-slate-300 hidden sm:inline">•</span>
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-[#C4846C]" />
-            <span>Zero Resume Guesswork • AST & Telemetry Backed</span>
-          </div>
-          <span className="text-slate-300 hidden md:inline">•</span>
-          <div className="flex items-center gap-2">
-            <Cpu className="w-4 h-4 text-[#53789B]" />
-            <span>Real-Time Concurrency Calibration</span>
-          </div>
-        </div>
 
+          {/* ── Main Editorial Headline with Curated Palette Tokens ── */}
+          <div className="space-y-1">
+            <h1 className="text-4xl sm:text-5xl lg:text-[4.15rem] font-extrabold leading-[1.12] tracking-tight">
+              <span className="text-[#172132]">Your Mentality.</span>{' '}
+              <span className="text-[#53789B]">Our Matrix.</span>
+              <br />
+              <span className="text-[#C4846C]">Their Peace of Mind.</span>
+            </h1>
+          </div>
+
+          {/* ── Refined Editorial Subtitle ── */}
+          <p className="text-base sm:text-[17.5px] text-[#5A6472] leading-[1.7] max-w-xl font-normal">
+            A unified engineering validation platform designed to certify true technical depth through adaptive AI code probing, 1-to-1 Principal Architect defense, and verifiable evidence dossiers.
+          </p>
+
+          {/* ── Pillowy Dual Action Buttons ── */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-1">
+            <Link
+              to="/signup"
+              id="hero-join-talent-btn"
+              className="
+                inline-flex items-center justify-center gap-2.5 px-8 py-3.5
+                bg-[#C4846C] text-white text-[15px] font-bold rounded-2xl
+                transition-all duration-300 hover:bg-[#b3755e] hover:-translate-y-0.5
+                hover:shadow-[0_12px_28px_rgba(196,132,108,0.32)] active:scale-[0.98] shadow-md
+              "
+            >
+              <span>Launch Assessment</span>
+              <ArrowRight className="w-4 h-4 text-white" />
+            </Link>
+
+            <Link
+              to="/signin"
+              id="hero-signin-btn"
+              className="
+                inline-flex items-center justify-center px-7 py-3.5
+                bg-white text-[#172132] border border-slate-200/90
+                text-[15px] font-bold rounded-2xl transition-all duration-300
+                hover:border-[#53789B]/40 hover:bg-[#F8FAFC] hover:-translate-y-0.5
+                active:scale-[0.98] shadow-2xs
+              "
+            >
+              <span>Access Candidate Portal</span>
+            </Link>
+          </div>
+
+          {/* ── Trust & Verification Indicators ── */}
+          <div className="pt-3 flex flex-wrap items-center gap-6 text-xs font-semibold text-[#64748B]">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-[#53789B]" />
+              <span>Verified by Architects at Microsoft, Amazon & Meta</span>
+            </div>
+            <span className="text-slate-300 hidden sm:inline">•</span>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-[#C4846C]" />
+              <span>Zero Resume Guesswork</span>
+            </div>
+          </div>
+
+        </div>
       </div>
     </section>
   );
