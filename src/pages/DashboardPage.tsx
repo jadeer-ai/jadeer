@@ -1,6 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useUser } from '@clerk/clerk-react';
 import { useUserRole } from '@/contexts/UserRoleContext';
+import { useCandidateJourney } from '@/contexts/CandidateJourneyContext';
 import { useInterviewSchedule, type InterviewType } from '@/contexts/InterviewScheduleContext';
 import { AdminApiService, type AdminConsultationRecord } from '@/services/adminService';
 import {
@@ -108,9 +110,16 @@ const journeyPhases: JourneyPhase[] = [
 ];
 
 export default function DashboardPage() {
-  const { isStudent, lockedTrack } = useUserRole();
+  const { isStudent, userRole, lockedTrack } = useUserRole();
+  const { isOnboarded } = useCandidateJourney();
   const navigate = useNavigate();
   const { getInterviewsForCandidate } = useInterviewSchedule();
+
+  // Extract full Clerk user data
+  const { user: clerkUser, isLoaded: isClerkLoaded } = useUser();
+  const clerkName = clerkUser?.fullName || clerkUser?.firstName || clerkUser?.username;
+  const clerkEmail = clerkUser?.primaryEmailAddress?.emailAddress;
+  const clerkImage = clerkUser?.imageUrl;
 
   // Load unified user data from AdminApiService
   const unifiedData = useMemo(() => {
@@ -125,7 +134,26 @@ export default function DashboardPage() {
   const consultations = unifiedData.consultations;
   const user = unifiedData.user;
   const profile = user.studentProfile;
-  const activeTrack = lockedTrack || profile?.softwareTrack || 'Backend Development';
+  const activeTrack = lockedTrack || (clerkUser?.publicMetadata?.track as string) || profile?.softwareTrack || 'Backend Development';
+  const effectiveName = clerkName || profile?.fullName || 'Ahmad Al-Hassan';
+  const effectiveEmail = clerkEmail || user?.email || 'ahmad.hassan@example.com';
+  const effectiveUniversity = (clerkUser?.publicMetadata?.university as string) || profile?.university || 'KFUPM';
+
+  // Auto-redirect if user signed up via social login and lacks required profile fields
+  useEffect(() => {
+    if (!isClerkLoaded) return;
+
+    if (clerkUser) {
+      const hasRole = Boolean(userRole || clerkUser.publicMetadata?.role);
+      const hasTrack = Boolean(lockedTrack || clerkUser.publicMetadata?.track);
+      const hasUniversity = Boolean(localStorage.getItem('jadeer-user-university') || clerkUser.publicMetadata?.university);
+      const isComplete = isOnboarded || (hasRole && hasTrack && hasUniversity);
+
+      if (!isComplete && !localStorage.getItem('jadeer-graduate-onboarded')) {
+        navigate('/onboarding', { replace: true });
+      }
+    }
+  }, [isClerkLoaded, clerkUser, userRole, lockedTrack, isOnboarded, navigate]);
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 sm:space-y-10 animate-[fade-in_0.4s_ease] py-2 sm:py-6">
@@ -141,7 +169,7 @@ export default function DashboardPage() {
                 {activeTrack}
               </span>
               <span>•</span>
-              <span className="font-mono text-[#0B0F19]/60">User_ID: {user.id}</span>
+              <span className="font-mono text-[#0B0F19]/60">User_ID: {clerkUser?.id || user.id}</span>
               <span>•</span>
               <span className="font-mono text-[#0B0F19]/60">Candidate_ID: {profile?.id || 'stu-001'}</span>
               <span>•</span>
@@ -151,9 +179,24 @@ export default function DashboardPage() {
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#0B0F19] tracking-tight">
-              Welcome back, <span className="text-[#6E8F75]">{profile?.fullName || 'Ahmad Al-Hassan'}</span>
-            </h1>
+            <div className="flex items-center gap-3">
+              {clerkImage ? (
+                <img
+                  src={clerkImage}
+                  alt={effectiveName}
+                  className="w-12 h-12 rounded-2xl object-cover ring-2 ring-[#6E8F75]/20 shadow-sm"
+                />
+              ) : null}
+              <div>
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#0B0F19] tracking-tight">
+                  Welcome back, <span className="text-[#6E8F75]">{effectiveName}</span>
+                </h1>
+                {effectiveEmail && (
+                  <p className="text-xs text-[#0B0F19]/40 font-mono mt-0.5">{effectiveEmail}</p>
+                )}
+              </div>
+            </div>
+
             <p className="text-[14px] sm:text-[15px] text-[#0B0F19]/60 max-w-2xl leading-relaxed">
               Unified Portal: Seamlessly manage your 1-on-1 mentor consultations, technical validation telemetry, and internship matching pipeline without data fragmentation.
             </p>
@@ -164,7 +207,7 @@ export default function DashboardPage() {
             <div className="text-left sm:text-right">
               <p className="text-[11px] font-bold uppercase tracking-wider text-[#0B0F19]/45">Academic Institution</p>
               <p className="text-xs font-bold text-[#0B0F19] truncate max-w-[200px]">
-                {profile?.university || 'KFUPM'}
+                {effectiveUniversity}
               </p>
             </div>
             <div className="text-right">

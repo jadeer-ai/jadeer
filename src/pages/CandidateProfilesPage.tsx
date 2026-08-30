@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
+import { useUser } from '@clerk/clerk-react';
 import { useInterviewSchedule } from '@/contexts/InterviewScheduleContext';
 import { useCompanyProfile } from '@/contexts/CompanyProfileContext';
 import {
@@ -222,6 +223,10 @@ export default function CandidateProfilesPage() {
   const { companyProfile } = useCompanyProfile();
   const [scheduledDone, setScheduledDone] = useState(false);
 
+  const { user: clerkUser, isLoaded: isClerkLoaded } = useUser();
+  const clerkName = clerkUser?.fullName || clerkUser?.firstName || clerkUser?.username;
+  const clerkEmail = clerkUser?.primaryEmailAddress?.emailAddress;
+
   // Resolve Candidate from database or fallback to JAD-8492
   const matchedCandidate = useMemo(() => {
     if (queryId && candidateDatabase[queryId]) return candidateDatabase[queryId];
@@ -235,8 +240,25 @@ export default function CandidateProfilesPage() {
       );
       if (foundByName) return foundByName;
     }
-    return candidateDatabase['JAD-8492'];
-  }, [queryId, queryName]);
+
+    const base = candidateDatabase['JAD-8492'];
+    if (clerkUser && !queryId && !queryName) {
+      return {
+        ...base,
+        fullName: clerkName || base.fullName,
+        email: clerkEmail || base.email,
+        initials: (clerkName || base.fullName)
+          .split(' ')
+          .map((w) => w[0])
+          .filter(Boolean)
+          .slice(0, 2)
+          .join('')
+          .toUpperCase() || base.initials,
+      };
+    }
+
+    return base;
+  }, [queryId, queryName, clerkUser, clerkName, clerkEmail]);
 
   const [profile, setProfile] = useState<CandidateData>(matchedCandidate);
   const [isEditing, setIsEditing] = useState(false);

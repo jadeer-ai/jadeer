@@ -1,4 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useUser, useClerk } from '@clerk/clerk-react';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { useUserRole } from '@/contexts/UserRoleContext';
 import { AuthService } from '@/services/authService';
@@ -36,9 +37,23 @@ const routeLabels: Record<string, string> = {
 
 export default function TopBar() {
   const navigate = useNavigate();
+  const { signOut } = useClerk();
+  const { user: clerkUser } = useUser();
   const { toggleMobile, isCollapsed } = useSidebar();
   const { isStudent, isGraduate, userRole, clearUserRole } = useUserRole();
   const location = useLocation();
+
+  const clerkName = clerkUser?.fullName || clerkUser?.firstName || clerkUser?.username;
+  const clerkEmail = clerkUser?.primaryEmailAddress?.emailAddress;
+  const clerkImage = clerkUser?.imageUrl;
+  const displayName = clerkName || (isStudent ? 'Ahmad Student' : 'Ahmad Al-Hassan');
+  const initials = displayName
+    .split(' ')
+    .map((w) => w[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase() || 'AH';
 
   /* Build breadcrumbs from path */
   const segments = location.pathname.split('/').filter(Boolean);
@@ -143,13 +158,21 @@ export default function TopBar() {
         >
           {/* Avatar */}
           <div className="relative">
-            <div className={`w-9 h-9 rounded-full text-white flex items-center justify-center text-xs font-bold ring-2 ${
-              isStudent
-                ? 'bg-student-500 ring-student-500/20 shadow-[0_2px_6px_rgba(0,86,214,0.25)]'
-                : 'bg-[#6E8F75] ring-[#6E8F75]/20 shadow-[0_2px_6px_rgba(110,143,117,0.25)]'
-            }`}>
-              AH
-            </div>
+            {clerkImage ? (
+              <img
+                src={clerkImage}
+                alt={displayName}
+                className="w-9 h-9 rounded-full object-cover ring-2 ring-[#6E8F75]/20 shadow-sm"
+              />
+            ) : (
+              <div className={`w-9 h-9 rounded-full text-white flex items-center justify-center text-xs font-bold ring-2 ${
+                isStudent
+                  ? 'bg-student-500 ring-student-500/20 shadow-[0_2px_6px_rgba(0,86,214,0.25)]'
+                  : 'bg-[#6E8F75] ring-[#6E8F75]/20 shadow-[0_2px_6px_rgba(110,143,117,0.25)]'
+              }`}>
+                {initials}
+              </div>
+            )}
             <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#10b981] ring-2 ring-white" />
           </div>
 
@@ -157,14 +180,14 @@ export default function TopBar() {
           <div className="hidden sm:block text-left">
             <div className="flex items-center gap-1.5">
               <p className="text-[13px] font-bold text-[#0B0F19] leading-tight">
-                Ahmad Al-Hassan
+                {displayName}
               </p>
               <span className={`px-1.5 py-0.2 text-[10px] font-semibold ${roleBadge.color} rounded-md`}>
                 {roleBadge.label}
               </span>
             </div>
             <p className="text-[11px] text-[#0B0F19]/40 leading-tight mt-0.5">
-              {isStudent ? 'Computer Science Student' : 'Junior Software Engineer'}
+              {clerkEmail || (isStudent ? 'Computer Science Student' : 'Junior Software Engineer')}
             </p>
           </div>
         </div>
@@ -173,6 +196,11 @@ export default function TopBar() {
         <button
           id="topbar-signout-btn"
           onClick={async () => {
+            try {
+              await signOut();
+            } catch {
+              // fallback
+            }
             await AuthService.logout();
             clearUserRole();
             navigate('/signin');
@@ -186,4 +214,3 @@ export default function TopBar() {
     </header>
   );
 }
-

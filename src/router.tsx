@@ -51,6 +51,8 @@ const router = createBrowserRouter([
     element: <AuthenticateWithRedirectCallback signInForceRedirectUrl="/dashboard" signUpForceRedirectUrl="/dashboard" />,
   },
   { path: '/wizard', element: <CandidateWizardPage /> },
+  { path: '/onboarding', element: <CandidateWizardPage /> },
+  { path: '/profile/edit', element: <CandidateWizardPage /> },
   { path: '/employer', element: <EmployerLandingPage /> },
   { path: '/employer/landing', element: <EmployerLandingPage /> },
   { path: '/employer/signin', element: <EmployerSignInPage /> },
@@ -96,6 +98,8 @@ const router = createBrowserRouter([
       { path: '/dashboard', element: <DashboardPage /> },
       { path: '/candidates/dashboard', element: <DashboardPage /> },
       { path: '/candidates/wizard', element: <CandidateWizardPage /> },
+      { path: '/candidates/onboarding', element: <CandidateWizardPage /> },
+      { path: '/candidates/profile/edit', element: <CandidateWizardPage /> },
 
       /* Candidate Journey Routes (Graduate Path) */
       { path: '/candidates/profiles', element: <CandidateProfilesPage /> },

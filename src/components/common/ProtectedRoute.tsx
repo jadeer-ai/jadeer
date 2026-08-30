@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation, Link, Navigate } from 'react-router-dom';
+import { useAuth } from '@clerk/clerk-react';
 import { ShieldAlert, ArrowLeft, KeyRound, Lock } from 'lucide-react';
 import { AuthService } from '@/services/authService';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
@@ -119,6 +120,7 @@ export function EmployerRouteGuard({ children }: RouteGuardProps) {
 export function GuestOnlyRouteGuard({ children }: RouteGuardProps) {
   const session = AuthService.getCurrentSession();
   const { isAuthenticated } = useAdminAuth();
+  const { isSignedIn, isLoaded } = useAuth();
 
   if (isAuthenticated || (session && session.user.role === 'ADMIN')) {
     return <Navigate to="/admin/dashboard" replace />;
@@ -134,6 +136,10 @@ export function GuestOnlyRouteGuard({ children }: RouteGuardProps) {
     return <Navigate to="/dashboard" replace />;
   }
 
+  if (isLoaded && isSignedIn) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return <>{children}</>;
 }
 
@@ -146,8 +152,11 @@ export function GuestOnlyRouteGuard({ children }: RouteGuardProps) {
 export function AuthenticatedRouteGuard({ children }: RouteGuardProps) {
   const session = AuthService.getCurrentSession();
   const location = useLocation();
+  const { isSignedIn, isLoaded } = useAuth();
 
-  if (!session || !AuthService.isAuthenticated()) {
+  const isAuthed = AuthService.isAuthenticated() || Boolean(session) || (isLoaded && isSignedIn);
+
+  if (isLoaded && !isAuthed) {
     return <Navigate to={`/signin?redirect=${encodeURIComponent(location.pathname)}`} replace />;
   }
 

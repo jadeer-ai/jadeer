@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, type DragEvent, type ChangeEvent } from 'react';
+import { useUser } from '@clerk/clerk-react';
 import { BrandLogo } from '@/components/common';
 import { useUserRole } from '@/contexts/UserRoleContext';
 import { useCandidateJourney } from '@/contexts/CandidateJourneyContext';
@@ -113,6 +114,8 @@ interface WizardFormData {
   title: string;
   location: string;
   bio: string;
+  university?: string;
+  selectedRole?: 'student' | 'graduate';
   selectedSkills: string[];
   skillSearch: string;
   resumeFile: File | null;
@@ -126,6 +129,8 @@ const initialFormData: WizardFormData = {
   title: '',
   location: '',
   bio: '',
+  university: 'King Fahd University of Petroleum & Minerals (KFUPM)',
+  selectedRole: undefined,
   selectedSkills: [],
   skillSearch: '',
   resumeFile: null,
@@ -1029,12 +1034,18 @@ function CompletionView() {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 export default function CandidateWizard({ embedded = false }: { embedded?: boolean }) {
-  const { isStudent } = useUserRole();
+  const { isStudent, setUserRole, bindTrack, lockedTrack } = useUserRole();
   const { completeOnboarding } = useCandidateJourney();
+  const { user: clerkUser, isLoaded: isClerkLoaded } = useUser();
+
   const [currentStep, setCurrentStep] = useState(0);
   const [direction, setDirection] = useState<'forward' | 'backward'>('forward');
   const [isAnimating, setIsAnimating] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
+
+  const clerkName = clerkUser?.fullName || clerkUser?.firstName || clerkUser?.username || '';
+  const clerkEmail = clerkUser?.primaryEmailAddress?.emailAddress || '';
+
   const [formData, setFormData] = useState<WizardFormData>(() => {
     const session = typeof window !== 'undefined' ? AuthService.getCurrentSession() : null;
     return {
@@ -1048,6 +1059,17 @@ export default function CandidateWizard({ embedded = false }: { embedded?: boole
           : '',
     };
   });
+
+  // Prepopulate from Clerk when available
+  useEffect(() => {
+    if (isClerkLoaded && clerkUser) {
+      setFormData((prev) => ({
+        ...prev,
+        fullName: prev.fullName || clerkName || '',
+        title: prev.title || (isStudent ? 'Software Engineering Intern' : 'Junior Software Engineer'),
+      }));
+    }
+  }, [isClerkLoaded, clerkUser, clerkName, isStudent]);
 
   const updateFormData = (patch: Partial<WizardFormData>) => {
     setFormData((prev) => ({ ...prev, ...patch }));
@@ -1072,9 +1094,16 @@ export default function CandidateWizard({ embedded = false }: { embedded?: boole
   const goNext = () => {
     if (isAnimating) return;
     if (currentStep === STEPS.length - 1) {
-      if (!isStudent) {
-        completeOnboarding();
+      // Save profile metadata locally and mark onboarded
+      try {
+        localStorage.setItem('jadeer-graduate-onboarded', 'true');
+        localStorage.setItem('jadeer-user-university', formData.university || 'KFUPM');
+        if (formData.selectedRole) setUserRole(formData.selectedRole);
+        bindTrack(lockedTrack || 'Backend Development');
+      } catch {
+        // localStorage unavailable
       }
+      completeOnboarding();
       setIsComplete(true);
       return;
     }
