@@ -24,6 +24,8 @@ import {
 } from 'lucide-react';
 import { BrandLogo } from '@/components/common';
 
+import { useSignIn } from '@clerk/clerk-react';
+
 /* ── Social Provider Icons ──────────────────────────────────────────────── */
 
 function GoogleIcon({ className }: { className?: string }) {
@@ -74,6 +76,7 @@ export default function SignInPage() {
   const { isStudent, setUserRole } = useUserRole();
   const { isOnboarded, completeOnboarding } = useCandidateJourney();
   const { login: adminLogin } = useAdminAuth();
+  const { isLoaded: isClerkLoaded, signIn } = useSignIn();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -115,24 +118,35 @@ export default function SignInPage() {
     setError(null);
     setSocialLoading(provider);
 
+    const strategyMap: Record<string, string> = {
+      google: 'oauth_google',
+      github: 'oauth_github',
+      linkedin: 'oauth_linkedin_oidc',
+      apple: 'oauth_apple',
+    };
+
     try {
+      if (signIn) {
+        await signIn.authenticateWithRedirect({
+          strategy: (strategyMap[provider] || `oauth_${provider}`) as any,
+          redirectUrl: '/sso-callback',
+          redirectUrlComplete: '/dashboard',
+        });
+        return;
+      }
+
+      // Direct fallback if Clerk is still mounting
       const res = await AuthService.initiateSocialAuth(provider, {
         role: isStudent ? 'student' : 'graduate',
         mode: 'direct',
       });
-
       setSocialLoading(null);
-
-      if (res.success) {
-        setUserRole(isStudent ? 'student' : 'graduate');
-        completeOnboarding();
-        navigate(res.redirectUrl || '/candidates/wizard');
-      } else {
+      if (!res.success) {
         setError(res.error || `Failed to authenticate with ${provider}.`);
       }
-    } catch {
+    } catch (err: any) {
       setSocialLoading(null);
-      setError(`Unexpected error during ${provider} authentication.`);
+      setError(err?.errors?.[0]?.longMessage || err?.message || `Failed to authenticate with ${provider}.`);
     }
   };
 

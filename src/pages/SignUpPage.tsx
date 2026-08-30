@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useUserRole } from '@/contexts/UserRoleContext';
 import { AuthService } from '@/services/authService';
 import { BrandLogo } from '@/components/common';
+import { useSignUp } from '@clerk/clerk-react';
 import {
   Eye,
   EyeOff,
@@ -99,6 +100,8 @@ export default function SignUpPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const { isLoaded: isClerkLoaded, signUp } = useSignUp();
+
   const handleRoleToggle = (type: 'student' | 'graduate') => {
     setCandidateType(type);
     setUserRole(type);
@@ -110,24 +113,37 @@ export default function SignUpPage() {
   const handleSocialSignUp = async (provider: 'google' | 'linkedin' | 'github' | 'apple') => {
     setError(null);
     setSocialLoading(provider);
+
+    const strategyMap: Record<string, string> = {
+      google: 'oauth_google',
+      github: 'oauth_github',
+      linkedin: 'oauth_linkedin_oidc',
+      apple: 'oauth_apple',
+    };
+
     try {
+      if (signUp) {
+        await signUp.authenticateWithRedirect({
+          strategy: (strategyMap[provider] || `oauth_${provider}`) as any,
+          redirectUrl: '/sso-callback',
+          redirectUrlComplete: '/dashboard',
+        });
+        return;
+      }
+
+      // Direct fallback if Clerk is still mounting
       const res = await AuthService.initiateSocialAuth(provider, {
         role: candidateType,
         track: effectiveTrack || 'General Engineering',
         mode: 'direct',
       });
-
       setSocialLoading(null);
-      if (res.success) {
-        setUserRole(candidateType);
-        bindTrack(effectiveTrack || 'General Engineering');
-        navigate(res.redirectUrl || '/candidates/wizard');
-      } else {
+      if (!res.success) {
         setError(res.error || `Failed to sign up with ${provider}.`);
       }
-    } catch {
+    } catch (err: any) {
       setSocialLoading(null);
-      setError(`Unexpected error during ${provider} authentication.`);
+      setError(err?.errors?.[0]?.longMessage || err?.message || `Failed to sign up with ${provider}.`);
     }
   };
 

@@ -35,6 +35,7 @@ import {
   AuthenticatedRouteGuard,
 } from '@/components/common/ProtectedRoute';
 import AuthTestPage from '@/pages/AuthTestPage';
+import { AuthenticateWithRedirectCallback } from '@clerk/clerk-react';
 
 const router = createBrowserRouter([
   /* ── Public & Authentication Pages ─────────────────────────────────── */
@@ -45,6 +46,10 @@ const router = createBrowserRouter([
   { path: '/verify-otp', element: <OtpVerificationPage /> },
   { path: '/signin', element: <SignInPage /> },
   { path: '/login', element: <SignInPage /> },
+  {
+    path: '/sso-callback',
+    element: <AuthenticateWithRedirectCallback signInForceRedirectUrl="/dashboard" signUpForceRedirectUrl="/dashboard" />,
+  },
   { path: '/wizard', element: <CandidateWizardPage /> },
   { path: '/employer', element: <EmployerLandingPage /> },
   { path: '/employer/landing', element: <EmployerLandingPage /> },

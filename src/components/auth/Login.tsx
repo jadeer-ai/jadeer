@@ -4,6 +4,7 @@ import { useUserRole } from '@/contexts/UserRoleContext';
 import { useCandidateJourney } from '@/contexts/CandidateJourneyContext';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { AuthService } from '@/services/authService';
+import { useSignIn } from '@clerk/clerk-react';
 import {
   Eye,
   EyeOff,
@@ -112,29 +113,41 @@ export function Login({ onSuccess, defaultEmail = '', className = '' }: LoginPro
     }
   }, [searchParams]);
 
+  const { isLoaded: isClerkLoaded, signIn } = useSignIn();
+
   const handleSocialSignIn = async (provider: 'google' | 'linkedin' | 'github' | 'apple') => {
     setError(null);
     setSocialLoading(provider);
 
+    const strategyMap: Record<string, string> = {
+      google: 'oauth_google',
+      github: 'oauth_github',
+      linkedin: 'oauth_linkedin_oidc',
+      apple: 'oauth_apple',
+    };
+
     try {
+      if (signIn) {
+        await signIn.authenticateWithRedirect({
+          strategy: (strategyMap[provider] || `oauth_${provider}`) as any,
+          redirectUrl: '/sso-callback',
+          redirectUrlComplete: '/dashboard',
+        });
+        return;
+      }
+
+      // Direct fallback if Clerk is still mounting
       const res = await AuthService.initiateSocialAuth(provider, {
         role: isStudent ? 'student' : 'graduate',
         mode: 'direct',
       });
-
       setSocialLoading(null);
-
-      if (res.success) {
-        setUserRole(isStudent ? 'student' : 'graduate');
-        completeOnboarding();
-        if (onSuccess) onSuccess();
-        navigate(res.redirectUrl || '/candidates/wizard');
-      } else {
+      if (!res.success) {
         setError(res.error || `Failed to authenticate with ${provider}.`);
       }
-    } catch {
+    } catch (err: any) {
       setSocialLoading(null);
-      setError(`Unexpected error during ${provider} authentication.`);
+      setError(err?.errors?.[0]?.longMessage || err?.message || `Failed to authenticate with ${provider}.`);
     }
   };
 
