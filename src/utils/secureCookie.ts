@@ -5,66 +5,77 @@
    cookie standards. Prevents exposure of raw JWT tokens in local storage or URLs.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-const COOKIE_PREFIX = '__Host-jadeer_';
+const COOKIE_PREFIX = 'jadeer_';
 const SECURE_FLAG = typeof window !== 'undefined' && window.location.protocol === 'https:' ? '; Secure' : '';
 
-// Simple obfuscation/encryption wrapper for client-cookie payloads
-function encryptPayload(data: string): string {
+function decodeCookieValue(raw: string): string {
+  if (!raw) return '';
+  // Try URI decode first
   try {
-    return btoa(encodeURIComponent(data));
+    const uriDecoded = decodeURIComponent(raw);
+    // If it looks like JSON or normal string, return it
+    if (uriDecoded.startsWith('{') || uriDecoded.startsWith('[') || uriDecoded.startsWith('eyJ')) {
+      return uriDecoded;
+    }
+    // Try base64 decode if applicable
+    try {
+      const b64Decoded = decodeURIComponent(atob(uriDecoded));
+      if (b64Decoded) return b64Decoded;
+    } catch {
+      // not base64
+    }
+    return uriDecoded;
   } catch {
-    return data;
-  }
-}
-
-function decryptPayload(data: string): string {
-  try {
-    return decodeURIComponent(atob(data));
-  } catch {
-    return data;
+    return raw;
   }
 }
 
 export const SecureCookie = {
   /**
-   * Sets a secure, SameSite=Strict, Secure cookie
+   * Sets a secure cookie
    */
-  set(name: string, value: string, maxAgeSeconds: number = 86400): void {
+  set(name: string, value: string, maxAgeSeconds: number = 86400 * 7): void {
     if (typeof document === 'undefined') return;
 
-    const cookieName = `${COOKIE_PREFIX}${name}`;
-    const encrypted = encryptPayload(value);
     const expires = new Date(Date.now() + maxAgeSeconds * 1000).toUTCString();
+    const encoded = encodeURIComponent(value);
 
-    document.cookie = `${cookieName}=${encrypted}; Expires=${expires}; Max-Age=${maxAgeSeconds}; Path=/; SameSite=Strict${SECURE_FLAG}`;
+    document.cookie = `${name}=${encoded}; Expires=${expires}; Max-Age=${maxAgeSeconds}; Path=/; SameSite=Lax${SECURE_FLAG}`;
+    document.cookie = `${COOKIE_PREFIX}${name}=${encoded}; Expires=${expires}; Max-Age=${maxAgeSeconds}; Path=/; SameSite=Lax${SECURE_FLAG}`;
   },
 
   /**
-   * Retrieves and decrypts a secure cookie
+   * Retrieves and decodes a cookie by name, checking standard and prefixed forms
    */
   get(name: string): string | null {
     if (typeof document === 'undefined') return null;
 
-    const cookieName = `${COOKIE_PREFIX}${name}=`;
     const cookies = document.cookie.split(';');
+    const lookupNames = [name, `${COOKIE_PREFIX}${name}`, `__Host-jadeer_${name}`];
 
     for (let cookie of cookies) {
       cookie = cookie.trim();
-      if (cookie.startsWith(cookieName)) {
-        const rawValue = cookie.substring(cookieName.length);
-        return decryptPayload(rawValue);
+      for (const targetName of lookupNames) {
+        const prefix = `${targetName}=`;
+        if (cookie.startsWith(prefix)) {
+          const rawValue = cookie.substring(prefix.length);
+          return decodeCookieValue(rawValue);
+        }
       }
     }
     return null;
   },
 
   /**
-   * Removes a secure cookie
+   * Removes a cookie
    */
   remove(name: string): void {
     if (typeof document === 'undefined') return;
 
-    const cookieName = `${COOKIE_PREFIX}${name}`;
-    document.cookie = `${cookieName}=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; Path=/; SameSite=Strict${SECURE_FLAG}`;
+    const lookupNames = [name, `${COOKIE_PREFIX}${name}`, `__Host-jadeer_${name}`];
+    for (const targetName of lookupNames) {
+      document.cookie = `${targetName}=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; Path=/; SameSite=Lax${SECURE_FLAG}`;
+    }
   },
 };
+

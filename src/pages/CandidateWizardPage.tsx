@@ -1,7 +1,8 @@
-import { useState, useRef, useCallback, type DragEvent, type ChangeEvent } from 'react';
+import { useState, useEffect, useRef, useCallback, type DragEvent, type ChangeEvent } from 'react';
 import { BrandLogo } from '@/components/common';
 import { useUserRole } from '@/contexts/UserRoleContext';
 import { useCandidateJourney } from '@/contexts/CandidateJourneyContext';
+import { AuthService } from '@/services/authService';
 import {
   User,
   Code2,
@@ -1034,7 +1035,19 @@ export default function CandidateWizard({ embedded = false }: { embedded?: boole
   const [direction, setDirection] = useState<'forward' | 'backward'>('forward');
   const [isAnimating, setIsAnimating] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
-  const [formData, setFormData] = useState<WizardFormData>(initialFormData);
+  const [formData, setFormData] = useState<WizardFormData>(() => {
+    const session = typeof window !== 'undefined' ? AuthService.getCurrentSession() : null;
+    return {
+      ...initialFormData,
+      fullName: session?.user?.name || '',
+      title: session?.user?.name ? (isStudent ? 'Software Engineering Intern' : 'Junior Software Engineer') : '',
+      githubUrl: session?.user?.githubUsername
+        ? `https://github.com/${session.user.githubUsername}`
+        : session?.user?.email?.includes('github')
+          ? 'https://github.com/ahmad-dev-engineer'
+          : '',
+    };
+  });
 
   const updateFormData = (patch: Partial<WizardFormData>) => {
     setFormData((prev) => ({ ...prev, ...patch }));

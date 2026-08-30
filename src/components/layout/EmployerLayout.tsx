@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { BrandLogo } from '@/components/common';
 import { useCompanyProfile } from '@/contexts/CompanyProfileContext';
+import { AuthService } from '@/services/authService';
 import {
   LayoutDashboard,
   FilePlus2,
@@ -13,6 +14,7 @@ import {
   X,
   Building2,
   ShieldCheck,
+  LogOut,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -170,7 +172,25 @@ function EmployerSidebar({
         </nav>
 
         {/* Footer */}
-        <div className="px-3 py-4 border-t border-white/[0.06] shrink-0">
+        <div className="px-3 py-4 border-t border-white/[0.06] shrink-0 space-y-1.5">
+          <button
+            id="employer-sidebar-signout-btn"
+            onClick={async () => {
+              await AuthService.logout();
+              window.location.href = '/employer/signin';
+            }}
+            className={`
+              flex items-center w-full py-2.5 px-3.5 rounded-xl
+              text-rose-300 hover:text-white hover:bg-rose-500/20
+              transition-all duration-200 cursor-pointer
+              ${isCollapsed ? 'justify-center' : 'gap-2.5'}
+            `}
+            title="Sign Out of Employer Portal"
+          >
+            <LogOut className="w-4 h-4 shrink-0 text-rose-400" />
+            {!isCollapsed && <span className="text-xs font-bold">Sign Out</span>}
+          </button>
+
           {!isCollapsed ? (
             <Link
               to="/employer"
@@ -203,7 +223,13 @@ function EmployerTopBar({
   isCollapsed: boolean;
   openMobile: () => void;
 }) {
+  const navigate = useNavigate();
   const { companyProfile } = useCompanyProfile();
+
+  const handleSignOut = async () => {
+    await AuthService.logout();
+    navigate('/employer/signin');
+  };
 
   return (
     <header
@@ -244,6 +270,16 @@ function EmployerTopBar({
             <p className="text-[10px] text-[#0B0F19]/40">{companyProfile.contactRole}</p>
           </div>
         </div>
+
+        {/* Sign Out Button */}
+        <button
+          id="employer-topbar-signout-btn"
+          onClick={handleSignOut}
+          className="p-2.5 rounded-xl text-[#0B0F19]/40 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+          title="Sign Out of Company Portal"
+        >
+          <LogOut className="w-4 h-4" />
+        </button>
       </div>
     </header>
   );

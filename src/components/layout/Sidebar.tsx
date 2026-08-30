@@ -1,7 +1,8 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { useUserRole } from '@/contexts/UserRoleContext';
 import { useCandidateJourney } from '@/contexts/CandidateJourneyContext';
+import { AuthService } from '@/services/authService';
 import { BrandLogo } from '@/components/common';
 import {
   LayoutDashboard,
@@ -21,6 +22,7 @@ import {
   ArrowLeftRight,
   GraduationCap,
   Lock,
+  LogOut,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -77,10 +79,18 @@ const studentNavItems: NavItem[] = [
 /* ── Deep Navy Sidebar Component ───────────────────────────────────────── */
 
 export default function Sidebar() {
+  const navigate = useNavigate();
   const { isCollapsed, isMobileOpen, toggleCollapse, closeMobile } = useSidebar();
   const { userRole, isStudent, clearUserRole } = useUserRole();
-  const { isOnboarded, isRouteUnlocked, getRouteLockReason } = useCandidateJourney();
+  const { isOnboarded, isRouteUnlocked, getRouteLockReason, resetOnboarding } = useCandidateJourney();
   const location = useLocation();
+
+  const handleSignOut = async () => {
+    await AuthService.logout();
+    clearUserRole();
+    resetOnboarding();
+    navigate('/signin');
+  };
 
   const navItems = isStudent
     ? studentNavItems
@@ -251,8 +261,23 @@ export default function Sidebar() {
           </div>
         )}
 
-        {/* ── Collapse Toggle ────────────────────────────────────────── */}
-        <div className="shrink-0 p-3 border-t border-white/[0.08]">
+        {/* ── Footer Actions (Sign Out & Collapse) ─────────────────── */}
+        <div className="shrink-0 p-3 border-t border-white/[0.08] space-y-1.5">
+          <button
+            id="sidebar-signout-btn"
+            onClick={handleSignOut}
+            className={`
+              flex items-center w-full py-2.5 px-3 rounded-xl
+              text-rose-300 hover:text-white hover:bg-rose-500/20
+              transition-all duration-200 cursor-pointer
+              ${isCollapsed ? 'justify-center' : 'gap-2.5'}
+            `}
+            title="Sign Out of Candidate Portal"
+          >
+            <LogOut className="w-4 h-4 shrink-0 text-rose-400" />
+            {!isCollapsed && <span className="text-xs font-bold">Sign Out</span>}
+          </button>
+
           <button
             id="sidebar-toggle"
             onClick={toggleCollapse}

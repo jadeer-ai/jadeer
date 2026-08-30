@@ -1,6 +1,7 @@
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { useUserRole } from '@/contexts/UserRoleContext';
+import { AuthService } from '@/services/authService';
 import {
   Menu,
   Bell,
@@ -8,6 +9,7 @@ import {
   ChevronRight,
   Sparkles,
   GraduationCap,
+  LogOut,
 } from 'lucide-react';
 
 /* ── Route → Breadcrumb label mapping ───────────────────────────────────── */
@@ -33,8 +35,9 @@ const routeLabels: Record<string, string> = {
 };
 
 export default function TopBar() {
+  const navigate = useNavigate();
   const { toggleMobile, isCollapsed } = useSidebar();
-  const { isStudent, isGraduate, userRole } = useUserRole();
+  const { isStudent, isGraduate, userRole, clearUserRole } = useUserRole();
   const location = useLocation();
 
   /* Build breadcrumbs from path */
@@ -165,6 +168,20 @@ export default function TopBar() {
             </p>
           </div>
         </div>
+
+        {/* Quick Sign Out Action */}
+        <button
+          id="topbar-signout-btn"
+          onClick={async () => {
+            await AuthService.logout();
+            clearUserRole();
+            navigate('/signin');
+          }}
+          className="p-2.5 rounded-xl text-[#0B0F19]/40 hover:text-rose-600 hover:bg-rose-50 transition-colors ml-1"
+          title="Sign Out"
+        >
+          <LogOut className="w-4 h-4" />
+        </button>
       </div>
     </header>
   );

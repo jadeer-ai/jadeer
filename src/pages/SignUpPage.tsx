@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useUserRole } from '@/contexts/UserRoleContext';
+import { AuthService } from '@/services/authService';
 import { BrandLogo } from '@/components/common';
 import {
   Eye,
@@ -10,6 +11,8 @@ import {
   ArrowRight,
   ShieldCheck,
   Sparkles,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -46,6 +49,14 @@ function GitHubIcon({ className }: { className?: string }) {
   );
 }
 
+function AppleIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.85c.66-.8 1.1-1.92.98-3.04-.95.04-2.11.64-2.79 1.44-.59.69-1.12 1.83-.98 2.92 1.06.08 2.14-.54 2.79-1.32z" />
+    </svg>
+  );
+}
+
 /* ── Password validation rules ──────────────────────────────────────────── */
 
 interface PasswordRule {
@@ -69,6 +80,7 @@ const softwareTracks = [
   'Data Engineering & Analytics',
   'AI / Machine Learning',
   'Cybersecurity & Systems',
+  'Add Custom Track...',
 ];
 
 export default function SignUpPage() {
@@ -80,14 +92,43 @@ export default function SignUpPage() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [selectedTrack, setSelectedTrack] = useState(softwareTracks[0]);
+  const [customTrack, setCustomTrack] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-
-  const isStudent = candidateType === 'student';
+  const [socialLoading, setSocialLoading] = useState<'google' | 'linkedin' | 'github' | 'apple' | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleRoleToggle = (type: 'student' | 'graduate') => {
     setCandidateType(type);
     setUserRole(type);
+  };
+
+  const isCustomTrack = selectedTrack === 'Add Custom Track...';
+  const effectiveTrack = isCustomTrack ? customTrack.trim() : selectedTrack;
+
+  const handleSocialSignUp = async (provider: 'google' | 'linkedin' | 'github' | 'apple') => {
+    setError(null);
+    setSocialLoading(provider);
+    try {
+      const res = await AuthService.initiateSocialAuth(provider, {
+        role: candidateType,
+        track: effectiveTrack || 'General Engineering',
+        mode: 'direct',
+      });
+
+      setSocialLoading(null);
+      if (res.success) {
+        setUserRole(candidateType);
+        bindTrack(effectiveTrack || 'General Engineering');
+        navigate(res.redirectUrl || '/candidates/wizard');
+      } else {
+        setError(res.error || `Failed to sign up with ${provider}.`);
+      }
+    } catch {
+      setSocialLoading(null);
+      setError(`Unexpected error during ${provider} authentication.`);
+    }
   };
 
   const ruleResults = useMemo(
@@ -96,23 +137,41 @@ export default function SignUpPage() {
   );
 
   const allRulesPassed = ruleResults.every((r) => r.passed);
-  const isFormValid = fullName.trim() !== '' && email.trim() !== '' && allRulesPassed;
+  const isTrackValid = !isCustomTrack || customTrack.trim().length > 0;
+  const isFormValid = fullName.trim() !== '' && email.trim() !== '' && allRulesPassed && isTrackValid;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isFormValid) {
+    if (!isFormValid || isLoading) return;
+
+    setError(null);
+    setIsLoading(true);
+
+    const res = await AuthService.register({
+      name: fullName,
+      email,
+      password,
+      role: candidateType,
+      track: effectiveTrack || 'General Engineering',
+    });
+
+    setIsLoading(false);
+
+    if (res.success) {
       setUserRole(candidateType);
-      bindTrack(selectedTrack);
-      navigate('/candidates/wizard');
+      bindTrack(effectiveTrack || 'General Engineering');
+      navigate(res.redirectUrl || '/candidates/wizard');
+    } else {
+      setError(res.error || 'Registration failed. Please check your information and try again.');
     }
   };
 
-  const primaryColorClass = isStudent ? 'text-student-500' : 'text-[#6E8F75]';
-  const primaryBgClass = isStudent ? 'bg-student-500 hover:bg-student-600' : 'bg-[#6E8F75] hover:bg-[#5d7d64]';
-  const focusRingClass = isStudent ? 'focus:border-student-500 focus:ring-student-500/15' : 'focus:border-[#6E8F75] focus:ring-[#6E8F75]/15';
-  const headerLinkColorClass = isStudent ? 'text-student-500 hover:text-student-600' : 'text-[#6E8F75] hover:text-[#5d7d64]';
-  const badgeBgBorderClass = isStudent ? 'bg-student-500/10 border-student-500/20' : 'bg-[#6E8F75]/10 border-[#6E8F75]/20';
-  const shadowClass = isStudent ? 'hover:shadow-[0_12px_28px_rgba(0,86,214,0.28)]' : 'hover:shadow-[0_12px_28px_rgba(110,143,117,0.28)]';
+  const primaryColorClass = 'text-[#6E8F75]';
+  const primaryBgClass = 'bg-[#6E8F75] hover:bg-[#5d7d64]';
+  const focusRingClass = 'focus:border-[#6E8F75] focus:ring-[#6E8F75]/15';
+  const headerLinkColorClass = 'text-[#6E8F75] hover:text-[#5d7d64]';
+  const badgeBgBorderClass = 'bg-[#6E8F75]/10 border-[#6E8F75]/20';
+  const shadowClass = 'hover:shadow-[0_12px_28px_rgba(110,143,117,0.28)]';
 
   return (
     <div className="min-h-screen bg-[#FAF9F6] flex flex-col justify-between text-[#0B0F19] relative overflow-hidden selection:bg-[#6E8F75]/20 selection:text-[#0B0F19]">
@@ -151,7 +210,7 @@ export default function SignUpPage() {
             <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border ${badgeBgBorderClass} mb-1`}>
               <ShieldCheck className={`w-3.5 h-3.5 ${primaryColorClass}`} />
               <span className={`text-[11px] font-bold ${primaryColorClass} uppercase tracking-wider`}>
-                Unified Talent Registration
+                Talent Registration
               </span>
             </div>
 
@@ -159,29 +218,39 @@ export default function SignUpPage() {
               Create your talent account
             </h1>
             <p className="text-xs sm:text-[13px] text-[#0B0F19]/55 leading-relaxed max-w-sm mx-auto">
-              Join Jadeer's single talent network to validate skills, book mentor sessions, and unlock direct hiring pipelines.
+              Join Jadeer's talent network to validate skills, book mentor calibration sessions, and unlock direct hiring pipelines.
             </p>
           </div>
 
-          {/* ── MANDATORY CANDIDATE TYPE SELECTION TOGGLE ────────────── */}
+          {/* Error Alert */}
+          {error && (
+            <div className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs animate-[fade-in_0.2s_ease]">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold">{error}</p>
+              </div>
+            </div>
+          )}
+
+          {/* ── 'I AM JOINING AS' DUAL ROLE SELECTION TOGGLE (EMERALD/DARK THEMED) ── */}
           <div className="space-y-1.5 pt-1">
             <label className="block text-xs font-bold uppercase tracking-wider text-[#0B0F19]/60">
               I am joining as <span className="text-rose-500">*</span>
             </label>
-            <div className="grid grid-cols-2 gap-2.5 p-1.5 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.07]">
+            <div className="grid grid-cols-2 gap-2 p-1.5 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08]">
               <button
                 type="button"
                 id="toggle-candidate-student"
                 onClick={() => handleRoleToggle('student')}
                 className={`
-                  flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer
-                  ${isStudent
-                    ? 'bg-student-500 text-white shadow-sm'
+                  flex items-center justify-center py-2.5 px-3 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer
+                  ${candidateType === 'student'
+                    ? 'bg-[#6E8F75] text-white shadow-sm'
                     : 'bg-transparent text-[#0B0F19]/60 hover:text-[#0B0F19] hover:bg-white/60'
                   }
                 `}
               >
-                <span>🎓 University Student</span>
+                <span>University Student</span>
               </button>
 
               <button
@@ -189,20 +258,20 @@ export default function SignUpPage() {
                 id="toggle-candidate-graduate"
                 onClick={() => handleRoleToggle('graduate')}
                 className={`
-                  flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer
-                  ${!isStudent
+                  flex items-center justify-center py-2.5 px-3 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer
+                  ${candidateType === 'graduate'
                     ? 'bg-[#6E8F75] text-white shadow-sm'
                     : 'bg-transparent text-[#0B0F19]/60 hover:text-[#0B0F19] hover:bg-white/60'
                   }
                 `}
               >
-                <span>🚀 Graduate Engineer</span>
+                <span>Graduate Engineer</span>
               </button>
             </div>
 
             <p className="text-[11px] text-[#0B0F19]/45 italic pt-0.5">
-              {isStudent
-                ? '• Tailors AI assessments for university internship benchmarks & mentor guidance.'
+              {candidateType === 'student'
+                ? '• Tailors AI assessments for university internship benchmarks & mentor calibration.'
                 : '• Calibrates AI assessments for junior & full-time engineering hiring gates.'
               }
             </p>
@@ -216,7 +285,7 @@ export default function SignUpPage() {
                 htmlFor="full-name"
                 className="block text-xs font-bold uppercase tracking-wider text-[#0B0F19]/60"
               >
-                Full Name
+                Full Name <span className="text-rose-500">*</span>
               </label>
               <input
                 id="full-name"
@@ -229,14 +298,14 @@ export default function SignUpPage() {
               />
             </div>
 
-            {/* Technical Domain / Track (One-time Binding) */}
+            {/* Technical Domain / Track (With Custom Input Option) */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <label
                   htmlFor="tech-track"
                   className="block text-xs font-bold uppercase tracking-wider text-[#0B0F19]/60"
                 >
-                  Technical Track
+                  Technical Track <span className="text-rose-500">*</span>
                 </label>
                 <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200/50">
                   Locked upon signup
@@ -254,8 +323,24 @@ export default function SignUpPage() {
                   </option>
                 ))}
               </select>
+
+              {/* Custom Track Input Field */}
+              {isCustomTrack && (
+                <div className="pt-1 animate-[fade-in_0.3s_ease]">
+                  <input
+                    id="custom-tech-track"
+                    type="text"
+                    value={customTrack}
+                    onChange={(e) => setCustomTrack(e.target.value)}
+                    required
+                    placeholder="Enter your custom engineering track (e.g. Distributed Systems)"
+                    className={`w-full h-11 px-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-sm text-[#0B0F19] font-medium focus:bg-white focus:outline-none transition-all placeholder:text-[#0B0F19]/30 ${focusRingClass}`}
+                  />
+                </div>
+              )}
+
               <p className="text-[10.5px] text-[#0B0F19]/45 leading-tight">
-                Your technical track is permanently bound to anchor your AI evaluation and evidence dossier.
+                Your technical track anchors your AI assessment algorithms and live evidence dossier.
               </p>
             </div>
 
@@ -265,7 +350,7 @@ export default function SignUpPage() {
                 htmlFor="email"
                 className="block text-xs font-bold uppercase tracking-wider text-[#0B0F19]/60"
               >
-                Email Address
+                Email Address <span className="text-rose-500">*</span>
               </label>
               <input
                 id="email"
@@ -273,7 +358,7 @@ export default function SignUpPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                placeholder="engineer@domain.com"
+                placeholder="yourname@gmail.com"
                 className={`w-full h-11 px-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-sm text-[#0B0F19] font-medium focus:bg-white focus:outline-none transition-all placeholder:text-[#0B0F19]/30 ${focusRingClass}`}
               />
             </div>
@@ -284,7 +369,7 @@ export default function SignUpPage() {
                 htmlFor="password"
                 className="block text-xs font-bold uppercase tracking-wider text-[#0B0F19]/60"
               >
-                Password
+                Password <span className="text-rose-500">*</span>
               </label>
               <div className="relative">
                 <input
@@ -300,7 +385,7 @@ export default function SignUpPage() {
                   type="button"
                   id="toggle-password"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#0B0F19]/40 hover:text-[#0B0F19] transition-colors"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#0B0F19]/40 hover:text-[#0B0F19] transition-colors cursor-pointer"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -318,9 +403,7 @@ export default function SignUpPage() {
                       className={`
                         flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all duration-200
                         ${rule.passed
-                          ? isStudent
-                            ? 'bg-student-500 border-student-500'
-                            : 'bg-[#6E8F75] border-[#6E8F75]'
+                          ? 'bg-[#6E8F75] border-[#6E8F75]'
                           : 'bg-transparent border-[#0B0F19]/20'
                         }
                       `}
@@ -343,20 +426,27 @@ export default function SignUpPage() {
             <button
               id="create-account-btn"
               type="submit"
-              disabled={!isFormValid}
+              disabled={!isFormValid || isLoading}
               className={`
                 w-full py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center gap-2
                 transition-all duration-300 shadow-md mt-4
-                ${isFormValid
+                ${isFormValid && !isLoading
                   ? `${primaryBgClass} ${shadowClass} text-white hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] cursor-pointer`
-                  : isStudent
-                    ? 'bg-student-500/30 text-white/70 cursor-not-allowed'
-                    : 'bg-[#6E8F75]/30 text-white/70 cursor-not-allowed'
+                  : 'bg-[#6E8F75]/30 text-white/70 cursor-not-allowed'
                 }
               `}
             >
-              <span>Continue to Onboarding</span>
-              <ArrowRight className="w-4 h-4" />
+              {isLoading ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 text-white animate-spin" />
+                  <span>Creating Candidate Account...</span>
+                </span>
+              ) : (
+                <>
+                  <span>Create Talent Account</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
             </button>
           </form>
 
@@ -369,30 +459,69 @@ export default function SignUpPage() {
           </div>
 
           {/* Social Logins */}
-          <div className="grid grid-cols-3 gap-2.5">
+          <div className="grid grid-cols-4 gap-2.5">
             <button
               type="button"
-              onClick={() => navigate(isStudent ? '/wizard' : '/candidates/wizard')}
-              className="flex items-center justify-center py-2.5 rounded-xl border border-[#0B0F19]/[0.08] hover:bg-[#FAF9F6] hover:border-[#0B0F19]/20 transition-all text-xs font-semibold"
+              id="signup-google-btn"
+              disabled={socialLoading !== null}
+              onClick={() => handleSocialSignUp('google')}
+              className="flex items-center justify-center py-2.5 rounded-xl border border-[#0B0F19]/[0.08] hover:bg-[#FAF9F6] hover:border-[#0B0F19]/20 transition-all text-xs font-semibold cursor-pointer disabled:opacity-50"
               title="Sign up with Google"
+              aria-label="Sign up with Google"
             >
-              <GoogleIcon className="w-4 h-4" />
+              {socialLoading === 'google' ? (
+                <Loader2 className="w-4 h-4 text-[#4285F4] animate-spin" />
+              ) : (
+                <GoogleIcon className="w-4 h-4" />
+              )}
             </button>
+
             <button
               type="button"
-              onClick={() => navigate(isStudent ? '/wizard' : '/candidates/wizard')}
-              className="flex items-center justify-center py-2.5 rounded-xl border border-[#0B0F19]/[0.08] hover:bg-[#FAF9F6] hover:border-[#0B0F19]/20 transition-all text-xs font-semibold"
+              id="signup-linkedin-btn"
+              disabled={socialLoading !== null}
+              onClick={() => handleSocialSignUp('linkedin')}
+              className="flex items-center justify-center py-2.5 rounded-xl border border-[#0B0F19]/[0.08] hover:bg-[#FAF9F6] hover:border-[#0B0F19]/20 transition-all text-xs font-semibold cursor-pointer disabled:opacity-50"
               title="Sign up with LinkedIn"
+              aria-label="Sign up with LinkedIn"
             >
-              <LinkedInIcon className="w-4 h-4 text-[#0077b5]" />
+              {socialLoading === 'linkedin' ? (
+                <Loader2 className="w-4 h-4 text-[#0A66C2] animate-spin" />
+              ) : (
+                <LinkedInIcon className="w-4 h-4 text-[#0077b5]" />
+              )}
             </button>
+
             <button
               type="button"
-              onClick={() => navigate(isStudent ? '/wizard' : '/candidates/wizard')}
-              className="flex items-center justify-center py-2.5 rounded-xl border border-[#0B0F19]/[0.08] hover:bg-[#FAF9F6] hover:border-[#0B0F19]/20 transition-all text-xs font-semibold"
+              id="signup-github-btn"
+              disabled={socialLoading !== null}
+              onClick={() => handleSocialSignUp('github')}
+              className="flex items-center justify-center py-2.5 rounded-xl border border-[#0B0F19]/[0.08] hover:bg-[#FAF9F6] hover:border-[#0B0F19]/20 transition-all text-xs font-semibold cursor-pointer disabled:opacity-50"
               title="Sign up with GitHub"
+              aria-label="Sign up with GitHub"
             >
-              <GitHubIcon className="w-4 h-4 text-[#0B0F19]" />
+              {socialLoading === 'github' ? (
+                <Loader2 className="w-4 h-4 text-[#0B0F19] animate-spin" />
+              ) : (
+                <GitHubIcon className="w-4 h-4 text-[#0B0F19]" />
+              )}
+            </button>
+
+            <button
+              type="button"
+              id="signup-apple-btn"
+              disabled={socialLoading !== null}
+              onClick={() => handleSocialSignUp('apple')}
+              className="flex items-center justify-center py-2.5 rounded-xl border border-[#0B0F19]/[0.08] hover:bg-[#FAF9F6] hover:border-[#0B0F19]/20 transition-all text-xs font-semibold cursor-pointer disabled:opacity-50"
+              title="Sign up with Apple"
+              aria-label="Sign up with Apple"
+            >
+              {socialLoading === 'apple' ? (
+                <Loader2 className="w-4 h-4 text-[#0B0F19] animate-spin" />
+              ) : (
+                <AppleIcon className="w-4 h-4 text-[#0B0F19]" />
+              )}
             </button>
           </div>
 

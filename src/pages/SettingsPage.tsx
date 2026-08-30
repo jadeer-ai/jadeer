@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUserRole } from '@/contexts/UserRoleContext';
 import { useCandidateJourney } from '@/contexts/CandidateJourneyContext';
+import { AuthService } from '@/services/authService';
 import {
   Settings,
   Mail,
@@ -16,11 +17,16 @@ import {
   KeyRound,
   Save,
   AlertCircle,
+  Smartphone,
+  Loader2,
+  ShieldAlert,
+  X,
+  LogOut,
 } from 'lucide-react';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    JADEER — SETTINGS & PREFERENCES
-   Ultra-minimalist, smart account security and email notification preferences.
+   Ultra-minimalist, smart account security, 2FA & email preferences.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 export default function SettingsPage() {
@@ -29,12 +35,31 @@ export default function SettingsPage() {
   const navigate = useNavigate();
 
   // Account state
-  const [email, setEmail] = useState('ahmad.hassan@example.com');
+  const session = AuthService.getCurrentSession();
+  const [email, setEmail] = useState(session?.user?.email || 'ahmad.hassan@example.com');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+
+  // 2FA state
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [twoFactorModal, setTwoFactorModal] = useState<'enable' | 'disable' | null>(null);
+  const [twoFactorOtp, setTwoFactorOtp] = useState('');
+  const [twoFactorPassword, setTwoFactorPassword] = useState('');
+  const [twoFactorLoading, setTwoFactorLoading] = useState(false);
+  const [twoFactorError, setTwoFactorError] = useState<string | null>(null);
+  const [demoOtp, setDemoOtp] = useState<string | null>(null);
+
+  // Fetch initial 2FA status
+  useEffect(() => {
+    AuthService.get2faStatus(email).then((res) => {
+      if (res.success) {
+        setTwoFactorEnabled(res.twoFactorEnabled);
+      }
+    });
+  }, [email]);
 
   // Notification toggles
   const [notifications, setNotifications] = useState({
@@ -63,6 +88,64 @@ export default function SettingsPage() {
 
   const toggleNotification = (key: keyof typeof notifications) => {
     setNotifications((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  // Open 2FA Setup Modal
+  const handleStartEnable2fa = async () => {
+    setTwoFactorError(null);
+    setTwoFactorOtp('');
+    setTwoFactorLoading(true);
+    setTwoFactorModal('enable');
+
+    const res = await AuthService.sendOtp(email, 'setup');
+    setTwoFactorLoading(false);
+
+    if (res.success && res.code) {
+      setDemoOtp(res.code);
+    } else if (!res.success) {
+      setTwoFactorError(res.error || 'Failed to dispatch verification code.');
+    }
+  };
+
+  // Confirm 2FA OTP verification
+  const handleConfirmEnable2fa = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!twoFactorOtp.trim()) return;
+
+    setTwoFactorError(null);
+    setTwoFactorLoading(true);
+
+    const res = await AuthService.verifyOtp(email, twoFactorOtp.trim(), 'setup');
+    setTwoFactorLoading(false);
+
+    if (res.success) {
+      setTwoFactorEnabled(true);
+      setTwoFactorModal(null);
+      setSavedToast('Two-Factor Authentication (2FA) has been successfully activated!');
+      setTimeout(() => setSavedToast(null), 3500);
+    } else {
+      setTwoFactorError(res.error || 'Invalid verification code. Please check and retry.');
+    }
+  };
+
+  // Confirm 2FA Disable
+  const handleConfirmDisable2fa = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTwoFactorError(null);
+    setTwoFactorLoading(true);
+
+    const res = await AuthService.toggle2fa(false, twoFactorPassword);
+    setTwoFactorLoading(false);
+
+    if (res.success) {
+      setTwoFactorEnabled(false);
+      setTwoFactorModal(null);
+      setTwoFactorPassword('');
+      setSavedToast('Two-Factor Authentication (2FA) has been disabled.');
+      setTimeout(() => setSavedToast(null), 3500);
+    } else {
+      setTwoFactorError(res.error || 'Failed to disable 2FA. Please verify password.');
+    }
   };
 
   return (
@@ -448,12 +531,236 @@ export default function SettingsPage() {
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════
-         SECTION 3: PORTAL SETTINGS & RESET
+         SECTION 3: TWO-FACTOR AUTHENTICATION (2FA) & SECURITY
          ═══════════════════════════════════════════════════════════════ */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-red-100 shadow-[0_2px_16px_rgba(0,0,0,0.02)] space-y-4">
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#0B0F19]/[0.06] shadow-[0_2px_16px_rgba(0,0,0,0.02)] space-y-6">
+        <div className="flex items-center justify-between border-b border-[#0B0F19]/[0.06] pb-4">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-2xl ${twoFactorEnabled ? 'bg-emerald-50 text-emerald-600' : 'bg-[#0B0F19]/[0.05] text-[#0B0F19]'} flex items-center justify-center font-bold`}>
+              <Smartphone className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-lg sm:text-xl font-extrabold text-[#0B0F19] tracking-tight flex items-center gap-2.5">
+                <span>Two-Factor Authentication (2FA)</span>
+                <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${twoFactorEnabled ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-[#0B0F19]/[0.06] text-[#0B0F19]/60'}`}>
+                  {twoFactorEnabled ? 'Enabled' : 'Disabled'}
+                </span>
+              </h2>
+              <p className="text-xs text-[#0B0F19]/45">
+                Enforce a 6-digit verification code sent to your email on every login attempt for enhanced account protection.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={twoFactorEnabled ? () => setTwoFactorModal('disable') : handleStartEnable2fa}
+            className={`
+              px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer
+              ${twoFactorEnabled
+                ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
+                : (isStudent ? 'bg-student-500 hover:bg-student-600 text-white' : 'bg-[#6E8F75] hover:bg-[#5d7d64] text-white')
+              }
+            `}
+          >
+            {twoFactorEnabled ? 'Disable 2FA' : 'Enable 2FA'}
+          </button>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.05] flex items-start gap-3.5 text-xs text-[#0B0F19]/75">
+          <ShieldCheck className={`w-4 h-4 ${twoFactorEnabled ? 'text-emerald-600' : 'text-[#6E8F75]'} shrink-0 mt-0.5`} />
+          <div className="space-y-1">
+            <p className="font-bold text-[#0B0F19]">
+              {twoFactorEnabled
+                ? 'Your account is cryptographically protected by Two-Factor Authentication.'
+                : 'Protect your candidate profile, technical assessments, and interview invitations.'}
+            </p>
+            <p className="text-[#0B0F19]/60 leading-relaxed">
+              When enabled, signing in requires your password plus a single-use 6-digit OTP with strict 5-minute expiration and anti-brute-force rate limiting.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 2FA Setup Modal ────────────────────────────────────────── */}
+      {twoFactorModal === 'enable' && (
+        <div className="fixed inset-0 z-50 bg-[#0B0F19]/60 backdrop-blur-sm flex items-center justify-center p-4 animate-[fade-in_0.2s_ease]">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-[#0B0F19]/[0.08] relative">
+            <button
+              onClick={() => setTwoFactorModal(null)}
+              className="absolute right-5 top-5 p-1.5 rounded-full hover:bg-[#0B0F19]/[0.05] text-[#0B0F19]/40 hover:text-[#0B0F19] transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="space-y-2 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-[#6E8F75]/10 text-[#6E8F75] flex items-center justify-center mx-auto">
+                <Smartphone className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-extrabold text-[#0B0F19] tracking-tight">
+                Verify Two-Factor Authentication
+              </h3>
+              <p className="text-xs text-[#0B0F19]/60 max-w-xs mx-auto">
+                We've sent a 6-digit verification code to <strong className="text-[#0B0F19]">{email}</strong>.
+              </p>
+            </div>
+
+            {demoOtp && (
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-center text-xs text-amber-800 font-mono">
+                Sandbox Demo Code: <strong>{demoOtp}</strong> (Valid for 5 mins)
+              </div>
+            )}
+
+            {twoFactorError && (
+              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-semibold flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{twoFactorError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleConfirmEnable2fa} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#0B0F19]/60 mb-1.5 text-center">
+                  Enter 6-Digit Code
+                </label>
+                <input
+                  type="text"
+                  maxLength={6}
+                  value={twoFactorOtp}
+                  onChange={(e) => setTwoFactorOtp(e.target.value.replace(/\D/g, ''))}
+                  placeholder="123456"
+                  required
+                  autoFocus
+                  className="w-full h-12 text-center text-xl font-mono font-bold tracking-[0.3em] rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.1] focus:bg-white focus:outline-none focus:border-[#6E8F75]"
+                />
+              </div>
+
+              <div className="pt-2 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setTwoFactorModal(null)}
+                  className="flex-1 py-3 rounded-xl bg-[#FAF9F6] text-[#0B0F19]/70 text-xs font-bold hover:bg-[#0B0F19]/[0.05] transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={twoFactorOtp.length < 6 || twoFactorLoading}
+                  className="flex-1 py-3 rounded-xl bg-[#6E8F75] text-white text-xs font-bold hover:bg-[#5d7d64] disabled:opacity-50 transition-all shadow-md flex items-center justify-center gap-2"
+                >
+                  {twoFactorLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>Activate 2FA</span>}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── 2FA Disable Modal ──────────────────────────────────────── */}
+      {twoFactorModal === 'disable' && (
+        <div className="fixed inset-0 z-50 bg-[#0B0F19]/60 backdrop-blur-sm flex items-center justify-center p-4 animate-[fade-in_0.2s_ease]">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-[#0B0F19]/[0.08] relative">
+            <button
+              onClick={() => setTwoFactorModal(null)}
+              className="absolute right-5 top-5 p-1.5 rounded-full hover:bg-[#0B0F19]/[0.05] text-[#0B0F19]/40 hover:text-[#0B0F19] transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="space-y-2 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
+                <ShieldAlert className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-extrabold text-[#0B0F19] tracking-tight">
+                Disable Two-Factor Authentication
+              </h3>
+              <p className="text-xs text-[#0B0F19]/60 max-w-xs mx-auto">
+                Please enter your password to confirm deactivation of 2FA.
+              </p>
+            </div>
+
+            {twoFactorError && (
+              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-semibold flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{twoFactorError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleConfirmDisable2fa} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#0B0F19]/60 mb-1.5">
+                  Current Password
+                </label>
+                <input
+                  type="password"
+                  value={twoFactorPassword}
+                  onChange={(e) => setTwoFactorPassword(e.target.value)}
+                  placeholder="••••••••••••"
+                  autoFocus
+                  className="w-full h-11 px-3.5 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.1] text-xs text-[#0B0F19] focus:bg-white focus:outline-none focus:border-rose-500"
+                />
+              </div>
+
+              <div className="pt-2 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setTwoFactorModal(null)}
+                  className="flex-1 py-3 rounded-xl bg-[#FAF9F6] text-[#0B0F19]/70 text-xs font-bold hover:bg-[#0B0F19]/[0.05] transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={twoFactorLoading}
+                  className="flex-1 py-3 rounded-xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 disabled:opacity-50 transition-all shadow-md flex items-center justify-center gap-2"
+                >
+                  {twoFactorLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>Confirm Deactivation</span>}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════
+         SECTION 4: PORTAL SETTINGS, LOGOUT & RESET
+         ═══════════════════════════════════════════════════════════════ */}
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-red-100 shadow-[0_2px_16px_rgba(0,0,0,0.02)] space-y-6">
+        {/* Sign Out Card */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#0B0F19]/[0.06]">
+          <div className="space-y-1">
+            <h2 className="text-lg font-extrabold text-[#0B0F19] tracking-tight flex items-center gap-2">
+              <LogOut className="w-5 h-5 text-rose-600" />
+              <span>Sign Out of Account</span>
+            </h2>
+            <p className="text-xs text-[#0B0F19]/55">
+              Safely terminate your current session, invalidate tokens, and clear stored credentials.
+            </p>
+          </div>
+          <button
+            type="button"
+            id="settings-signout-btn"
+            onClick={async () => {
+              await AuthService.logout();
+              clearUserRole();
+              resetOnboarding();
+              navigate('/signin');
+            }}
+            className="
+              inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl
+              bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold
+              transition-all shadow-md cursor-pointer active:scale-95
+            "
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Sign Out Now</span>
+          </button>
+        </div>
+
+        {/* Portal Path Reset */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
-            <h2 className="text-lg font-extrabold text-[#0B0F19] tracking-tight">
+            <h2 className="text-base font-bold text-[#0B0F19] tracking-tight">
               Portal Path Selection
             </h2>
             <p className="text-xs text-[#0B0F19]/55">
@@ -468,7 +775,7 @@ export default function SettingsPage() {
               navigate('/');
             }}
             className="
-              inline-flex items-center justify-center px-5 py-3 rounded-2xl
+              inline-flex items-center justify-center px-5 py-2.5 rounded-xl
               bg-red-50 text-red-600 text-xs font-bold border border-red-100
               hover:bg-red-100 hover:text-red-700 transition-all cursor-pointer active:scale-95
             "

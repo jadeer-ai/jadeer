@@ -136,3 +136,21 @@ export function GuestOnlyRouteGuard({ children }: RouteGuardProps) {
 
   return <>{children}</>;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   4. AUTHENTICATED CANDIDATE & STUDENT ROUTE GUARD
+   ─────────────────────────────────────────────────────────────────────────
+   Guarantees that candidate portal workspaces, AI assessments, and profiles
+   are strictly inaccessible when a user is logged out.
+   ═══════════════════════════════════════════════════════════════════════════ */
+export function AuthenticatedRouteGuard({ children }: RouteGuardProps) {
+  const session = AuthService.getCurrentSession();
+  const location = useLocation();
+
+  if (!session || !AuthService.isAuthenticated()) {
+    return <Navigate to={`/signin?redirect=${encodeURIComponent(location.pathname)}`} replace />;
+  }
+
+  return <>{children}</>;
+}
+

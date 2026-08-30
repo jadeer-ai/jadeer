@@ -3,6 +3,7 @@ import { MainLayout, EmployerLayout } from '@/components/layout';
 import LandingPage from '@/pages/LandingPage';
 import SignUpPage from '@/pages/SignUpPage';
 import SignInPage from '@/pages/SignInPage';
+import OtpVerificationPage from '@/pages/OtpVerificationPage';
 import CandidateWizardPage from '@/pages/CandidateWizardPage';
 import StudentDashboardPage from '@/pages/StudentDashboardPage';
 import MentorConsultationPage from '@/pages/MentorConsultationPage';
@@ -31,70 +32,26 @@ import {
   AdminRouteGuard,
   EmployerRouteGuard,
   GuestOnlyRouteGuard,
+  AuthenticatedRouteGuard,
 } from '@/components/common/ProtectedRoute';
+import AuthTestPage from '@/pages/AuthTestPage';
 
 const router = createBrowserRouter([
-  /* ── Public & Authentication Pages (Guest Gated) ───────────────────── */
+  /* ── Public & Authentication Pages ─────────────────────────────────── */
   { path: '/', element: <LandingPage /> },
-  {
-    path: '/signup',
-    element: (
-      <GuestOnlyRouteGuard>
-        <SignUpPage />
-      </GuestOnlyRouteGuard>
-    ),
-  },
-  {
-    path: '/signin',
-    element: (
-      <GuestOnlyRouteGuard>
-        <SignInPage />
-      </GuestOnlyRouteGuard>
-    ),
-  },
-  {
-    path: '/login',
-    element: (
-      <GuestOnlyRouteGuard>
-        <SignInPage />
-      </GuestOnlyRouteGuard>
-    ),
-  },
+  { path: '/test/auth', element: <AuthTestPage /> },
+  { path: '/test-auth', element: <AuthTestPage /> },
+  { path: '/signup', element: <SignUpPage /> },
+  { path: '/verify-otp', element: <OtpVerificationPage /> },
+  { path: '/signin', element: <SignInPage /> },
+  { path: '/login', element: <SignInPage /> },
   { path: '/wizard', element: <CandidateWizardPage /> },
   { path: '/employer', element: <EmployerLandingPage /> },
   { path: '/employer/landing', element: <EmployerLandingPage /> },
-  {
-    path: '/employer/signin',
-    element: (
-      <GuestOnlyRouteGuard>
-        <EmployerSignInPage />
-      </GuestOnlyRouteGuard>
-    ),
-  },
-  {
-    path: '/employer/login',
-    element: (
-      <GuestOnlyRouteGuard>
-        <EmployerSignInPage />
-      </GuestOnlyRouteGuard>
-    ),
-  },
-  {
-    path: '/employer/signup',
-    element: (
-      <GuestOnlyRouteGuard>
-        <EmployerSignUpPage />
-      </GuestOnlyRouteGuard>
-    ),
-  },
-  {
-    path: '/employer/onboarding',
-    element: (
-      <GuestOnlyRouteGuard>
-        <EmployerSignUpPage />
-      </GuestOnlyRouteGuard>
-    ),
-  },
+  { path: '/employer/signin', element: <EmployerSignInPage /> },
+  { path: '/employer/login', element: <EmployerSignInPage /> },
+  { path: '/employer/signup', element: <EmployerSignUpPage /> },
+  { path: '/employer/onboarding', element: <EmployerSignUpPage /> },
 
   /* ── Admin Console Routes (RBAC Protected) ─────────────────────────── */
   {
@@ -115,24 +72,20 @@ const router = createBrowserRouter([
   },
   {
     path: '/admin/signin',
-    element: (
-      <GuestOnlyRouteGuard>
-        <AdminSignInPage />
-      </GuestOnlyRouteGuard>
-    ),
+    element: <AdminSignInPage />,
   },
   {
     path: '/admin/login',
-    element: (
-      <GuestOnlyRouteGuard>
-        <AdminSignInPage />
-      </GuestOnlyRouteGuard>
-    ),
+    element: <AdminSignInPage />,
   },
 
   /* ── Candidate Portal Shell ────────────────────────────────────────── */
   {
-    element: <MainLayout />,
+    element: (
+      <AuthenticatedRouteGuard>
+        <MainLayout />
+      </AuthenticatedRouteGuard>
+    ),
     children: [
       /* Main Candidate Dashboard (Home View) */
       { path: '/dashboard', element: <DashboardPage /> },

@@ -1,6 +1,7 @@
 export { default as LandingPage } from './LandingPage';
 export { default as SignUpPage } from './SignUpPage';
 export { default as SignInPage } from './SignInPage';
+export { default as OtpVerificationPage } from './OtpVerificationPage';
 export { default as CandidateWizardPage } from './CandidateWizardPage';
 export { default as DashboardPage } from './DashboardPage';
 export { default as CandidateProfilesPage } from './CandidateProfilesPage';

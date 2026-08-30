@@ -61,9 +61,10 @@ export interface CandidateData {
   bio: string;
   matchScore: number;
   aiScore: number;
-  githubUrl: string;
-  linkedinUrl: string;
-  portfolioUrl: string;
+  githubUrl?: string;
+  linkedinUrl?: string;
+  portfolioUrl?: string;
+  website?: string;
   resumeFileName: string;
   skills: {
     languages: string[];
@@ -701,44 +702,58 @@ export default function CandidateProfilesPage() {
 
             {!isEditing ? (
               <div className="space-y-2.5 text-xs">
-                <a
-                  href={profile.githubUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center justify-between p-3 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.04] hover:border-[#6E8F75]/30 transition-colors group"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <GitHubIcon className="w-4 h-4 text-[#0B0F19]" />
-                    <span className="font-bold text-[#0B0F19]">GitHub</span>
-                  </div>
-                  <ExternalLink className="w-3.5 h-3.5 text-[#0B0F19]/30 group-hover:text-[#6E8F75]" />
-                </a>
+                {Boolean(profile.githubUrl?.trim()) && (
+                  <a
+                    href={profile.githubUrl!.trim()}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center justify-between p-3 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.04] hover:border-[#6E8F75]/30 transition-colors group"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <GitHubIcon className="w-4 h-4 text-[#0B0F19]" />
+                      <span className="font-bold text-[#0B0F19]">GitHub</span>
+                    </div>
+                    <ExternalLink className="w-3.5 h-3.5 text-[#0B0F19]/30 group-hover:text-[#6E8F75]" />
+                  </a>
+                )}
 
-                <a
-                  href={profile.linkedinUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center justify-between p-3 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.04] hover:border-[#6E8F75]/30 transition-colors group"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <LinkedInIcon className="w-4 h-4 text-[#0077b5]" />
-                    <span className="font-bold text-[#0B0F19]">LinkedIn</span>
-                  </div>
-                  <ExternalLink className="w-3.5 h-3.5 text-[#0B0F19]/30 group-hover:text-[#6E8F75]" />
-                </a>
+                {Boolean(profile.linkedinUrl?.trim()) && (
+                  <a
+                    href={profile.linkedinUrl!.trim()}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center justify-between p-3 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.04] hover:border-[#6E8F75]/30 transition-colors group"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <LinkedInIcon className="w-4 h-4 text-[#0077b5]" />
+                      <span className="font-bold text-[#0B0F19]">LinkedIn</span>
+                    </div>
+                    <ExternalLink className="w-3.5 h-3.5 text-[#0B0F19]/30 group-hover:text-[#6E8F75]" />
+                  </a>
+                )}
 
-                <a
-                  href={profile.portfolioUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center justify-between p-3 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.04] hover:border-[#6E8F75]/30 transition-colors group"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Globe className="w-4 h-4 text-[#6E8F75]" />
-                    <span className="font-bold text-[#0B0F19]">Personal Website</span>
-                  </div>
-                  <ExternalLink className="w-3.5 h-3.5 text-[#0B0F19]/30 group-hover:text-[#6E8F75]" />
-                </a>
+                {/* Personal Website / Portfolio Link: Conditionally verified and completely hidden if missing/empty */}
+                {Boolean((profile.website || profile.portfolioUrl)?.trim()) && (
+                  <a
+                    href={(profile.website || profile.portfolioUrl)!.trim()}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center justify-between p-3 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.04] hover:border-[#6E8F75]/30 transition-colors group"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Globe className="w-4 h-4 text-[#6E8F75]" />
+                      <span className="font-bold text-[#0B0F19]">Personal Website</span>
+                    </div>
+                    <ExternalLink className="w-3.5 h-3.5 text-[#0B0F19]/30 group-hover:text-[#6E8F75]" />
+                  </a>
+                )}
+
+                {/* Fallback if no external profiles are connected */}
+                {!profile.githubUrl?.trim() && !profile.linkedinUrl?.trim() && !(profile.website || profile.portfolioUrl)?.trim() && (
+                  <p className="text-xs text-[#0B0F19]/40 italic py-2 text-center">
+                    No external profiles connected yet.
+                  </p>
+                )}
               </div>
             ) : (
               <div className="space-y-3 text-xs">
@@ -746,27 +761,30 @@ export default function CandidateProfilesPage() {
                   <label className="block text-[10px] font-bold text-[#0B0F19]/40 mb-1">GitHub URL</label>
                   <input
                     type="text"
-                    value={draft.githubUrl}
+                    value={draft.githubUrl || ''}
                     onChange={(e) => setDraft({ ...draft, githubUrl: e.target.value })}
                     className="w-full h-8 px-2.5 rounded-lg border border-[#0B0F19]/10 text-xs"
+                    placeholder="https://github.com/username"
                   />
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-[#0B0F19]/40 mb-1">LinkedIn URL</label>
                   <input
                     type="text"
-                    value={draft.linkedinUrl}
+                    value={draft.linkedinUrl || ''}
                     onChange={(e) => setDraft({ ...draft, linkedinUrl: e.target.value })}
                     className="w-full h-8 px-2.5 rounded-lg border border-[#0B0F19]/10 text-xs"
+                    placeholder="https://linkedin.com/in/username"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-[#0B0F19]/40 mb-1">Portfolio Website</label>
+                  <label className="block text-[10px] font-bold text-[#0B0F19]/40 mb-1">Personal Website / Portfolio</label>
                   <input
                     type="text"
-                    value={draft.portfolioUrl}
-                    onChange={(e) => setDraft({ ...draft, portfolioUrl: e.target.value })}
+                    value={draft.website || draft.portfolioUrl || ''}
+                    onChange={(e) => setDraft({ ...draft, website: e.target.value, portfolioUrl: e.target.value })}
                     className="w-full h-8 px-2.5 rounded-lg border border-[#0B0F19]/10 text-xs"
+                    placeholder="https://yourwebsite.dev"
                   />
                 </div>
               </div>

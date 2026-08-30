@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { Show, UserButton } from '@clerk/react';
 import {
   ArrowRight,
   ChevronRight,
@@ -17,7 +18,7 @@ import {
   Zap,
   Check,
 } from 'lucide-react';
-import { BrandLogo } from '@/components/common';
+import { BrandLogo, NeuralGridCanvas } from '@/components/common';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    JADEER LANDING PAGE — UNIFIED TALENT CERTIFICATION PLATFORM
@@ -31,7 +32,6 @@ const navLinks = [
   { label: 'How It Works', href: '#how-it-works' },
   { label: 'Validation Pipeline', href: '#pipeline' },
   { label: 'Evidence Dossier', href: '#evidence' },
-  { label: 'Mentorship', href: '#mentorship' },
 ];
 
 /* ── Navbar Component ───────────────────────────────────────────────────── */
@@ -88,31 +88,63 @@ function Navbar() {
           {/* ── Desktop Actions ────────────────────────────────────── */}
           <div className="hidden md:flex items-center gap-3">
             <Link
-              to="/signin"
-              id="nav-signin"
+              to="/employer"
+              id="nav-for-companies"
               className="
-                px-3.5 py-2 text-[14.5px] font-semibold text-white/85
+                px-3.5 py-2 text-[14.5px] font-semibold text-white/80
                 transition-colors duration-200 hover:text-white
+                hover:bg-white/[0.06] rounded-xl
               "
             >
-              Sign In
+              For Companies
             </Link>
 
-            <Link
-              to="/signup"
-              id="nav-join-talent"
-              className="
-                inline-flex items-center gap-2 px-5 py-2.5
-                bg-[#6E8F75] text-white text-[14px] font-bold
-                rounded-full transition-all duration-300
-                hover:bg-[#5d7d64] hover:-translate-y-0.5
-                hover:shadow-[0_8px_20px_rgba(110,143,117,0.35)]
-                active:translate-y-0 active:scale-[0.98] shadow-sm
-              "
-            >
-              <span>Join as Talent</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            <div className="h-4 w-px bg-white/20 mx-0.5" />
+
+            <Show when="signed-out">
+              <Link
+                to="/signin"
+                id="nav-signin"
+                className="
+                  px-3.5 py-2 text-[14.5px] font-semibold text-white/85
+                  transition-colors duration-200 hover:text-white
+                "
+              >
+                Sign In
+              </Link>
+
+              <Link
+                to="/signup"
+                id="nav-join-talent"
+                className="
+                  inline-flex items-center gap-2 px-5 py-2.5
+                  bg-[#6E8F75] text-white text-[14px] font-bold
+                  rounded-full transition-all duration-300
+                  hover:bg-[#5d7d64] hover:-translate-y-0.5
+                  hover:shadow-[0_8px_20px_rgba(110,143,117,0.35)]
+                  active:translate-y-0 active:scale-[0.98] shadow-sm
+                "
+              >
+                <span>Join as Talent</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </Show>
+
+            <Show when="signed-in">
+              <Link
+                to="/dashboard"
+                id="nav-dashboard"
+                className="
+                  px-3.5 py-2 text-[14.5px] font-semibold text-white/85
+                  transition-colors duration-200 hover:text-white
+                "
+              >
+                Dashboard
+              </Link>
+              <div className="flex items-center pl-1">
+                <UserButton />
+              </div>
+            </Show>
           </div>
 
           {/* ── Mobile Menu Toggle ─────────────────────────────────── */}
@@ -151,25 +183,42 @@ function Navbar() {
           <div className="pt-4 border-t border-white/[0.08] flex flex-col gap-2.5">
             <Link
               to="/employer"
+              id="mobile-nav-for-companies"
               onClick={() => setMobileOpen(false)}
               className="w-full text-center py-3 text-sm font-bold text-white rounded-2xl bg-white/[0.06] hover:bg-white/10"
             >
-              For Employers
+              For Companies
             </Link>
-            <Link
-              to="/signin"
-              onClick={() => setMobileOpen(false)}
-              className="w-full text-center py-3 text-sm font-bold text-white rounded-2xl bg-white/[0.06] hover:bg-white/10"
-            >
-              Sign In
-            </Link>
-            <Link
-              to="/signup"
-              onClick={() => setMobileOpen(false)}
-              className="w-full text-center py-3 text-sm font-bold text-white bg-[#6E8F75] rounded-2xl shadow-sm"
-            >
-              Join as Talent →
-            </Link>
+
+            <Show when="signed-out">
+              <Link
+                to="/signin"
+                onClick={() => setMobileOpen(false)}
+                className="w-full text-center py-3 text-sm font-bold text-white rounded-2xl bg-white/[0.06] hover:bg-white/10"
+              >
+                Sign In
+              </Link>
+              <Link
+                to="/signup"
+                onClick={() => setMobileOpen(false)}
+                className="w-full text-center py-3 text-sm font-bold text-white rounded-2xl bg-[#6E8F75] hover:bg-[#5d7d64]"
+              >
+                Join as Talent →
+              </Link>
+            </Show>
+
+            <Show when="signed-in">
+              <div className="flex items-center justify-between py-2.5 px-3 rounded-2xl bg-white/[0.06]">
+                <Link
+                  to="/dashboard"
+                  onClick={() => setMobileOpen(false)}
+                  className="text-sm font-semibold text-white hover:text-[#6E8F75]"
+                >
+                  Dashboard →
+                </Link>
+                <UserButton />
+              </div>
+            </Show>
           </div>
         </div>
       </div>
@@ -178,10 +227,133 @@ function Navbar() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   1. UNIFIED HERO SECTION (SINGLE ENTRY POINT)
+   1. CODE ASSEMBLER ENTRANCE ANIMATION & UNIFIED HERO SECTION
+   - 0.0s - 0.8s: High-frequency alphanumeric Matrix rain / telemetry stream
+   - 0.8s - 1.2s: Accelerating left-to-right snap-to-lock decryption
+   - >= 1.2s: Assembly lock complete & element staggered fade-in triggered
    ═══════════════════════════════════════════════════════════════════════════ */
 
+const TARGET_WORDS = [
+  { text: 'Your', isGreen: false },
+  { text: 'Mentality.', isGreen: false },
+  { text: 'Our', isGreen: false },
+  { text: 'Matrix.', isGreen: false },
+  { text: 'Their', isGreen: true },
+  { text: 'Peace', isGreen: true },
+  { text: 'of', isGreen: true },
+  { text: 'Mind.', isGreen: true },
+];
+
+const FULL_TARGET = TARGET_WORDS.map((w) => w.text).join(' ');
+const GLYPH_CHARS = '01ABCDEFXYZ#$@%&*+-/<>[]{}~=!?|_0x4A0x7F';
+
+function CodeAssemblerSlogan({ onAssembled }: { onAssembled: () => void }) {
+  const totalLength = FULL_TARGET.length;
+  const [lockedCount, setLockedCount] = useState<number>(0);
+  const [randomGlitchStr, setRandomGlitchStr] = useState<string>(() =>
+    Array.from({ length: totalLength }, () => GLYPH_CHARS[Math.floor(Math.random() * GLYPH_CHARS.length)]).join('')
+  );
+  const [isFullyAssembled, setIsFullyAssembled] = useState(false);
+
+  useEffect(() => {
+    let animFrame: number;
+    const startTime = performance.now();
+    const SCRAMBLE_MS = 800; // 0.8s pure stream
+    const TOTAL_MS = 1200;   // 1.2s full slogan assembly
+    const ASSEMBLY_WINDOW = TOTAL_MS - SCRAMBLE_MS; // 400ms decrypt sweep
+
+    const loop = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+
+      if (elapsed < SCRAMBLE_MS) {
+        // Phase 1: Pure rapid-fire Matrix stream
+        setRandomGlitchStr(
+          Array.from({ length: totalLength }, () => GLYPH_CHARS[Math.floor(Math.random() * GLYPH_CHARS.length)]).join('')
+        );
+        setLockedCount(0);
+        animFrame = requestAnimationFrame(loop);
+      } else if (elapsed < TOTAL_MS) {
+        // Phase 2: Decrypt left-to-right (accelerating ease curve)
+        const progress = (elapsed - SCRAMBLE_MS) / ASSEMBLY_WINDOW;
+        const eased = Math.min(1, Math.pow(progress, 1.25));
+        const currentLocked = Math.floor(eased * totalLength);
+
+        setLockedCount(currentLocked);
+        setRandomGlitchStr(
+          Array.from({ length: totalLength }, () => GLYPH_CHARS[Math.floor(Math.random() * GLYPH_CHARS.length)]).join('')
+        );
+        animFrame = requestAnimationFrame(loop);
+      } else {
+        // Phase 3: Slogan fully assembled & locked
+        setLockedCount(totalLength);
+        setIsFullyAssembled(true);
+        onAssembled();
+      }
+    };
+
+    animFrame = requestAnimationFrame(loop);
+
+    return () => cancelAnimationFrame(animFrame);
+  }, [totalLength, onAssembled]);
+
+  // Compute character mapping per word to prevent awkward line breaks
+  let globalCharIndex = 0;
+
+  return (
+    <h1
+      className="text-[clamp(2.5rem,5.5vw,4.5rem)] font-extrabold leading-[1.14] tracking-tight select-none text-[#0B0F19] min-h-[2.4em] sm:min-h-[2.3em] flex flex-wrap items-center justify-center"
+      aria-label={FULL_TARGET}
+    >
+      {TARGET_WORDS.map((wordObj, wordIdx) => {
+        const wordStartIndex = globalCharIndex;
+        const wordChars = Array.from(wordObj.text);
+        globalCharIndex += wordChars.length + 1; // +1 for trailing space
+
+        const isGreenWord = wordObj.isGreen;
+
+        return (
+          <span key={wordIdx} className="inline-block whitespace-nowrap mr-[0.26em] last:mr-0 relative">
+            {wordChars.map((char, charIdx) => {
+              const thisIndex = wordStartIndex + charIdx;
+              const isLocked = thisIndex < lockedCount || isFullyAssembled;
+              const displayChar = isLocked ? char : randomGlitchStr[thisIndex] || '0';
+
+              let charColor = isGreenWord ? 'text-[#6E8F75]' : 'text-[#0B0F19]';
+              if (!isLocked) {
+                charColor = isGreenWord ? 'text-[#6E8F75]/70 font-mono' : 'text-[#0B0F19]/45 font-mono';
+              }
+
+              return (
+                <span
+                  key={charIdx}
+                  className={`inline-block transition-colors duration-100 ${charColor} ${
+                    isLocked && thisIndex === lockedCount - 1 && !isFullyAssembled
+                      ? 'scale-110 drop-shadow-[0_0_10px_rgba(110,143,117,0.8)] text-emerald-400 font-bold'
+                      : ''
+                  }`}
+                >
+                  {displayChar}
+                </span>
+              );
+            })}
+            {/* Green underline under "Their Peace of Mind." once fully assembled */}
+            {isGreenWord && isFullyAssembled && wordIdx === 4 && (
+              <span className="absolute bottom-1 left-0 right-[-3.5em] sm:right-[-4em] h-[3px] bg-[#6E8F75]/30 rounded-full animate-[fade-in_0.4s_ease] pointer-events-none" />
+            )}
+          </span>
+        );
+      })}
+    </h1>
+  );
+}
+
 function UnifiedHeroSection() {
+  const [isAssembled, setIsAssembled] = useState(false);
+
+  const handleAssemblyComplete = useCallback(() => {
+    setIsAssembled(true);
+  }, []);
+
   return (
     <section className="relative overflow-hidden pt-40 sm:pt-48 pb-24 sm:pb-32 lg:pb-36">
       {/* Subtle Engineering Grid Background */}
@@ -207,167 +379,94 @@ function UnifiedHeroSection() {
       />
 
       <div className="relative mx-auto max-w-7xl px-6 sm:px-10 lg:px-12">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-14 items-center">
+        <div className="mx-auto max-w-4xl text-center space-y-7 sm:space-y-8">
 
-          {/* Left Column: Headline & Unified Actions */}
-          <div className="lg:col-span-7 space-y-7 sm:space-y-8 text-center lg:text-left">
-            {/* Eyebrow Pill */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-[#0B0F19]/[0.08] shadow-[0_2px_8px_rgba(0,0,0,0.02)] animate-[fade-in_0.5s_ease]">
-              <span className="w-2 h-2 rounded-full bg-[#6E8F75] animate-pulse" />
-              <span className="text-xs font-extrabold text-[#0B0F19]/75 uppercase tracking-wider">
-                Single Talent Portal • Engineering Certification
-              </span>
-            </div>
-
-            {/* Main Headline */}
-            <h1
-              className="
-                text-[clamp(2.5rem,5vw,4.15rem)] font-extrabold text-[#0B0F19]
-                leading-[1.14] tracking-tight
-                animate-[slide-up_0.6s_var(--ease-spring)_0.1s_both]
-              "
-            >
-              Certify your engineering depth with{' '}
-              <span className="relative inline-block text-[#6E8F75]">
-                verifiable proof.
-                <span className="absolute bottom-1 left-0 right-0 h-[3px] bg-[#6E8F75]/30 rounded-full" />
-              </span>
-            </h1>
-
-            {/* Sub-headline */}
-            <p
-              className="
-                text-[16px] sm:text-[18px] text-[#0B0F19]/65
-                leading-[1.7] max-w-2xl mx-auto lg:mx-0 font-normal
-                animate-[slide-up_0.6s_var(--ease-spring)_0.2s_both]
-              "
-            >
-              Whether you are a university student seeking industry mentorship or a graduate targeting full-time engineering roles, Jadeer evaluates your code depth through adaptive AI assessments, mentor calibration, and live evidence dossiers.
-            </p>
-
-            {/* ── Single Unified CTAs ── */}
-            <div
-              className="
-                flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2
-                animate-[slide-up_0.6s_var(--ease-spring)_0.3s_both]
-              "
-            >
-              <Link
-                to="/signup"
-                id="hero-join-talent-btn"
-                className="
-                  w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4
-                  bg-[#0B0F19] text-white text-[15px] font-bold rounded-2xl
-                  transition-all duration-300 hover:bg-[#1A2433] hover:-translate-y-0.5
-                  hover:shadow-[0_12px_28px_rgba(11,15,25,0.22)] active:scale-[0.98] shadow-md
-                "
-              >
-                <span>Join as Talent</span>
-                <ArrowRight className="w-4.5 h-4.5 text-[#6E8F75]" />
-              </Link>
-
-              <Link
-                to="/signin"
-                id="hero-signin-btn"
-                className="
-                  w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-4
-                  border-2 border-[#0B0F19]/[0.12] bg-white text-[#0B0F19]
-                  text-[15px] font-bold rounded-2xl transition-all duration-300
-                  hover:border-[#0B0F19]/30 hover:bg-[#FAF9F6] hover:-translate-y-0.5
-                  active:scale-[0.98] shadow-xs
-                "
-              >
-                <span>Sign In to Portal</span>
-              </Link>
-            </div>
-
-            {/* Unified Micro-Badges Bar */}
-            <div className="pt-3 flex justify-center lg:justify-start">
-              <div className="inline-flex flex-wrap items-center justify-center gap-3 sm:gap-4 px-5 py-3 rounded-2xl bg-white/90 border border-[#0B0F19]/[0.07] shadow-xs text-xs font-semibold text-[#0B0F19]/70">
-                <span className="flex items-center gap-1.5">
-                  <BrainCircuit className="w-3.5 h-3.5 text-[#6E8F75]" />
-                  Adaptive AI Code Radar
-                </span>
-                <span className="text-[#0B0F19]/20 hidden sm:inline">•</span>
-                <span className="flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-blue-500" />
-                  1-on-1 Mentor Calibration
-                </span>
-                <span className="text-[#0B0F19]/20 hidden sm:inline">•</span>
-                <span className="flex items-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                  Single User Architecture
-                </span>
-              </div>
-            </div>
+          {/* Eyebrow Pill */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-[#0B0F19]/[0.08] shadow-[0_2px_8px_rgba(0,0,0,0.02)] animate-[fade-in_0.5s_ease]">
+            <span className="w-2 h-2 rounded-full bg-[#6E8F75] animate-pulse" />
+            <span className="text-xs font-extrabold text-[#0B0F19]/75 uppercase tracking-wider">
+              Single Talent Portal • Engineering Certification
+            </span>
           </div>
 
-          {/* Right Column: Live Candidate Dossier Preview */}
-          <div className="lg:col-span-5 flex justify-center lg:justify-end items-center">
-            <div className="w-full max-w-[440px] bg-white rounded-3xl p-6 sm:p-7 border border-[#0B0F19]/[0.08] shadow-[0_20px_50px_-15px_rgba(0,0,0,0.06)] space-y-5 relative overflow-hidden">
-              <div className="h-1.5 w-full bg-gradient-to-r from-[#6E8F75] via-blue-500 to-[#6E8F75] absolute top-0 left-0" />
+          {/* Code Assembler Slogan */}
+          <CodeAssemblerSlogan onAssembled={handleAssemblyComplete} />
 
-              {/* Dossier Header */}
-              <div className="flex items-center justify-between pt-1">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0B0F19] to-[#1E2C42] text-white flex items-center justify-center font-bold text-sm shadow-sm">
-                    AH
-                  </div>
-                  <div>
-                    <h3 className="text-base font-extrabold text-[#0B0F19]">Ahmad Al-Hassan</h3>
-                    <p className="text-xs text-[#0B0F19]/50 font-medium">Backend & Systems Track • KFUPM</p>
-                  </div>
-                </div>
-                <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-extrabold">
-                  92% Verified
-                </span>
-              </div>
+          {/* Sub-headline (Staggered Fade-in) */}
+          <p
+            className={`
+              text-[16px] sm:text-[18.5px] text-[#0B0F19]/65
+              leading-[1.7] max-w-2xl mx-auto font-normal
+              transition-all duration-700 ease-out
+              ${isAssembled ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}
+            `}
+            style={{ transitionDelay: isAssembled ? '100ms' : '0ms' }}
+          >
+            Whether you are a university student seeking industry mentorship or a graduate targeting full-time engineering roles, Jadeer evaluates your code depth through adaptive AI assessments, mentor calibration, and live evidence dossiers.
+          </p>
 
-              {/* Competency Telemetry Bars */}
-              <div className="space-y-3 p-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.04]">
-                <span className="text-[10.5px] font-bold uppercase tracking-wider text-[#0B0F19]/45 block">
-                  Synchronized Telemetry:
-                </span>
-                <div className="space-y-2">
-                  <div>
-                    <div className="flex justify-between text-xs font-semibold text-[#0B0F19]/80 mb-1">
-                      <span>C++20 & Memory Layout (RAII)</span>
-                      <span className="text-[#6E8F75] font-extrabold">95%</span>
-                    </div>
-                    <div className="w-full h-2 rounded-full bg-white border border-[#0B0F19]/[0.06] overflow-hidden">
-                      <div className="h-full rounded-full bg-[#6E8F75]" style={{ width: '95%' }} />
-                    </div>
-                  </div>
+          {/* ── Directly beneath slogan: Two Primary CTAs (Staggered Fade-in) ── */}
+          <div
+            className={`
+              flex flex-col sm:flex-row items-center justify-center gap-4 pt-2
+              transition-all duration-700 ease-out
+              ${isAssembled ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}
+            `}
+            style={{ transitionDelay: isAssembled ? '250ms' : '0ms' }}
+          >
+            <Link
+              to="/signup"
+              id="hero-join-talent-btn"
+              className="
+                w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4
+                bg-[#0B0F19] text-white text-[15px] font-bold rounded-2xl
+                transition-all duration-300 hover:bg-[#1A2433] hover:-translate-y-0.5
+                hover:shadow-[0_12px_28px_rgba(11,15,25,0.22)] active:scale-[0.98] shadow-md
+              "
+            >
+              <span>Join as Talent</span>
+              <ArrowRight className="w-4.5 h-4.5 text-[#6E8F75]" />
+            </Link>
 
-                  <div>
-                    <div className="flex justify-between text-xs font-semibold text-[#0B0F19]/80 mb-1">
-                      <span>System Design & Distributed Queues</span>
-                      <span className="text-blue-500 font-extrabold">88%</span>
-                    </div>
-                    <div className="w-full h-2 rounded-full bg-white border border-[#0B0F19]/[0.06] overflow-hidden">
-                      <div className="h-full rounded-full bg-blue-500" style={{ width: '88%' }} />
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <Link
+              to="/signin"
+              id="hero-signin-btn"
+              className="
+                w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-4
+                border-2 border-[#0B0F19]/[0.12] bg-white text-[#0B0F19]
+                text-[15px] font-bold rounded-2xl transition-all duration-300
+                hover:border-[#0B0F19]/30 hover:bg-[#FAF9F6] hover:-translate-y-0.5
+                active:scale-[0.98] shadow-xs
+              "
+            >
+              <span>Sign In to Portal</span>
+            </Link>
+          </div>
 
-              {/* Mentor Calibration Pill */}
-              <div className="p-3.5 rounded-2xl bg-[#0B0F19]/[0.02] border border-[#0B0F19]/[0.05] flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <GraduationCap className="w-4 h-4 text-blue-500" />
-                  <span className="text-[#0B0F19]/70 font-medium">1-to-1 Mentor Calibrated</span>
-                </div>
-                <span className="font-bold text-[#0B0F19]">Eng. Sara @ Instabug</span>
-              </div>
-
-              {/* Direct CTA */}
-              <Link
-                to="/signup"
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-[#6E8F75] text-white text-xs font-bold hover:bg-[#5d7d64] transition-all"
-              >
-                <span>Create Your Verified Dossier</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
+          {/* Centered Micro-Badges Bar (Staggered Fade-in) */}
+          <div
+            className={`
+              pt-2 flex justify-center
+              transition-all duration-700 ease-out
+              ${isAssembled ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}
+            `}
+            style={{ transitionDelay: isAssembled ? '400ms' : '0ms' }}
+          >
+            <div className="inline-flex flex-wrap items-center justify-center gap-3 sm:gap-4 px-5 py-3 rounded-2xl bg-white/90 border border-[#0B0F19]/[0.07] shadow-xs text-xs font-semibold text-[#0B0F19]/70">
+              <span className="flex items-center gap-1.5">
+                <BrainCircuit className="w-3.5 h-3.5 text-[#6E8F75]" />
+                Adaptive AI Code Radar
+              </span>
+              <span className="text-[#0B0F19]/20 hidden sm:inline">•</span>
+              <span className="flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-blue-500" />
+                1-on-1 Mentor Calibration
+              </span>
+              <span className="text-[#0B0F19]/20 hidden sm:inline">•</span>
+              <span className="flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                Single User Architecture
+              </span>
             </div>
           </div>
         </div>
@@ -540,47 +639,7 @@ function TalentAdvantageSection() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   4. EMPLOYER CALLOUT SECTION
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-function EmployerCalloutSection() {
-  return (
-    <section className="py-16 sm:py-20 relative">
-      <div className="mx-auto max-w-7xl px-6 sm:px-10 lg:px-12">
-        <div className="p-8 sm:p-10 rounded-3xl bg-[#0B0F19] text-white border border-white/[0.08] shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="space-y-2 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-xs font-bold text-[#6E8F75]">
-              <Building2 className="w-3.5 h-3.5" />
-              <span>For Companies & Hiring Managers</span>
-            </div>
-            <h3 className="text-2xl font-extrabold text-white">
-              Looking to hire pre-calibrated engineering talent?
-            </h3>
-            <p className="text-sm text-white/65 leading-relaxed">
-              Explore verified candidate evidence dossiers, inspect automated code quality telemetry, and schedule 1-click interviews.
-            </p>
-          </div>
-
-          <Link
-            to="/employer"
-            className="
-              inline-flex items-center gap-2.5 px-6 py-3.5 rounded-2xl
-              bg-[#6E8F75] text-white text-sm font-bold shrink-0
-              hover:bg-[#5d7d64] hover:shadow-[0_8px_20px_rgba(110,143,117,0.35)]
-              transition-all
-            "
-          >
-            <span>Explore Employer Portal</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   5. UNIFIED FINAL CTA SECTION
+   4. UNIFIED FINAL CTA SECTION
    ═══════════════════════════════════════════════════════════════════════════ */
 
 function UnifiedFinalCtaSection() {
@@ -659,14 +718,18 @@ function Footer() {
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-[#FAF9F6] text-[#0B0F19] selection:bg-[#6E8F75]/20 selection:text-[#0B0F19]">
-      <Navbar />
-      <UnifiedHeroSection />
-      <ValidationArchitectureSection />
-      <TalentAdvantageSection />
-      <EmployerCalloutSection />
-      <UnifiedFinalCtaSection />
-      <Footer />
+    <div className="min-h-screen bg-[#FAF9F6] text-[#0B0F19] selection:bg-[#6E8F75]/20 selection:text-[#0B0F19] relative overflow-hidden">
+      {/* Clean Minimalist Background Grid Canvas */}
+      <NeuralGridCanvas />
+
+      <div className="relative z-10">
+        <Navbar />
+        <UnifiedHeroSection />
+        <ValidationArchitectureSection />
+        <TalentAdvantageSection />
+        <UnifiedFinalCtaSection />
+        <Footer />
+      </div>
     </div>
   );
 }

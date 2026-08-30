@@ -25,6 +25,8 @@ enum AuthProvider {
   EMAIL
   GOOGLE
   GITHUB
+  LINKEDIN
+  APPLE
 }
 
 enum SoftwareTrack {
@@ -102,11 +104,13 @@ model User {
   role          UserRole
   candidateType CandidateType? @map("candidate_type")
   authProvider  AuthProvider   @default(EMAIL)
-  isVerified    Boolean        @default(false)
-  isActive      Boolean        @default(true)
-  lastLoginAt   DateTime?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  isVerified        Boolean        @default(false)
+  isActive          Boolean        @default(true)
+  twoFactorEnabled  Boolean        @default(false) @map("two_factor_enabled")
+  twoFactorSecret   String?        @map("two_factor_secret")
+  lastLoginAt       DateTime?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
 
   // ── Relations ──────────────────────────────────────────────────────
   studentProfile StudentProfile?
@@ -116,6 +120,20 @@ model User {
   @@index([role])
   @@index([candidateType])
   @@map("users")
+}
+
+/// Two-factor authentication & email OTP verification state.
+model OtpVerification {
+  id        String   @id @default(cuid())
+  email     String
+  codeHash  String   @map("code_hash")
+  expiresAt DateTime @map("expires_at")
+  attempts  Int      @default(0)
+  purpose   String   @default("login")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([email])
+  @@map("otp_verifications")
 }
 
 /// Extended profile for students and graduates.
