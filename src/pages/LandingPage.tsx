@@ -28,17 +28,17 @@ import {
 import { BrandLogo } from '@/components/common';
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   JADEER LANDING PAGE — SIGNATURE BRAND IDENTITY (EMERALD & DEEP NAVY)
-   - Palette:
-     • Canvas & Surfaces: Crisp Off-White (#F8FAFC) & Pure White (#FFFFFF)
-     • Primary Brand: Deep Charcoal Navy (#0A192F / #0F172A / #1E293B)
-     • Accent Brand: Jadeer Signature Emerald Green (#10B981 / #059669 / #6E8F75)
-     • Muted / Body Text: Slate Gray (#64748B / #475569)
+   JADEER LANDING PAGE — ORIGINAL SAGE GREEN & DEEP NAVY IDENTITY
+   - Exact Color Tokens:
+     • Primary Headings / Anchors: Deep Navy (#0F172A / #172132)
+     • Signature Jadeer Accent: Muted Sage Green (#5E8174 / #7E9F92)
+     • Background Canvas: Crisp Off-White / Porcelain (#F8F9FA)
+     • Card Surfaces: Pure White (#FFFFFF) with subtle slate borders (#E2E8F0)
+     • Subtext / Meta: Neutral Slate (#64748B)
    - Layout:
-     • Floating pill capsule navbar
-     • Centered 3-line headline with exact Jadeer Brand color tokens
-     • Subtle vector isometric grid with floating geometric wireframe cubes
-     • Zero skyline photos / textures — clean, daylight, software architecture focus
+     • Floating rounded-full capsule navbar
+     • Centered 3-line headline with exact #0F172A & #5E8174 colors
+     • Clean, lightweight vector isometric wireframe grid (opacity-25)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ── Navigation Links ───────────────────────────────────────────────────── */
@@ -48,17 +48,17 @@ const navLinks = [
   { label: 'Evidence Dossier', href: '#evidence' },
 ];
 
-/* ── Subtle Vector Isometric Wireframe Grid Canvas ───────────────────────── */
-function SubtleIsometricWireframeBackground() {
+/* ── Clean Lightweight Vector Isometric Wireframe Grid Canvas ───────────── */
+function CleanIsometricWireframeBackground() {
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
-      {/* 1. Underlying Architectural Perspective Grid */}
+      {/* 1. Underlying Perspective Wireframe Grid (opacity-25) */}
       <div
-        className="absolute inset-0 opacity-[0.35]"
+        className="absolute inset-0 opacity-[0.25]"
         style={{
           backgroundImage: `
-            linear-gradient(to right, rgba(15, 23, 42, 0.06) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(15, 23, 42, 0.06) 1px, transparent 1px)
+            linear-gradient(to right, rgba(15, 23, 42, 0.08) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(15, 23, 42, 0.08) 1px, transparent 1px)
           `,
           backgroundSize: '48px 48px',
           maskImage: 'radial-gradient(ellipse 90% 70% at 50% 35%, #000 30%, transparent 80%)',
@@ -66,18 +66,18 @@ function SubtleIsometricWireframeBackground() {
         }}
       />
 
-      {/* 2. Vector Isometric Wireframe Cubes & Neural Data Nodes */}
+      {/* 2. Vector Isometric Wireframe Cubes & Neural Telemetry Lines */}
       <svg
-        className="absolute top-10 left-1/2 -translate-x-1/2 w-[1500px] h-[850px] opacity-[0.32]"
+        className="absolute top-10 left-1/2 -translate-x-1/2 w-[1500px] h-[850px] opacity-[0.25]"
         viewBox="0 0 1500 850"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
-        <g stroke="#0F172A" strokeWidth="1">
-          {/* ── Cube 1: Far Left High (Emerald Accent) ── */}
-          <polygon points="180,180 230,150 280,180 230,210" fill="#FFFFFF" fillOpacity="0.8" stroke="#10B981" strokeWidth="1.2" />
-          <polygon points="180,180 230,210 230,265 180,235" fill="#10B981" fillOpacity="0.08" stroke="#10B981" strokeWidth="1.2" />
-          <polygon points="230,210 280,180 280,235 230,265" fill="#0F172A" fillOpacity="0.04" stroke="#10B981" strokeWidth="1.2" />
+        <g stroke="#5E8174" strokeWidth="1">
+          {/* ── Cube 1: Far Left High (Sage Accent) ── */}
+          <polygon points="180,180 230,150 280,180 230,210" fill="#FFFFFF" fillOpacity="0.8" stroke="#5E8174" strokeWidth="1.2" />
+          <polygon points="180,180 230,210 230,265 180,235" fill="#5E8174" fillOpacity="0.08" stroke="#5E8174" strokeWidth="1.2" />
+          <polygon points="230,210 280,180 280,235 230,265" fill="#0F172A" fillOpacity="0.04" stroke="#5E8174" strokeWidth="1.2" />
 
           {/* ── Cube 2: Mid-Left Floating Cubelet ── */}
           <polygon points="380,280 420,255 460,280 420,305" fill="#FFFFFF" fillOpacity="0.75" stroke="#64748B" strokeWidth="0.9" />
@@ -85,42 +85,42 @@ function SubtleIsometricWireframeBackground() {
           <polygon points="420,305 460,280 460,325 420,350" fill="#0F172A" fillOpacity="0.04" stroke="#64748B" strokeWidth="0.9" />
 
           {/* ── Cube 3: Top Center Subtly Hovering Wireframe ── */}
-          <polygon points="700,100 755,65 810,100 755,135" fill="#FFFFFF" fillOpacity="0.85" stroke="#10B981" strokeWidth="1.2" strokeDasharray="3 3" />
-          <polygon points="700,100 755,135 755,195 700,160" fill="#10B981" fillOpacity="0.05" stroke="#10B981" strokeWidth="1.2" strokeDasharray="3 3" />
-          <polygon points="755,135 810,100 810,160 755,195" fill="#0F172A" fillOpacity="0.03" stroke="#10B981" strokeWidth="1.2" strokeDasharray="3 3" />
+          <polygon points="700,100 755,65 810,100 755,135" fill="#FFFFFF" fillOpacity="0.85" stroke="#5E8174" strokeWidth="1.2" strokeDasharray="3 3" />
+          <polygon points="700,100 755,135 755,195 700,160" fill="#5E8174" fillOpacity="0.05" stroke="#5E8174" strokeWidth="1.2" strokeDasharray="3 3" />
+          <polygon points="755,135 810,100 810,160 755,195" fill="#0F172A" fillOpacity="0.03" stroke="#5E8174" strokeWidth="1.2" strokeDasharray="3 3" />
 
           {/* ── Cube 4: Mid-Right Floating Isometric Block ── */}
           <polygon points="1060,260 1105,235 1150,260 1105,285" fill="#FFFFFF" fillOpacity="0.75" stroke="#64748B" strokeWidth="0.9" />
           <polygon points="1060,260 1105,285 1105,335 1060,310" fill="#64748B" fillOpacity="0.06" stroke="#64748B" strokeWidth="0.9" />
           <polygon points="1105,285 1150,260 1150,310 1105,335" fill="#0F172A" fillOpacity="0.04" stroke="#64748B" strokeWidth="0.9" />
 
-          {/* ── Cube 5: Far Right High (Emerald Accent) ── */}
-          <polygon points="1240,160 1290,130 1340,160 1290,190" fill="#FFFFFF" fillOpacity="0.8" stroke="#10B981" strokeWidth="1.2" />
-          <polygon points="1240,160 1290,190 1290,245 1240,215" fill="#10B981" fillOpacity="0.08" stroke="#10B981" strokeWidth="1.2" />
-          <polygon points="1290,190 1340,160 1340,215 1290,245" fill="#0F172A" fillOpacity="0.04" stroke="#10B981" strokeWidth="1.2" />
+          {/* ── Cube 5: Far Right High (Sage Accent) ── */}
+          <polygon points="1240,160 1290,130 1340,160 1290,190" fill="#FFFFFF" fillOpacity="0.8" stroke="#5E8174" strokeWidth="1.2" />
+          <polygon points="1240,160 1290,190 1290,245 1240,215" fill="#5E8174" fillOpacity="0.08" stroke="#5E8174" strokeWidth="1.2" />
+          <polygon points="1290,190 1340,160 1340,215 1290,245" fill="#0F172A" fillOpacity="0.04" stroke="#5E8174" strokeWidth="1.2" />
 
           {/* ── Connecting Vector Telemetry Grid & Data Nodes ── */}
-          <line x1="230" y1="265" x2="420" y2="255" stroke="#10B981" strokeWidth="0.8" strokeDasharray="3 3" strokeOpacity="0.45" />
-          <line x1="420" y1="305" x2="755" y2="195" stroke="#64748B" strokeWidth="0.8" strokeDasharray="3 3" strokeOpacity="0.35" />
-          <line x1="755" y1="195" x2="1105" y2="235" stroke="#64748B" strokeWidth="0.8" strokeDasharray="3 3" strokeOpacity="0.35" />
-          <line x1="1105" y1="285" x2="1290" y2="245" stroke="#10B981" strokeWidth="0.8" strokeDasharray="3 3" strokeOpacity="0.45" />
+          <line x1="230" y1="265" x2="420" y2="255" stroke="#5E8174" strokeWidth="0.8" strokeDasharray="3 3" strokeOpacity="0.5" />
+          <line x1="420" y1="305" x2="755" y2="195" stroke="#64748B" strokeWidth="0.8" strokeDasharray="3 3" strokeOpacity="0.4" />
+          <line x1="755" y1="195" x2="1105" y2="235" stroke="#64748B" strokeWidth="0.8" strokeDasharray="3 3" strokeOpacity="0.4" />
+          <line x1="1105" y1="285" x2="1290" y2="245" stroke="#5E8174" strokeWidth="0.8" strokeDasharray="3 3" strokeOpacity="0.5" />
 
-          {/* Glowing Neural Vertex Markers */}
-          <circle cx="230" cy="210" r="3" fill="#10B981" />
+          {/* Neural Vertex Markers */}
+          <circle cx="230" cy="210" r="3" fill="#5E8174" />
           <circle cx="420" cy="280" r="2.5" fill="#64748B" />
-          <circle cx="755" cy="135" r="3.5" fill="#10B981" />
+          <circle cx="755" cy="135" r="3.5" fill="#5E8174" />
           <circle cx="1105" cy="260" r="2.5" fill="#64748B" />
-          <circle cx="1290" cy="190" r="3" fill="#10B981" />
+          <circle cx="1290" cy="190" r="3" fill="#5E8174" />
         </g>
       </svg>
 
-      {/* 3. Soft Radial Glow Halo in Jadeer Emerald */}
+      {/* 3. Soft Radial Glow in Jadeer Sage Green */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           background: `
-            radial-gradient(ellipse 80% 55% at 50% 25%, rgba(16, 185, 129, 0.07) 0%, rgba(15, 23, 42, 0.03) 40%, transparent 75%),
-            linear-gradient(to bottom, rgba(248, 250, 252, 0) 0%, rgba(248, 250, 252, 0.6) 50%, #F8FAFC 90%, #F8FAFC 100%)
+            radial-gradient(ellipse 80% 55% at 50% 25%, rgba(94, 129, 116, 0.08) 0%, rgba(15, 23, 42, 0.02) 40%, transparent 75%),
+            linear-gradient(to bottom, rgba(248, 249, 250, 0) 0%, rgba(248, 249, 250, 0.6) 50%, #F8F9FA 90%, #F8F9FA 100%)
           `,
         }}
       />
@@ -145,15 +145,15 @@ function Navbar() {
       className={`
         fixed top-0 left-0 right-0 z-50 transition-all duration-300
         ${scrolled
-          ? 'bg-[#F8FAFC]/90 backdrop-blur-md border-b border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.03)]'
-          : 'bg-transparent border-b border-slate-200/50'
+          ? 'bg-[#F8F9FA]/90 backdrop-blur-md border-b border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.03)]'
+          : 'bg-transparent border-b border-slate-200/40'
         }
       `}
     >
       <div className="mx-auto max-w-7xl px-6 sm:px-10 lg:px-12">
         <div className="flex h-[76px] items-center justify-between">
 
-          {/* ── Brand Logo with signature green mark ────────────────── */}
+          {/* ── Brand Logo with Sage Green Mark ────────────────────── */}
           <BrandLogo size="md" href="/" textColor="dark" />
 
           {/* ── Center Frosted Pill Navigation Capsule ──────────────── */}
@@ -172,7 +172,7 @@ function Navbar() {
             ))}
           </div>
 
-          {/* ── Desktop Actions (Green & Navy Accent) ───────────────── */}
+          {/* ── Desktop Actions in Sage Green ───────────────────────── */}
           <div className="hidden md:flex items-center gap-4">
             <Link
               to="/employer"
@@ -191,7 +191,7 @@ function Navbar() {
                 id="nav-signin"
                 className="
                   px-3 py-2 text-[14px] font-semibold text-[#0F172A]
-                  transition-colors duration-200 hover:text-emerald-600
+                  transition-colors duration-200 hover:text-[#5E8174]
                 "
               >
                 Sign In
@@ -202,10 +202,10 @@ function Navbar() {
                 id="nav-join-talent"
                 className="
                   inline-flex items-center gap-1.5 px-5 py-2.5
-                  bg-[#10B981] text-white text-[13.5px] font-bold
+                  bg-[#5E8174] text-white text-[13.5px] font-bold
                   rounded-full transition-all duration-300
-                  hover:bg-[#059669] hover:-translate-y-0.5
-                  hover:shadow-[0_8px_20px_rgba(16,185,129,0.35)]
+                  hover:bg-[#4D6C61] hover:-translate-y-0.5
+                  hover:shadow-[0_8px_20px_rgba(94,129,116,0.35)]
                   active:translate-y-0 active:scale-[0.98] shadow-sm
                 "
               >
@@ -220,7 +220,7 @@ function Navbar() {
                 id="nav-dashboard"
                 className="
                   px-3 py-2 text-[14px] font-semibold text-[#0F172A]
-                  transition-colors duration-200 hover:text-emerald-600
+                  transition-colors duration-200 hover:text-[#5E8174]
                 "
               >
                 Dashboard
@@ -285,7 +285,7 @@ function Navbar() {
               <Link
                 to="/signup"
                 onClick={() => setMobileOpen(false)}
-                className="w-full text-center py-3 text-sm font-bold text-white rounded-2xl bg-[#10B981] hover:bg-[#059669]"
+                className="w-full text-center py-3 text-sm font-bold text-white rounded-2xl bg-[#5E8174] hover:bg-[#4D6C61]"
               >
                 Join as Talent →
               </Link>
@@ -296,7 +296,7 @@ function Navbar() {
                 <Link
                   to="/dashboard"
                   onClick={() => setMobileOpen(false)}
-                  className="text-sm font-semibold text-[#0F172A] hover:text-emerald-600"
+                  className="text-sm font-semibold text-[#0F172A] hover:text-[#5E8174]"
                 >
                   Dashboard →
                 </Link>
@@ -311,26 +311,26 @@ function Navbar() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   CENTERED HERO SECTION: JADEER SIGNATURE GREEN & NAVY PALETTE
+   CENTERED HERO SECTION: JADEER SAGE GREEN & DEEP NAVY PALETTE
    ═══════════════════════════════════════════════════════════════════════════ */
 
 function CenteredHeroSection() {
   return (
     <section className="relative overflow-hidden pt-36 sm:pt-48 pb-20 sm:pb-32">
-      {/* Subtle Vector Isometric Wireframe Background */}
-      <SubtleIsometricWireframeBackground />
+      {/* Clean Vector Isometric Wireframe Background */}
+      <CleanIsometricWireframeBackground />
 
       <div className="relative mx-auto max-w-5xl px-6 sm:px-10 lg:px-12 text-center z-10 space-y-8 sm:space-y-10">
 
-        {/* ── Pre-headline Eyebrow Badge with Green Dot ── */}
+        {/* ── Pre-headline Eyebrow Badge with Sage Green Indicator Dot ── */}
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 border border-slate-200/80 shadow-[0_2px_8px_rgba(15,23,42,0.03)] backdrop-blur-sm animate-[fade-in_0.5s_ease]">
-          <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
+          <span className="w-2 h-2 rounded-full bg-[#5E8174] animate-pulse" />
           <span className="text-[11px] sm:text-xs font-extrabold text-[#64748B] uppercase tracking-widest">
             JADEER • TECHNICAL VALIDATION MATRIX
           </span>
         </div>
 
-        {/* ── Centered Main Headline Split into 3 Lines with Jadeer Colors ── */}
+        {/* ── Centered Main Headline Split into 3 Lines ── */}
         <div className="space-y-1 sm:space-y-2">
           <h1 className="text-4xl sm:text-6xl lg:text-[4.25rem] font-extrabold leading-[1.14] tracking-tight">
             {/* Line 1: Deep Navy (#0F172A) */}
@@ -338,33 +338,33 @@ function CenteredHeroSection() {
               Your Mentality.
             </span>
 
-            {/* Line 2: Deep Navy with Subtle Slate (#1E293B) */}
-            <span className="block text-[#1E293B]">
+            {/* Line 2: Deep Navy (#0F172A) */}
+            <span className="block text-[#0F172A]">
               Our Matrix.
             </span>
 
-            {/* Line 3: Jadeer Signature Emerald Green (#10B981 / #059669) */}
-            <span className="block text-[#10B981]">
+            {/* Line 3: Signature Jadeer Sage Green (#5E8174) */}
+            <span className="block text-[#5E8174]">
               Their Peace of Mind.
             </span>
           </h1>
         </div>
 
-        {/* ── Refined Editorial Subtitle ── */}
+        {/* ── Refined Editorial Subtitle in Neutral Slate ── */}
         <p className="text-base sm:text-lg lg:text-[18.5px] text-[#64748B] leading-[1.7] max-w-2xl mx-auto font-normal">
           A unified engineering validation platform designed to certify true technical depth through adaptive AI code probing, 1-to-1 Principal Architect defense, and verifiable evidence dossiers.
         </p>
 
-        {/* ── Centered Smooth Pill Action Buttons ── */}
+        {/* ── Smooth Pill Dual Action Buttons ── */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
           <Link
             to="/signup"
             id="hero-join-talent-btn"
             className="
               w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-3.5
-              bg-[#10B981] text-white text-[15px] font-bold rounded-full
-              transition-all duration-300 hover:bg-[#059669] hover:-translate-y-0.5
-              hover:shadow-[0_12px_28px_rgba(16,185,129,0.32)] active:scale-[0.98] shadow-md
+              bg-[#5E8174] text-white text-[15px] font-bold rounded-full
+              transition-all duration-300 hover:bg-[#4D6C61] hover:-translate-y-0.5
+              hover:shadow-[0_12px_28px_rgba(94,129,116,0.32)] active:scale-[0.98] shadow-md
             "
           >
             <span>Launch Assessment</span>
@@ -376,9 +376,9 @@ function CenteredHeroSection() {
             id="hero-signin-btn"
             className="
               w-full sm:w-auto inline-flex items-center justify-center px-7 py-3.5
-              bg-white text-[#0F172A] border border-slate-200/90
+              bg-white text-slate-700 border border-slate-300
               text-[15px] font-bold rounded-full transition-all duration-300
-              hover:border-emerald-300 hover:bg-slate-50 hover:-translate-y-0.5
+              hover:border-[#5E8174]/50 hover:bg-slate-50 hover:-translate-y-0.5
               active:scale-[0.98] shadow-2xs
             "
           >
@@ -389,17 +389,17 @@ function CenteredHeroSection() {
         {/* ── Centered Trust & Calibration Indicators ── */}
         <div className="pt-6 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs font-semibold text-[#64748B]">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-[#10B981]" />
+            <ShieldCheck className="w-4 h-4 text-[#5E8174]" />
             <span>Verified by Architects at Microsoft, Amazon & Meta</span>
           </div>
           <span className="text-slate-300 hidden sm:inline">•</span>
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-[#10B981]" />
+            <CheckCircle2 className="w-4 h-4 text-[#5E8174]" />
             <span>Zero Resume Guesswork</span>
           </div>
           <span className="text-slate-300 hidden md:inline">•</span>
           <div className="flex items-center gap-2">
-            <Cpu className="w-4 h-4 text-[#10B981]" />
+            <Cpu className="w-4 h-4 text-[#5E8174]" />
             <span>Real-Time Concurrency Calibration</span>
           </div>
         </div>
@@ -410,7 +410,7 @@ function CenteredHeroSection() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   LOWER FEATURE GRID: 3-COLUMN PORCELAIN CARDS (JADEER EMERALD ACCENTS)
+   LOWER FEATURE GRID: 3-COLUMN PORCELAIN CARDS (SAGE GREEN ACCENTS)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 function LowerFeatureGridSection() {
@@ -424,7 +424,7 @@ function LowerFeatureGridSection() {
             {/* ── COLUMN 1: Metric Overview & Guarantee Statement ── */}
             <div className="p-8 sm:p-10 space-y-6 flex flex-col justify-between">
               <div className="space-y-3">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-[#10B981] text-[11px] font-bold border border-emerald-200/80">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#5E8174]/10 text-[#5E8174] text-[11px] font-bold border border-[#5E8174]/30">
                   <Award className="w-3.5 h-3.5" />
                   <span>100% Code-Verified Candidates</span>
                 </span>
@@ -440,26 +440,26 @@ function LowerFeatureGridSection() {
 
               {/* Sub-Metrics Counter Grid */}
               <div className="grid grid-cols-3 gap-3 pt-4 border-t border-slate-100 text-center">
-                <div className="p-3 rounded-2xl bg-[#F8FAFC] border border-slate-200/60">
+                <div className="p-3 rounded-2xl bg-[#F8F9FA] border border-slate-200/60">
                   <span className="text-xl font-black text-[#0F172A]">94%</span>
                   <span className="text-[10px] font-bold text-[#64748B] block">Accuracy</span>
                 </div>
-                <div className="p-3 rounded-2xl bg-[#F8FAFC] border border-slate-200/60">
-                  <span className="text-xl font-black text-[#10B981]">4.95</span>
+                <div className="p-3 rounded-2xl bg-[#F8F9FA] border border-slate-200/60">
+                  <span className="text-xl font-black text-[#5E8174]">4.95</span>
                   <span className="text-[10px] font-bold text-[#64748B] block">Rating</span>
                 </div>
-                <div className="p-3 rounded-2xl bg-[#F8FAFC] border border-slate-200/60">
-                  <span className="text-xl font-black text-[#059669]">&lt;48h</span>
+                <div className="p-3 rounded-2xl bg-[#F8F9FA] border border-slate-200/60">
+                  <span className="text-xl font-black text-[#4D6C61]">&lt;48h</span>
                   <span className="text-[10px] font-bold text-[#64748B] block">Fast-Track</span>
                 </div>
               </div>
             </div>
 
             {/* ── COLUMN 2: Soft Embossed Card with Stage Indicator ── */}
-            <div className="p-8 sm:p-10 space-y-5 bg-[#F8FAFC]/60 flex flex-col justify-between">
+            <div className="p-8 sm:p-10 space-y-5 bg-[#F8F9FA]/70 flex flex-col justify-between">
               <div className="space-y-3">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-[#0F172A] text-[11px] font-bold border border-slate-200">
-                  <Layers className="w-3.5 h-3.5 text-[#10B981]" />
+                  <Layers className="w-3.5 h-3.5 text-[#5E8174]" />
                   <span>Stage 02B: Human Calibration Pod</span>
                 </span>
 
@@ -476,10 +476,10 @@ function LowerFeatureGridSection() {
               <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-2xs space-y-2.5">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-bold text-[#0F172A] flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-[#10B981]" />
+                    <span className="w-2 h-2 rounded-full bg-[#5E8174]" />
                     Interactive Live Evaluation
                   </span>
-                  <span className="text-[11px] font-mono text-[#10B981] font-bold">STAGE 02B</span>
+                  <span className="text-[11px] font-mono text-[#5E8174] font-bold">STAGE 02B</span>
                 </div>
                 <p className="text-xs text-[#64748B]">
                   Live socket I/O review, thread race detection, and distributed query optimization.
@@ -487,7 +487,7 @@ function LowerFeatureGridSection() {
               </div>
             </div>
 
-            {/* ── COLUMN 3: Stacked Dual-Action Buttons in Jadeer Green/Navy ── */}
+            {/* ── COLUMN 3: Stacked Dual-Action Buttons in Sage Green & White ── */}
             <div className="p-8 sm:p-10 space-y-6 flex flex-col justify-between">
               <div className="space-y-2">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] block">
@@ -506,9 +506,9 @@ function LowerFeatureGridSection() {
                 <Link
                   to="/signup"
                   className="
-                    w-full py-3.5 px-5 rounded-full bg-[#10B981] text-white text-sm font-bold
-                    hover:bg-[#059669] transition-all flex items-center justify-between
-                    shadow-[0_10px_24px_rgba(16,185,129,0.28)] active:scale-[0.99] group
+                    w-full py-3.5 px-5 rounded-full bg-[#5E8174] text-white text-sm font-bold
+                    hover:bg-[#4D6C61] transition-all flex items-center justify-between
+                    shadow-[0_10px_24px_rgba(94,129,116,0.28)] active:scale-[0.99] group
                   "
                 >
                   <span>Launch Candidate Assessment</span>
@@ -524,7 +524,7 @@ function LowerFeatureGridSection() {
                   "
                 >
                   <span>Hire Verified Talent</span>
-                  <ArrowUpRight className="w-4 h-4 text-[#10B981] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                  <ArrowUpRight className="w-4 h-4 text-[#5E8174] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                 </Link>
               </div>
             </div>
@@ -566,10 +566,10 @@ function ValidationArchitectureSection() {
   ];
 
   return (
-    <section id="how-it-works" className="py-24 sm:py-32 relative bg-[#F8FAFC]/60 border-t border-slate-200/70">
+    <section id="how-it-works" className="py-24 sm:py-32 relative bg-[#F8F9FA]/70 border-t border-slate-200/70">
       <div className="mx-auto max-w-7xl px-6 sm:px-10 lg:px-12">
         <div className="text-center max-w-2xl mx-auto mb-16 sm:mb-20 space-y-3">
-          <span className="text-xs font-extrabold uppercase tracking-widest text-[#10B981]">
+          <span className="text-xs font-extrabold uppercase tracking-widest text-[#5E8174]">
             The Validation Architecture
           </span>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0F172A] tracking-tight">
@@ -591,14 +591,14 @@ function ValidationArchitectureSection() {
                   border border-slate-200/80
                   shadow-[0_10px_35px_-10px_rgba(15,23,42,0.04)]
                   flex flex-col justify-between space-y-6
-                  hover:border-emerald-300 hover:-translate-y-1
-                  hover:shadow-[0_20px_40px_-15px_rgba(16,185,129,0.12)]
+                  hover:border-[#5E8174]/40 hover:-translate-y-1
+                  hover:shadow-[0_20px_40px_-15px_rgba(94,129,116,0.12)]
                   transition-all duration-300 group
                 "
               >
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 text-[#10B981] flex items-center justify-center font-extrabold group-hover:bg-[#10B981] group-hover:text-white transition-colors">
+                    <div className="w-12 h-12 rounded-2xl bg-[#5E8174]/10 border border-[#5E8174]/20 text-[#5E8174] flex items-center justify-center font-extrabold group-hover:bg-[#5E8174] group-hover:text-white transition-colors">
                       <Icon className="w-6 h-6" />
                     </div>
                     <span className="text-xs font-mono font-extrabold text-slate-300">
@@ -606,7 +606,7 @@ function ValidationArchitectureSection() {
                     </span>
                   </div>
 
-                  <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-[#10B981] bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200/80">
+                  <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-[#5E8174] bg-[#5E8174]/10 px-2.5 py-0.5 rounded-md border border-[#5E8174]/20">
                     {pillar.badge}
                   </span>
 
@@ -621,7 +621,7 @@ function ValidationArchitectureSection() {
 
                 <Link
                   to="/signup"
-                  className="pt-4 border-t border-slate-100 flex items-center text-xs font-bold text-[#10B981] group-hover:text-[#059669] transition-colors"
+                  className="pt-4 border-t border-slate-100 flex items-center text-xs font-bold text-[#5E8174] group-hover:text-[#4D6C61] transition-colors"
                 >
                   <span>Start Validation</span>
                   <ChevronRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
@@ -662,7 +662,7 @@ function TalentAdvantageSection() {
     <section id="pipeline" className="py-24 sm:py-32 bg-white border-y border-slate-200/70">
       <div className="mx-auto max-w-7xl px-6 sm:px-10 lg:px-12">
         <div className="max-w-3xl mx-auto text-center space-y-4 mb-16">
-          <span className="text-xs font-extrabold uppercase tracking-widest text-[#10B981]">
+          <span className="text-xs font-extrabold uppercase tracking-widest text-[#5E8174]">
             Built for Students & Junior Engineers
           </span>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0F172A] tracking-tight">
@@ -679,9 +679,9 @@ function TalentAdvantageSection() {
             return (
               <div
                 key={adv.title}
-                className="p-8 rounded-3xl bg-[#F8FAFC] border border-slate-200/80 space-y-4 hover:border-emerald-300 transition-colors shadow-2xs"
+                className="p-8 rounded-3xl bg-[#F8F9FA] border border-slate-200/80 space-y-4 hover:border-[#5E8174]/40 transition-colors shadow-2xs"
               >
-                <div className="w-11 h-11 rounded-2xl bg-white border border-slate-200/80 text-[#10B981] flex items-center justify-center font-bold shadow-2xs">
+                <div className="w-11 h-11 rounded-2xl bg-white border border-slate-200/80 text-[#5E8174] flex items-center justify-center font-bold shadow-2xs">
                   <Icon className="w-5 h-5" />
                 </div>
                 <h3 className="text-lg font-bold text-[#0F172A]">
@@ -705,7 +705,7 @@ function TalentAdvantageSection() {
 
 function UnifiedFinalCtaSection() {
   return (
-    <section id="evidence" className="py-24 sm:py-32 relative bg-[#F8FAFC]">
+    <section id="evidence" className="py-24 sm:py-32 relative bg-[#F8F9FA]">
       <div className="mx-auto max-w-7xl px-6 sm:px-10 lg:px-12">
         <div className="bg-white rounded-3xl p-10 sm:p-16 border border-slate-200/80 shadow-[0_20px_60px_-15px_rgba(15,23,42,0.05)] text-center max-w-4xl mx-auto space-y-8">
           <div className="space-y-3">
@@ -723,9 +723,9 @@ function UnifiedFinalCtaSection() {
               id="final-join-talent-btn"
               className="
                 w-full sm:w-auto px-8 py-4 rounded-full
-                bg-[#10B981] text-white text-sm font-bold
-                hover:bg-[#059669] hover:-translate-y-0.5
-                hover:shadow-[0_12px_28px_rgba(16,185,129,0.32)]
+                bg-[#5E8174] text-white text-sm font-bold
+                hover:bg-[#4D6C61] hover:-translate-y-0.5
+                hover:shadow-[0_12px_28px_rgba(94,129,116,0.32)]
                 active:translate-y-0 active:scale-[0.98]
                 transition-all duration-300 shadow-md
               "
@@ -737,9 +737,9 @@ function UnifiedFinalCtaSection() {
               to="/signin"
               className="
                 w-full sm:w-auto px-8 py-4 rounded-full
-                bg-[#F8FAFC] text-[#0F172A] text-sm font-bold
-                border border-slate-200/80
-                hover:bg-white hover:border-emerald-300 hover:-translate-y-0.5
+                bg-[#F8F9FA] text-slate-700 text-sm font-bold
+                border border-slate-300
+                hover:bg-white hover:border-[#5E8174]/50 hover:-translate-y-0.5
                 transition-all duration-300 shadow-2xs
               "
             >
@@ -755,15 +755,15 @@ function UnifiedFinalCtaSection() {
 /* ── Footer ─────────────────────────────────────────────────────────────── */
 function Footer() {
   return (
-    <footer className="py-12 border-t border-slate-200/70 text-xs text-[#64748B] bg-[#F8FAFC]">
+    <footer className="py-12 border-t border-slate-200/70 text-xs text-[#64748B] bg-[#F8F9FA]">
       <div className="mx-auto max-w-7xl px-6 sm:px-10 lg:px-12 flex flex-col sm:flex-row items-center justify-between gap-4">
         <BrandLogo size="sm" href="/" textColor="dark" />
         <p>© {new Date().getFullYear()} Jadeer Talent Validation Platform. All rights reserved.</p>
         <div className="flex items-center gap-6 font-semibold">
           <Link to="/signin" className="hover:text-[#0F172A] transition-colors">Sign In</Link>
           <Link to="/signup" className="hover:text-[#0F172A] transition-colors">Join as Talent</Link>
-          <Link to="/employer" className="hover:text-[#10B981] transition-colors">For Employers</Link>
-          <Link to="/admin/signin" className="hover:text-[#10B981] transition-colors flex items-center gap-1 text-[11px] text-[#64748B]">
+          <Link to="/employer" className="hover:text-[#5E8174] transition-colors">For Employers</Link>
+          <Link to="/admin/signin" className="hover:text-[#5E8174] transition-colors flex items-center gap-1 text-[11px] text-[#64748B]">
             <span>Admin</span>
           </Link>
         </div>
@@ -773,12 +773,12 @@ function Footer() {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   LANDING PAGE — JADEER BRAND ROOT
+   LANDING PAGE — JADEER SAGE GREEN & DEEP NAVY ROOT
    ══════════════════════════════════════════════════════════════════════════ */
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] selection:bg-emerald-500/20 selection:text-[#0F172A] relative overflow-hidden">
+    <div className="min-h-screen bg-[#F8F9FA] text-[#0F172A] selection:bg-[#5E8174]/20 selection:text-[#0F172A] relative overflow-hidden">
       <Navbar />
       <CenteredHeroSection />
       <LowerFeatureGridSection />
