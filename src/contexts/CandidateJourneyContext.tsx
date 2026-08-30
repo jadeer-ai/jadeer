@@ -50,8 +50,22 @@ export function CandidateJourneyProvider({ children }: { children: React.ReactNo
       if (
         path === '/wizard' ||
         path === '/candidates/wizard' ||
+        path === '/profile' ||
+        path === '/candidates/profile' ||
+        path === '/candidates/profiles' ||
+        path === '/candidates/ai-interview' ||
+        path === '/candidates/human-interview' ||
+        path === '/portal/human-interview' ||
+        path === '/human-interview' ||
+        path === '/schedule' ||
+        path === '/projects/workspace' ||
+        path === '/candidates/portfolio' ||
+        path === '/candidates/jobs' ||
         path === '/settings' ||
         path === '/candidates/settings' ||
+        path.startsWith('/graduate') ||
+        path.startsWith('/student') ||
+        path.startsWith('/portal') ||
         path === '/' ||
         path === '/signin' ||
         path === '/signup' ||
@@ -61,11 +75,6 @@ export function CandidateJourneyProvider({ children }: { children: React.ReactNo
         path.startsWith('/consultations')
       ) {
         return true;
-      }
-
-      // If graduate onboarding is not complete, lock advanced candidate routes
-      if (!isOnboarded) {
-        return false;
       }
 
       return true;

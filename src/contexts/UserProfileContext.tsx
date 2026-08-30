@@ -33,6 +33,53 @@ export interface JobApplicationRecord {
   matchScore: number;
 }
 
+export type CandidateRole = 'student' | 'grad';
+
+export function normalizeCandidateRole(role?: string | null): CandidateRole {
+  if (!role) return 'grad';
+  const lower = role.toLowerCase().trim();
+  if (lower === 'student') return 'student';
+  return 'grad';
+}
+
+export interface ProfileLink {
+  id: string;
+  platform: 'github' | 'linkedin' | 'portfolio' | 'leetcode' | 'codeforces' | 'custom' | string;
+  label: string;
+  url: string;
+}
+
+export interface HumanInterviewRubric {
+  overallScore: number;
+  grade: string;
+  systemThinking: number;
+  codeQuality: number;
+  problemSolving: number;
+  technicalArticulation: number;
+  summaryNotes: string;
+  strengths: string[];
+  recommendations: string[];
+  calibratedAt: string;
+  interviewerName: string;
+  interviewerTitle: string;
+  interviewerCompany: string;
+  verifiedBadge: string;
+}
+
+export interface HumanInterviewState {
+  status: 'not_scheduled' | 'upcoming' | 'completed';
+  scheduledDate?: string;
+  scheduledTime?: string;
+  timezone?: string;
+  meetingLink?: string;
+  interviewerName?: string;
+  interviewerTitle?: string;
+  interviewerCompany?: string;
+  interviewerInitials?: string;
+  topic?: string;
+  rubric?: HumanInterviewRubric;
+}
+
 export interface CustomUserProfile {
   fullName: string;
   email: string;
@@ -41,7 +88,7 @@ export interface CustomUserProfile {
   university: string;
   major: string;
   graduationYear: string;
-  role: 'student' | 'graduate';
+  role: CandidateRole;
   track: string;
   location: string;
   bio: string;
@@ -49,13 +96,21 @@ export interface CustomUserProfile {
   githubUrl: string;
   linkedinUrl: string;
   portfolioUrl: string;
+  leetcodeUrl?: string;
+  codeforcesUrl?: string;
+  socialLinks?: ProfileLink[];
   phone?: string;
   resumeFileName?: string;
+  resumeUploadDate?: string;
+  resumeFileSize?: string;
+  resumeDataUrl?: string;
   /* Assessment & Badge Telemetry */
   assessmentScore?: number;
   completedAssessmentsCount?: number;
   verifiedBadges?: string[];
   assessmentsHistory?: AssessmentRecord[];
+  /* Human Interview State */
+  humanInterview?: HumanInterviewState;
   /* Job Applications */
   applications?: JobApplicationRecord[];
 }
@@ -66,20 +121,31 @@ const DEFAULT_PROFILE: CustomUserProfile = {
   fullName: 'Ahmad Al-Hassan',
   email: 'ahmad.hassan@kfupm.edu.sa',
   imageUrl: '',
-  title: 'Full-Stack Software Engineer',
+  title: 'Junior Backend & Systems Engineer',
   university: 'King Fahd University of Petroleum & Minerals (KFUPM)',
-  major: 'Computer Science & Engineering',
+  major: 'Computer Science & Software Engineering',
   graduationYear: '2025',
-  role: 'graduate',
+  role: 'grad',
   track: 'Backend Development',
   location: 'Riyadh, Saudi Arabia',
-  bio: 'Passionate software engineer building resilient, high-throughput microservices and cloud infrastructure. Specialized in distributed systems and type-safe architectures.',
-  skills: ['TypeScript', 'React', 'Node.js', 'PostgreSQL', 'Go', 'Docker', 'AWS'],
+  bio: 'Passionate software engineer building resilient, high-throughput microservices and cloud infrastructure. Specialized in distributed systems, low-latency socket multiplexing, and modern C++20 / Go type-safe architectures.',
+  skills: ['C++20', 'Go', 'TypeScript', 'Node.js', 'PostgreSQL', 'Docker', 'Redis', 'Linux epoll', 'gRPC'],
   githubUrl: 'https://github.com/ahmad-dev-engineer',
   linkedinUrl: 'https://linkedin.com/in/ahmad-alhassan',
   portfolioUrl: 'https://ahmadhassan.dev',
+  leetcodeUrl: 'https://leetcode.com/u/ahmad_hassan_dev',
+  codeforcesUrl: 'https://codeforces.com/profile/ahmad_dev',
+  socialLinks: [
+    { id: 'link-gh', platform: 'github', label: 'GitHub', url: 'https://github.com/ahmad-dev-engineer' },
+    { id: 'link-li', platform: 'linkedin', label: 'LinkedIn', url: 'https://linkedin.com/in/ahmad-alhassan' },
+    { id: 'link-port', platform: 'portfolio', label: 'Portfolio Website', url: 'https://ahmadhassan.dev' },
+    { id: 'link-lc', platform: 'leetcode', label: 'LeetCode Profile', url: 'https://leetcode.com/u/ahmad_hassan_dev' },
+    { id: 'link-cf', platform: 'codeforces', label: 'Codeforces Profile', url: 'https://codeforces.com/profile/ahmad_dev' },
+  ],
   phone: '+966 50 123 4567',
   resumeFileName: 'Ahmad_AlHassan_Software_Engineer.pdf',
+  resumeUploadDate: '2026-08-28',
+  resumeFileSize: '1.4 MB',
   assessmentScore: 94,
   completedAssessmentsCount: 2,
   verifiedBadges: ['Verified Backend Engineer', 'Jadeer AI Technical Badge', 'System Design Verified'],
@@ -109,6 +175,42 @@ const DEFAULT_PROFILE: CustomUserProfile = {
       totalChallenges: 4,
     },
   ],
+  humanInterview: {
+    status: 'completed',
+    scheduledDate: '2026-08-29',
+    scheduledTime: '02:00 PM - 03:00 PM (1 hr)',
+    timezone: 'Asia/Riyadh (GMT+3)',
+    meetingLink: 'https://meet.jadeer.io/interview/jad-tech-8492',
+    interviewerName: 'Eng. Tariq Al-Mansour',
+    interviewerTitle: 'Principal Systems Architect & Calibration Lead',
+    interviewerCompany: 'Microsoft',
+    interviewerInitials: 'TM',
+    topic: 'Stage 02B: Human Technical Calibration (Backend Distributed Systems)',
+    rubric: {
+      overallScore: 94,
+      grade: 'A+ (Exemplary Calibration)',
+      systemThinking: 96,
+      codeQuality: 94,
+      problemSolving: 92,
+      technicalArticulation: 95,
+      summaryNotes:
+        'Ahmad demonstrated stellar depth in asynchronous socket multiplexing, Linux epoll primitives, and modern C++20 memory management. His ability to articulate architectural trade-offs during live systems probing was outstanding.',
+      strengths: [
+        'Command of RAII, thread safety, and zero-cost abstraction principles in C++20 and Go.',
+        'High-level clarity when defending cache-aside vs. write-through invalidation topologies.',
+        'Structured analytical approach when identifying concurrency race conditions.',
+      ],
+      recommendations: [
+        'Explore distributed consensus protocols (e.g. Raft leader election and log replication) for geo-distributed clusters.',
+        'Add automated fuzz testing suites for socket edge-case malformed packet scenarios.',
+      ],
+      calibratedAt: '2026-08-29T15:00:00Z',
+      interviewerName: 'Eng. Tariq Al-Mansour',
+      interviewerTitle: 'Principal Systems Architect',
+      interviewerCompany: 'Microsoft',
+      verifiedBadge: 'Jadeer Human-Calibrated Senior Engineer Badge',
+    },
+  },
   applications: [
     {
       id: 'app-001',
@@ -159,8 +261,20 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
   const [profile, setProfile] = useState<CustomUserProfile>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
+      const storedRole = localStorage.getItem('jadeer-user-role');
       if (stored) {
-        return { ...DEFAULT_PROFILE, ...JSON.parse(stored) };
+        const parsed = JSON.parse(stored);
+        return {
+          ...DEFAULT_PROFILE,
+          ...parsed,
+          role: normalizeCandidateRole(storedRole || parsed.role),
+        };
+      }
+      if (storedRole) {
+        return {
+          ...DEFAULT_PROFILE,
+          role: normalizeCandidateRole(storedRole),
+        };
       }
     } catch {
       // localStorage unavailable
@@ -176,18 +290,20 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
       const clerkName = clerkUser.fullName || clerkUser.firstName || clerkUser.username || '';
       const clerkEmail = clerkUser.primaryEmailAddress?.emailAddress || '';
       const clerkImage = clerkUser.imageUrl || '';
+      const rawRole = (clerkUser.publicMetadata?.role || clerkUser.unsafeMetadata?.role) as string | undefined;
 
       setProfile((prev) => {
+        const role = rawRole ? normalizeCandidateRole(rawRole) : prev.role;
         const merged: CustomUserProfile = {
           ...prev,
           fullName: clerkName || prev.fullName,
           email: clerkEmail || prev.email,
           imageUrl: clerkImage || prev.imageUrl,
           // Sync any public metadata if set on Clerk
-          university: (clerkUser.publicMetadata?.university as string) || prev.university,
-          major: (clerkUser.publicMetadata?.major as string) || prev.major,
-          role: (clerkUser.publicMetadata?.role as 'student' | 'graduate') || prev.role,
-          track: (clerkUser.publicMetadata?.track as string) || prev.track,
+          university: (clerkUser.publicMetadata?.university as string) || (clerkUser.unsafeMetadata?.university as string) || prev.university,
+          major: (clerkUser.publicMetadata?.major as string) || (clerkUser.unsafeMetadata?.major as string) || prev.major,
+          role,
+          track: (clerkUser.publicMetadata?.track as string) || (clerkUser.unsafeMetadata?.track as string) || prev.track,
         };
 
         try {
@@ -206,7 +322,11 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
 
   const updateProfile = useCallback((patch: Partial<CustomUserProfile>) => {
     setProfile((prev) => {
-      const next = { ...prev, ...patch };
+      const normalizedPatch = { ...patch };
+      if (normalizedPatch.role) {
+        normalizedPatch.role = normalizeCandidateRole(normalizedPatch.role);
+      }
+      const next = { ...prev, ...normalizedPatch };
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
         if (next.role) localStorage.setItem('jadeer-user-role', next.role);

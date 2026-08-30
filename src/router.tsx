@@ -102,28 +102,61 @@ const router = createBrowserRouter([
       { path: '/candidates/profile/edit', element: <CandidateWizardPage /> },
 
       /* Candidate Journey Routes (Graduate Path) */
+      { path: '/profile', element: <CandidateProfilesPage /> },
+      { path: '/candidates/profile', element: <CandidateProfilesPage /> },
       { path: '/candidates/profiles', element: <CandidateProfilesPage /> },
-      { path: '/candidates/ai-interview', element: <AIInterviewPage /> },
+      { path: '/graduate/profile', element: <CandidateProfilesPage /> },
+      { path: '/student/profile', element: <CandidateProfilesPage /> },
+      /* Human Technical Calibration (Shared across Student & Graduate Portals) */
       { path: '/candidates/human-interview', element: <HumanInterviewPage /> },
+      { path: '/graduate/human-interview', element: <HumanInterviewPage /> },
+      { path: '/student/human-interview', element: <HumanInterviewPage /> },
+      { path: '/student/interview', element: <HumanInterviewPage /> },
+      { path: '/student/calibration', element: <HumanInterviewPage /> },
+      { path: '/portal/human-interview', element: <HumanInterviewPage /> },
+      { path: '/human-interview', element: <HumanInterviewPage /> },
       { path: '/schedule', element: <HumanInterviewPage /> },
+
+      /* AI Technical Interview */
+      { path: '/candidates/ai-interview', element: <AIInterviewPage /> },
+      { path: '/graduate/ai-interview', element: <AIInterviewPage /> },
+      { path: '/student/ai-interview', element: <AIInterviewPage /> },
+
+      /* Project Workspace */
       { path: '/projects/workspace', element: <ProjectWorkspacePage /> },
+      { path: '/graduate/workspace', element: <ProjectWorkspacePage /> },
+      { path: '/student/workspace', element: <ProjectWorkspacePage /> },
+
+      /* Evidence Portfolio */
       { path: '/candidates/portfolio', element: <PortfolioPage /> },
+      { path: '/graduate/portfolio', element: <PortfolioPage /> },
+      { path: '/student/portfolio', element: <PortfolioPage /> },
+
+      /* Job & Internship Matches */
       { path: '/candidates/jobs', element: <JobMatchesPage /> },
+      { path: '/graduate/jobs', element: <JobMatchesPage /> },
+      { path: '/student/jobs', element: <JobMatchesPage /> },
       { path: '/candidates/matching', element: <JobMatchesPage /> },
+
+      /* Settings */
       { path: '/settings', element: <SettingsPage /> },
       { path: '/candidates/settings', element: <SettingsPage /> },
+      { path: '/graduate/settings', element: <SettingsPage /> },
+      { path: '/student/settings', element: <SettingsPage /> },
       { path: '/candidates/readiness', element: <ReadinessPage /> },
 
-      /* ── Standalone Consultation Routes (Students & Graduates) ────── */
+      /* ── Unified 1-to-1 Consultation Routes (Students & Graduates) ────── */
       { path: '/consultations', element: <MentorConsultationPage /> },
-      { path: '/consultations/book', element: <BookSessionPage /> },
+      { path: '/graduate/consultations', element: <MentorConsultationPage /> },
+      { path: '/consultations/book', element: <MentorConsultationPage /> },
+      { path: '/graduate/book-consultation', element: <MentorConsultationPage /> },
 
       /* Student-branded Dashboard */
       { path: '/student/dashboard', element: <StudentDashboardPage /> },
 
-      /* Legacy student aliases → shared consultation pages */
+      /* Legacy student aliases → unified consultation page */
       { path: '/student/mentors', element: <MentorConsultationPage /> },
-      { path: '/student/book-session', element: <BookSessionPage /> },
+      { path: '/student/book-session', element: <MentorConsultationPage /> },
     ],
   },
 

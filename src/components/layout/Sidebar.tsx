@@ -1,4 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useClerk } from '@clerk/clerk-react';
+import { useUserProfile } from '@/contexts/UserProfileContext';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { useUserRole } from '@/contexts/UserRoleContext';
 import { useCandidateJourney } from '@/contexts/CandidateJourneyContext';
@@ -35,43 +37,29 @@ interface NavItem {
   badge?: string;
 }
 
-/* Graduate (Candidate) Navigation — pipeline + standalone consultations */
-const graduateNavItems: NavItem[] = [
+/* Unified Candidate Navigation — identical structure for both students & graduates */
+const candidateNavItems: NavItem[] = [
   { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-  { label: 'My Profile', path: '/candidates/profiles', icon: User },
+  { label: 'My Profile', path: '/profile', icon: User },
   { label: 'AI Interview', path: '/candidates/ai-interview', icon: MessageSquareCode, badge: 'Step 1' },
   { label: 'Human Interview', path: '/candidates/human-interview', icon: UserCheck },
   { label: 'Project Workspace', path: '/projects/workspace', icon: GitBranch },
   { label: 'Evidence Portfolio', path: '/candidates/portfolio', icon: FileBarChart },
-  { label: '1-on-1 Consultations', path: '/consultations', icon: CalendarCheck },
-  { label: 'Book Consultation', path: '/consultations/book', icon: Calendar },
-  { label: 'Job Matches', path: '/candidates/jobs', icon: Briefcase, badge: '3 Matches' },
+  { label: '1-to-1 Consultations', path: '/consultations', icon: CalendarCheck },
+  { label: 'Job Matches', path: '/candidates/jobs', icon: Briefcase, badge: 'Matches' },
   { label: 'Settings', path: '/settings', icon: Settings },
 ];
 
-/* Un-onboarded Graduate Navigation */
-const graduateUnonboardedNavItems: NavItem[] = [
+/* Un-onboarded Candidate Navigation */
+const candidateUnonboardedNavItems: NavItem[] = [
   { label: 'Profile Setup', path: '/candidates/wizard', icon: Sparkles, badge: 'Required' },
   { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+  { label: 'My Profile', path: '/profile', icon: User },
   { label: 'AI Interview', path: '/candidates/ai-interview', icon: MessageSquareCode },
-  { label: 'Project Workspace', path: '/projects/workspace', icon: GitBranch },
-  { label: 'Evidence Portfolio', path: '/candidates/portfolio', icon: FileBarChart },
-  { label: '1-on-1 Consultations', path: '/consultations', icon: CalendarCheck },
-  { label: 'Book Consultation', path: '/consultations/book', icon: Calendar },
-  { label: 'Job Matches', path: '/candidates/jobs', icon: Briefcase },
-  { label: 'Settings', path: '/settings', icon: Settings },
-];
-
-/* Student Navigation — unified validation pipeline + standalone consultations */
-const studentNavItems: NavItem[] = [
-  { label: 'Dashboard', path: '/student/dashboard', icon: LayoutDashboard },
-  { label: 'My Profile', path: '/candidates/profiles', icon: User },
-  { label: 'AI Interview', path: '/candidates/ai-interview', icon: MessageSquareCode, badge: 'Step 1' },
   { label: 'Human Interview', path: '/candidates/human-interview', icon: UserCheck },
   { label: 'Project Workspace', path: '/projects/workspace', icon: GitBranch },
   { label: 'Evidence Portfolio', path: '/candidates/portfolio', icon: FileBarChart },
-  { label: '1-on-1 Consultations', path: '/consultations', icon: CalendarCheck },
-  { label: 'Book Consultation', path: '/consultations/book', icon: Calendar },
+  { label: '1-to-1 Consultations', path: '/consultations', icon: CalendarCheck },
   { label: 'Job Matches', path: '/candidates/jobs', icon: Briefcase },
   { label: 'Settings', path: '/settings', icon: Settings },
 ];
@@ -80,29 +68,49 @@ const studentNavItems: NavItem[] = [
 
 export default function Sidebar() {
   const navigate = useNavigate();
+  const { signOut } = useClerk();
   const { isCollapsed, isMobileOpen, toggleCollapse, closeMobile } = useSidebar();
   const { userRole, isStudent, clearUserRole } = useUserRole();
   const { isOnboarded, isRouteUnlocked, getRouteLockReason, resetOnboarding } = useCandidateJourney();
+  const { profile } = useUserProfile();
   const location = useLocation();
 
   const handleSignOut = async () => {
+    try {
+      if (signOut) {
+        await signOut();
+      }
+    } catch (err) {
+      console.error('Clerk sign out error:', err);
+    }
     await AuthService.logout();
     clearUserRole();
     resetOnboarding();
     navigate('/signin');
   };
 
-  const navItems = isStudent
-    ? studentNavItems
-    : isOnboarded
-    ? graduateNavItems
-    : graduateUnonboardedNavItems;
+  const checkIsActive = (itemPath: string) => {
+    const p = location.pathname;
+    if (p === itemPath) return true;
+    if (itemPath === '/dashboard' && (p === '/' || p === '/graduate/dashboard' || p === '/candidates/dashboard' || p === '/student/dashboard')) return true;
+    if (itemPath === '/candidates/wizard' && p === '/wizard') return true;
+    if (itemPath === '/profile' && (p === '/profile' || p === '/candidates/profiles' || p === '/candidates/profile' || p === '/graduate/profiles' || p === '/student/profile')) return true;
+    if (itemPath === '/candidates/profiles' && (p === '/profile' || p === '/candidates/profiles' || p === '/candidates/profile' || p === '/graduate/profiles' || p === '/student/profile')) return true;
+    if (itemPath === '/candidates/ai-interview' && (p === '/graduate/ai-interview' || p === '/student/ai-interview')) return true;
+    if (itemPath === '/candidates/human-interview' && (p === '/candidates/human-interview' || p === '/portal/human-interview' || p === '/human-interview' || p === '/graduate/human-interview' || p === '/student/human-interview' || p === '/student/interview' || p === '/student/calibration' || p === '/schedule')) return true;
+    if (itemPath === '/projects/workspace' && (p === '/graduate/workspace' || p === '/student/workspace')) return true;
+    if (itemPath === '/candidates/portfolio' && (p === '/graduate/portfolio' || p === '/student/portfolio')) return true;
+    if (itemPath === '/consultations' && (p === '/consultations' || p === '/consultations/book' || p === '/graduate/consultations' || p === '/graduate/book-consultation' || p === '/student/mentors' || p === '/student/book-session')) return true;
+    if (itemPath === '/candidates/jobs' && (p === '/graduate/jobs' || p === '/student/jobs' || p === '/candidates/matching')) return true;
+    if (itemPath === '/settings' && (p === '/graduate/settings' || p === '/student/settings' || p === '/candidates/settings')) return true;
+    return false;
+  };
 
-  const portalLabel = isStudent
-    ? 'Student Portal'
-    : isOnboarded
-    ? 'Graduate Portal'
-    : 'Candidate Onboarding';
+  const navItems = isOnboarded
+    ? candidateNavItems
+    : candidateUnonboardedNavItems;
+
+  const portalLabel = 'Talent Portal';
 
   return (
     <>
@@ -149,11 +157,7 @@ export default function Sidebar() {
             const isUnlocked = isStudent || isRouteUnlocked(item.path);
             const lockReason = isStudent ? undefined : getRouteLockReason(item.path);
 
-            const isActive =
-              location.pathname === item.path ||
-              (item.path === '/candidates/wizard' && location.pathname === '/wizard') ||
-              (item.path === '/dashboard' && location.pathname === '/') ||
-              (item.path === '/student/dashboard' && location.pathname === '/');
+            const isActive = checkIsActive(item.path);
             const Icon = item.icon;
 
             if (!isUnlocked) {
@@ -189,9 +193,7 @@ export default function Sidebar() {
                   text-[14px] font-medium transition-all duration-200
                   ${
                     isActive
-                      ? isStudent
-                        ? 'bg-student-500/20 text-student-300 font-semibold border border-student-500/30 shadow-[0_2px_12px_rgba(0,86,214,0.15)]'
-                        : 'bg-[#6E8F75]/20 text-[#82a78a] font-semibold border border-[#6E8F75]/30 shadow-[0_2px_12px_rgba(110,143,117,0.15)]'
+                      ? 'bg-[#6E8F75]/20 text-[#82a78a] font-semibold border border-[#6E8F75]/30 shadow-[0_2px_12px_rgba(110,143,117,0.15)]'
                       : 'text-white/75 hover:text-white hover:bg-white/[0.06]'
                   }
                   ${isCollapsed ? 'justify-center px-0' : ''}
@@ -200,9 +202,7 @@ export default function Sidebar() {
                 <Icon
                   className={`w-[18px] h-[18px] shrink-0 transition-colors duration-200 ${
                     isActive
-                      ? isStudent
-                        ? 'text-student-300'
-                        : 'text-[#82a78a]'
+                      ? 'text-[#82a78a]'
                       : 'text-white/50 group-hover:text-white'
                   }`}
                 />
@@ -214,9 +214,7 @@ export default function Sidebar() {
                     className={`
                       text-[10px] font-semibold px-2 py-0.5 rounded-full
                       ${isActive
-                        ? isStudent
-                          ? 'bg-student-500 text-white'
-                          : 'bg-[#6E8F75] text-white'
+                        ? 'bg-[#6E8F75] text-white'
                         : 'bg-white/10 text-white/60'}
                     `}
                   >
@@ -228,36 +226,43 @@ export default function Sidebar() {
           })}
         </nav>
 
-        {/* ── Role Status Card & Switch ────────────────────────────────── */}
+        {/* ── Role Status Card ────────────────────────────────── */}
         {!isCollapsed && (
           <div className="px-3 mb-2 space-y-2">
-            {/* Candidate/Student Dossier Card */}
+            {/* Candidate Dossier Card */}
             <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/[0.08]">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  {isStudent ? (
-                    <GraduationCap className="w-3.5 h-3.5 text-student-400" />
-                  ) : (
-                    <Sparkles className="w-3.5 h-3.5 text-[#82a78a]" />
-                  )}
-                  <span className={`text-[11px] font-bold uppercase tracking-wider ${isStudent ? 'text-student-400' : 'text-[#82a78a]'}`}>
-                    {isStudent ? 'Student Profile' : 'Candidate Dossier'}
+                  <Sparkles className="w-3.5 h-3.5 text-[#82a78a]" />
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#82a78a]">
+                    Candidate Dossier
                   </span>
                 </div>
-                <span className={`flex h-2 w-2 rounded-full ${isStudent ? 'bg-student-500' : 'bg-[#6E8F75]'} animate-[pulse-glow_2s_ease-in-out_infinite]`} />
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-white/10 text-white/80">
+                    {profile.role === 'student' ? 'Student' : 'Graduate'}
+                  </span>
+                  <span className="flex h-2 w-2 rounded-full bg-[#6E8F75] animate-[pulse-glow_2s_ease-in-out_infinite]" />
+                </div>
               </div>
 
-              <p className="text-[12px] font-semibold text-white mb-1">
-                Ahmad Al-Hassan
+              <div className="flex items-center justify-between mb-1 text-white">
+                <p className="text-[13px] font-bold truncate">
+                  {profile.fullName || 'Ahmad Al-Hassan'}
+                </p>
+                {profile.verifiedBadges && profile.verifiedBadges.length > 0 && (
+                  <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-[#6E8F75]/30 text-[#82a78a] border border-[#6E8F75]/40 shrink-0">
+                    Verified
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] font-semibold text-[#82a78a] mb-1 truncate">
+                {profile.track || 'Backend Development'}
               </p>
               <p className="text-[11px] text-white/45 leading-relaxed">
-                {isStudent
-                  ? 'Mentorship sessions, career guidance & consultation tools are open.'
-                  : 'All validation modules, project workspace & portfolio tools are open for review.'
-                }
+                Score: {profile.assessmentScore || 94}% • {profile.verifiedBadges?.length || 3} Verified Badges
               </p>
             </div>
-
           </div>
         )}
 

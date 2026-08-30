@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, type DragEvent, type ChangeEvent } from 'react';
+import { useUserProfile } from '@/contexts/UserProfileContext';
 import {
   GitBranch,
   GitPullRequest,
@@ -214,6 +215,7 @@ const initialFiles: UploadedFile[] = [
 ];
 
 export default function ProjectWorkspacePage() {
+  const { profile: userProfile } = useUserProfile();
   const [tasks, setTasks] = useState(initialTasks);
   const [chatMessages, setChatMessages] = useState(initialChatMessages);
   const [chatInput, setChatInput] = useState('');
@@ -222,12 +224,14 @@ export default function ProjectWorkspacePage() {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const isStudent = userProfile.role === 'student';
+
   const handleSendMessage = () => {
     if (!chatInput.trim()) return;
     const newMsg: ChatMessage = {
       id: `c-${Date.now()}`,
-      sender: 'Ahmad Al-Hassan',
-      role: 'Junior Backend',
+      sender: userProfile.fullName || 'Ahmad Al-Hassan',
+      role: isStudent ? 'University Intern' : 'Junior Backend Engineer',
       initials: 'AH',
       avatarBg: 'bg-[#6E8F75]',
       text: chatInput.trim(),
@@ -255,12 +259,12 @@ export default function ProjectWorkspacePage() {
       const newFile: UploadedFile = {
         name: file.name,
         size: `${(file.size / 1024).toFixed(0)} KB`,
-        uploader: 'Ahmad Al-Hassan',
+        uploader: userProfile.fullName || 'Ahmad Al-Hassan',
         date: 'Just now',
       };
       setUploadedFiles((prev) => [newFile, ...prev]);
     }
-  }, []);
+  }, [userProfile.fullName]);
 
   const handleFileInput = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -268,7 +272,7 @@ export default function ProjectWorkspacePage() {
       const newFile: UploadedFile = {
         name: file.name,
         size: `${(file.size / 1024).toFixed(0)} KB`,
-        uploader: 'Ahmad Al-Hassan',
+        uploader: userProfile.fullName || 'Ahmad Al-Hassan',
         date: 'Just now',
       };
       setUploadedFiles((prev) => [newFile, ...prev]);
@@ -289,10 +293,13 @@ export default function ProjectWorkspacePage() {
             <div className="flex flex-wrap items-center gap-2.5">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#6E8F75]/10 text-[#6E8F75] text-xs font-bold border border-[#6E8F75]/20">
                 <span className="w-2 h-2 rounded-full bg-[#6E8F75] animate-[pulse-glow_1.8s_ease-in-out_infinite]" />
-                Assigned Industry Project
+                {isStudent ? 'University Internship / Co-op Project' : 'Assigned Industry Project'}
               </span>
               <span className="text-xs font-semibold px-2.5 py-0.5 rounded-lg bg-[#0B0F19]/[0.04] text-[#0B0F19]/60">
                 Sprint 3 of 6 • Active
+              </span>
+              <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-[#0B0F19]/60">
+                Track: {userProfile.track || 'Backend Systems'}
               </span>
               <a
                 href="https://github.com"
@@ -310,7 +317,9 @@ export default function ProjectWorkspacePage() {
               Distributed Task Queue & Telemetry Ingestion Engine
             </h1>
             <p className="text-[14px] text-[#0B0F19]/50 max-w-3xl leading-relaxed">
-              High-throughput asynchronous job scheduler and stream telemetry buffer in C++20 with gRPC, Redis Sentinel, and custom epoll connection pooling.
+              {isStudent
+                ? 'Co-op Capstone Sprint: Build high-throughput asynchronous job scheduling and telemetry buffer in C++20 with mentor guidance and verified PR milestones.'
+                : 'High-throughput asynchronous job scheduler and stream telemetry buffer in C++20 with gRPC, Redis Sentinel, and custom epoll connection pooling.'}
             </p>
           </div>
 

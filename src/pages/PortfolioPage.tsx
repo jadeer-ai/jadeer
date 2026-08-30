@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useUserProfile } from '@/contexts/UserProfileContext';
 import {
   ShieldCheck,
   CheckCircle2,
@@ -40,11 +41,22 @@ function GitHubIcon({ className }: { className?: string }) {
 }
 
 export default function PortfolioPage() {
+  const { profile } = useUserProfile();
   const [copiedLink, setCopiedLink] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
+  const initials = profile.fullName
+    ? profile.fullName
+        .split(' ')
+        .map((n) => n[0])
+        .filter(Boolean)
+        .slice(0, 2)
+        .join('')
+        .toUpperCase()
+    : 'AH';
+
   const handleShareLink = () => {
-    navigator.clipboard.writeText('https://jadeer.io/candidates/ahmad-al-hassan');
+    navigator.clipboard.writeText(`https://jadeer.io/candidates/${(profile.fullName || 'ahmad-al-hassan').toLowerCase().replace(/\s+/g, '-')}`);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
   };
@@ -68,13 +80,17 @@ export default function PortfolioPage() {
 
           {/* Candidate Profile Summary */}
           <div className="flex items-start gap-4 sm:gap-5">
-            <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-[#0B0F19] text-white flex items-center justify-center font-extrabold text-2xl shadow-sm shrink-0">
-              AH
+            <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-[#0B0F19] text-white flex items-center justify-center font-extrabold text-2xl shadow-sm shrink-0 overflow-hidden">
+              {profile.imageUrl ? (
+                <img src={profile.imageUrl} alt={profile.fullName} className="w-full h-full object-cover" />
+              ) : (
+                initials
+              )}
             </div>
             <div className="space-y-1">
               <div className="flex items-center gap-2.5">
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B0F19] tracking-tight">
-                  Ahmad Al-Hassan
+                  {profile.fullName || 'Ahmad Al-Hassan'}
                 </h1>
                 <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#6E8F75] bg-[#6E8F75]/10 px-2.5 py-0.5 rounded-full border border-[#6E8F75]/20">
                   <ShieldCheck className="w-3.5 h-3.5" />
@@ -82,20 +98,20 @@ export default function PortfolioPage() {
                 </span>
               </div>
               <p className="text-sm font-semibold text-[#0B0F19]/70">
-                Junior Software Engineer • C++ & Backend Systems
+                {profile.title || 'Junior Software Engineer'} • {profile.track || 'C++ & Backend Systems'}
               </p>
               <div className="flex flex-wrap items-center gap-4 text-xs text-[#0B0F19]/50 pt-0.5">
                 <span className="flex items-center gap-1">
                   <MapPin className="w-3.5 h-3.5 text-[#6E8F75]" />
-                  Cairo, Egypt
+                  {profile.location || 'Riyadh, Saudi Arabia'}
                 </span>
                 <span className="flex items-center gap-1">
                   <Mail className="w-3.5 h-3.5 text-[#6E8F75]" />
-                  ahmad.hassan@example.com
+                  {profile.email || 'ahmad.hassan@example.com'}
                 </span>
                 <span className="flex items-center gap-1">
                   <GitHubIcon className="w-3.5 h-3.5 text-[#0B0F19]" />
-                  github.com/ahmad-hassan
+                  {profile.githubUrl ? profile.githubUrl.replace('https://', '') : 'github.com/ahmad-hassan'}
                 </span>
               </div>
             </div>

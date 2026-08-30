@@ -12,34 +12,9 @@ export default function MainLayout() {
   const location = useLocation();
   const path = location.pathname;
 
-  // Bi-directional Route Guard for complete Portal Isolation
-  if (isStudent) {
-    const isGraduatePath =
-      path === '/dashboard' ||
-      path.startsWith('/candidates/') ||
-      path.startsWith('/projects/') ||
-      path === '/schedule';
-    
-    if (isGraduatePath) {
-      return <Navigate to="/student/dashboard" replace />;
-    }
-  } else {
-    // Graduate Portal Checks
-    const isStudentPath = path.startsWith('/student/');
-    if (isStudentPath) {
-      return <Navigate to={isOnboarded ? "/dashboard" : "/candidates/wizard"} replace />;
-    }
-
-    // Graduate Onboarding Gating Guard
-    const isAllowedPreOnboarding =
-      path === '/candidates/wizard' ||
-      path === '/wizard' ||
-      path === '/settings' ||
-      path === '/candidates/settings';
-
-    if (!isOnboarded && !isAllowedPreOnboarding) {
-      return <Navigate to="/candidates/wizard" replace />;
-    }
+  // Clean dashboard routing for student view
+  if (isStudent && path === '/dashboard') {
+    return <Navigate to="/student/dashboard" replace />;
   }
 
   return (

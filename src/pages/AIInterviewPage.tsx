@@ -234,7 +234,10 @@ export default function AIInterviewPage() {
                 Live Assessment Session
               </span>
               <span className="text-xs font-semibold px-2.5 py-0.5 rounded-lg bg-[#0B0F19]/[0.04] text-[#0B0F19]/60">
-                Track: Junior Backend / Systems
+                Track: {userProfile.track || 'Junior Backend / Systems'}
+              </span>
+              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-[#0B0F19]/70">
+                Calibration: {userProfile.role === 'student' ? '🎓 Internship Benchmark' : '⚡ Graduate Hiring Gate'}
               </span>
             </div>
             <h2 className="text-xl sm:text-2xl font-extrabold text-[#0B0F19] tracking-tight">
@@ -332,7 +335,7 @@ export default function AIInterviewPage() {
                   {/* Header info */}
                   <div className={`flex items-center gap-2 px-1 text-xs ${isAi ? 'text-[#0B0F19]/40' : 'justify-end text-[#0B0F19]/40'}`}>
                     <span className="font-bold text-[#0B0F19]/70">
-                      {isAi ? 'Jadeer AI Technical Interviewer' : 'Ahmad Al-Hassan (You)'}
+                      {isAi ? 'Jadeer AI Technical Interviewer' : `${userProfile.fullName || 'Ahmad Al-Hassan'} (You)`}
                     </span>
                     <span>•</span>
                     <span>{msg.timestamp}</span>
@@ -583,7 +586,7 @@ export default function AIInterviewPage() {
 
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <button
-                onClick={() => navigate('/profiles')}
+                onClick={() => navigate('/candidates/portfolio')}
                 className="w-full py-3 rounded-2xl bg-[#6E8F75] text-white text-xs font-bold hover:bg-[#5d7d64] transition-all shadow-md flex items-center justify-center gap-2"
               >
                 <span>View Verified Candidate Dossier</span>

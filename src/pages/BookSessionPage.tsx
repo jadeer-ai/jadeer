@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useInterviewSchedule } from '@/contexts/InterviewScheduleContext';
+import { useUserProfile } from '@/contexts/UserProfileContext';
 import {
   Calendar,
   Clock,
@@ -103,6 +105,8 @@ const steps: { key: BookingStep; label: string; num: string }[] = [
 /* ── Main Component ─────────────────────────────────────────────────────── */
 
 export default function BookSessionPage() {
+  const { scheduleInterview } = useInterviewSchedule();
+  const { profile } = useUserProfile();
   const [currentStep, setCurrentStep] = useState<BookingStep>('time');
   const [selectedDay, setSelectedDay] = useState<string>(weekSlots[0].date);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
@@ -125,7 +129,23 @@ export default function BookSessionPage() {
   const handleNext = () => {
     if (currentStep === 'time' && selectedSlot) setCurrentStep('topic');
     else if (currentStep === 'topic' && selectedTopic) setCurrentStep('confirm');
-    else if (currentStep === 'confirm') setIsBooked(true);
+    else if (currentStep === 'confirm') {
+      scheduleInterview({
+        candidateId: 'JAD-8492',
+        candidateName: profile.fullName || 'Ahmad Al-Hassan',
+        candidateInitials: 'AH',
+        role: selectedTopicData?.label || '1-on-1 Mentorship Session',
+        company: 'Eng. Mariam Ashraf (Microsoft)',
+        date: selectedDay,
+        timeSlot: selectedSlotTime || '10:00 AM',
+        timezone: 'Asia/Riyadh (GMT+3)',
+        meetingLink: 'https://meet.jadeer.io/consultation/jad-mentor-8492',
+        type: 'human',
+        scheduledBy: 'candidate',
+        notes: sessionGoals,
+      });
+      setIsBooked(true);
+    }
   };
 
   const handleBack = () => {
@@ -138,7 +158,7 @@ export default function BookSessionPage() {
     return (
       <div className="max-w-xl mx-auto py-16 sm:py-24 animate-[scale-in_0.4s_var(--ease-spring)]">
         <div className="bg-white rounded-3xl p-10 sm:p-14 border border-[#0B0F19]/[0.05] shadow-[0_8px_40px_rgba(0,0,0,0.04)] text-center space-y-6">
-          <div className="mx-auto w-16 h-16 rounded-full bg-student-500 text-white flex items-center justify-center shadow-[0_8px_24px_rgba(0,86,214,0.3)] animate-[gentle-bounce_2s_ease-in-out_infinite]">
+          <div className="mx-auto w-16 h-16 rounded-full bg-[#6E8F75] text-white flex items-center justify-center shadow-[0_8px_24px_rgba(110,143,117,0.3)] animate-[gentle-bounce_2s_ease-in-out_infinite]">
             <Check className="w-8 h-8" strokeWidth={2.5} />
           </div>
 
@@ -153,7 +173,7 @@ export default function BookSessionPage() {
 
           <div className="bg-[#FAF9F6] rounded-2xl p-5 space-y-3 text-left">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-student-500 text-white flex items-center justify-center text-sm font-bold">
+              <div className="w-10 h-10 rounded-full bg-[#6E8F75] text-white flex items-center justify-center text-sm font-bold">
                 MA
               </div>
               <div>
@@ -163,21 +183,21 @@ export default function BookSessionPage() {
             </div>
             <div className="flex flex-wrap gap-4 text-[12px] text-[#0B0F19]/55 pt-2 border-t border-[#0B0F19]/[0.04]">
               <div className="flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-student-500" />
+                <Calendar className="w-3.5 h-3.5 text-[#6E8F75]" />
                 <span className="font-semibold">{activeDayLabel}</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-student-500" />
+                <Clock className="w-3.5 h-3.5 text-[#6E8F75]" />
                 <span>{selectedSlotTime} (45 min)</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <Video className="w-3.5 h-3.5 text-student-500" />
+                <Video className="w-3.5 h-3.5 text-[#6E8F75]" />
                 <span>Video Call</span>
               </div>
             </div>
             {selectedTopicData && (
               <div className="flex items-center gap-1.5 text-[12px]">
-                <MessageCircle className="w-3.5 h-3.5 text-student-500" />
+                <MessageCircle className="w-3.5 h-3.5 text-[#6E8F75]" />
                 <span className="font-semibold text-[#0B0F19]/70">{selectedTopicData.label}</span>
               </div>
             )}
@@ -196,8 +216,8 @@ export default function BookSessionPage() {
               to="/student/dashboard"
               className="
                 flex-1 inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl
-                bg-student-500 text-white text-[14px] font-bold
-                hover:bg-student-600 transition-all duration-200 shadow-md
+                bg-[#6E8F75] text-white text-[14px] font-bold
+                hover:bg-[#587a60] transition-all duration-200 shadow-md
               "
             >
               Back to Dashboard
@@ -226,20 +246,20 @@ export default function BookSessionPage() {
       <div className="space-y-2">
         <Link
           to="/student/mentors"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-student-500 hover:text-student-600 transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#6E8F75] hover:text-[#587a60] transition-colors"
         >
           <ChevronLeft className="w-3.5 h-3.5" />
           Back to Mentors
         </Link>
 
         <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B0F19] tracking-tight">
-          Book a <span className="text-student-500">Consultation Session</span>
+          Book a <span className="text-[#6E8F75]">Consultation Session</span>
         </h1>
       </div>
 
       {/* ── Mentor Summary Card ──────────────────────────────────────── */}
       <div className="bg-white rounded-2xl p-5 border border-[#0B0F19]/[0.05] flex items-center gap-4">
-        <div className="w-12 h-12 rounded-2xl bg-student-500 text-white flex items-center justify-center text-base font-bold shadow-[0_4px_12px_rgba(0,86,214,0.25)] shrink-0">
+        <div className="w-12 h-12 rounded-2xl bg-[#6E8F75] text-white flex items-center justify-center text-base font-bold shadow-[0_4px_12px_rgba(110,143,117,0.25)] shrink-0">
           MA
         </div>
         <div className="flex-1 min-w-0">
@@ -264,9 +284,9 @@ export default function BookSessionPage() {
                   className={`
                     w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 transition-all duration-300
                     ${isComplete
-                      ? 'bg-student-500 text-white shadow-[0_2px_8px_rgba(0,86,214,0.3)]'
+                      ? 'bg-[#6E8F75] text-white shadow-[0_2px_8px_rgba(110,143,117,0.3)]'
                       : isCurrent
-                        ? 'bg-white border-2 border-student-500 text-student-500'
+                        ? 'bg-white border-2 border-[#6E8F75] text-[#6E8F75]'
                         : 'bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-[#0B0F19]/30'
                     }
                   `}
@@ -282,7 +302,7 @@ export default function BookSessionPage() {
                 </span>
               </div>
               {idx < steps.length - 1 && (
-                <div className={`flex-1 h-[2px] rounded-full ${isComplete ? 'bg-student-500' : 'bg-[#0B0F19]/[0.06]'}`} />
+                <div className={`flex-1 h-[2px] rounded-full ${isComplete ? 'bg-[#6E8F75]' : 'bg-[#0B0F19]/[0.06]'}`} />
               )}
             </div>
           );
@@ -311,8 +331,8 @@ export default function BookSessionPage() {
                   className={`
                     px-4 py-2.5 rounded-xl text-[12.5px] font-semibold whitespace-nowrap transition-all duration-200
                     ${selectedDay === day.date
-                      ? 'bg-student-500 text-white shadow-[0_4px_12px_rgba(0,86,214,0.25)]'
-                      : 'bg-[#FAF9F6] text-[#0B0F19]/60 border border-[#0B0F19]/[0.06] hover:border-student-500/30'
+                      ? 'bg-[#6E8F75] text-white shadow-[0_4px_12px_rgba(110,143,117,0.25)]'
+                      : 'bg-[#FAF9F6] text-[#0B0F19]/60 border border-[#0B0F19]/[0.06] hover:border-[#6E8F75]/30'
                     }
                   `}
                 >
@@ -333,8 +353,8 @@ export default function BookSessionPage() {
                     ${!slot.available
                       ? 'bg-[#FAF9F6] text-[#0B0F19]/20 cursor-not-allowed line-through'
                       : selectedSlot === slot.id
-                        ? 'bg-student-500 text-white shadow-[0_4px_16px_rgba(0,86,214,0.3)] scale-[1.02]'
-                        : 'bg-white text-[#0B0F19]/70 border border-[#0B0F19]/[0.08] hover:border-student-500/40 hover:text-student-500'
+                        ? 'bg-[#6E8F75] text-white shadow-[0_4px_16px_rgba(110,143,117,0.3)] scale-[1.02]'
+                        : 'bg-white text-[#0B0F19]/70 border border-[#0B0F19]/[0.08] hover:border-[#6E8F75]/40 hover:text-[#6E8F75]'
                     }
                   `}
                 >
@@ -369,8 +389,8 @@ export default function BookSessionPage() {
                   className={`
                     text-left p-4 rounded-2xl border transition-all duration-200
                     ${selectedTopic === topic.id
-                      ? 'bg-student-500/[0.06] border-student-500/30 shadow-[0_0_0_2px_rgba(0,86,214,0.15)]'
-                      : 'bg-white border-[#0B0F19]/[0.06] hover:border-student-500/20'
+                      ? 'bg-[#6E8F75]/[0.06] border-[#6E8F75]/30 shadow-[0_0_0_2px_rgba(110,143,117,0.15)]'
+                      : 'bg-white border-[#0B0F19]/[0.06] hover:border-[#6E8F75]/20'
                     }
                   `}
                 >
@@ -378,7 +398,7 @@ export default function BookSessionPage() {
                     <div
                       className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
                         selectedTopic === topic.id
-                          ? 'border-student-500 bg-student-500'
+                          ? 'border-[#6E8F75] bg-[#6E8F75]'
                           : 'border-[#0B0F19]/20'
                       }`}
                     >
@@ -414,7 +434,7 @@ export default function BookSessionPage() {
                   w-full min-h-[100px] p-3.5 rounded-2xl
                   bg-[#FAF9F6] border border-[#0B0F19]/[0.08]
                   text-[13.5px] text-[#0B0F19] placeholder:text-[#0B0F19]/35
-                  focus:outline-none focus:border-student-500 focus:ring-2 focus:ring-student-500/10 focus:bg-white
+                  focus:outline-none focus:border-[#6E8F75] focus:ring-2 focus:ring-[#6E8F75]/10 focus:bg-white
                   transition-all duration-200 resize-none
                 "
               />
@@ -435,7 +455,7 @@ export default function BookSessionPage() {
             <div className="bg-[#FAF9F6] rounded-2xl p-5 sm:p-6 space-y-4 border border-[#0B0F19]/[0.04]">
               {/* Mentor */}
               <div className="flex items-center gap-3 pb-4 border-b border-[#0B0F19]/[0.06]">
-                <div className="w-11 h-11 rounded-full bg-student-500 text-white flex items-center justify-center text-sm font-bold shadow-[0_2px_8px_rgba(0,86,214,0.25)]">
+                <div className="w-11 h-11 rounded-full bg-[#6E8F75] text-white flex items-center justify-center text-sm font-bold shadow-[0_2px_8px_rgba(110,143,117,0.25)]">
                   MA
                 </div>
                 <div>
@@ -447,28 +467,28 @@ export default function BookSessionPage() {
               {/* Details Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="flex items-center gap-2.5 text-[13px]">
-                  <Calendar className="w-4 h-4 text-student-500" />
+                  <Calendar className="w-4 h-4 text-[#6E8F75]" />
                   <div>
                     <p className="text-[11px] text-[#0B0F19]/40 font-medium">Date</p>
                     <p className="font-bold text-[#0B0F19]">{activeDayLabel}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2.5 text-[13px]">
-                  <Clock className="w-4 h-4 text-student-500" />
+                  <Clock className="w-4 h-4 text-[#6E8F75]" />
                   <div>
                     <p className="text-[11px] text-[#0B0F19]/40 font-medium">Time</p>
                     <p className="font-bold text-[#0B0F19]">{selectedSlotTime} (45 min)</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2.5 text-[13px]">
-                  <Video className="w-4 h-4 text-student-500" />
+                  <Video className="w-4 h-4 text-[#6E8F75]" />
                   <div>
                     <p className="text-[11px] text-[#0B0F19]/40 font-medium">Format</p>
                     <p className="font-bold text-[#0B0F19]">1-to-1 Video Call</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2.5 text-[13px]">
-                  <MessageCircle className="w-4 h-4 text-student-500" />
+                  <MessageCircle className="w-4 h-4 text-[#6E8F75]" />
                   <div>
                     <p className="text-[11px] text-[#0B0F19]/40 font-medium">Topic</p>
                     <p className="font-bold text-[#0B0F19]">{selectedTopicData?.label}</p>
@@ -487,7 +507,7 @@ export default function BookSessionPage() {
 
               {/* Info Note */}
               <div className="flex items-start gap-2 p-3 rounded-xl bg-white border border-[#0B0F19]/[0.04] text-[12px] text-[#0B0F19]/50">
-                <Sparkles className="w-3.5 h-3.5 text-student-500 mt-0.5 shrink-0" />
+                <Sparkles className="w-3.5 h-3.5 text-[#6E8F75] mt-0.5 shrink-0" />
                 <span>
                   A calendar invite and video call link will be sent to your email after booking. You can reschedule up to 24 hours before the session.
                 </span>
@@ -522,7 +542,7 @@ export default function BookSessionPage() {
               inline-flex items-center gap-2 px-6 py-3 rounded-2xl
               text-[14px] font-bold transition-all duration-200
               ${canProceed
-                ? 'bg-student-500 text-white hover:bg-student-600 hover:shadow-[0_8px_20px_rgba(0,86,214,0.3)] active:scale-[0.98] shadow-md'
+                ? 'bg-[#6E8F75] text-white hover:bg-[#587a60] hover:shadow-[0_8px_20px_rgba(110,143,117,0.3)] active:scale-[0.98] shadow-md'
                 : 'bg-[#0B0F19]/[0.06] text-[#0B0F19]/25 cursor-not-allowed'
               }
             `}

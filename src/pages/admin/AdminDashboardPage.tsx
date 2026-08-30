@@ -60,6 +60,7 @@ import {
   type UserRole,
   type JobStatus,
   type SoftwareTrack,
+  type TargetAudience,
   type ApplicationStatus,
   type AssessmentType,
   type AssessmentDifficulty,
@@ -129,6 +130,7 @@ export default function AdminDashboardPage() {
   const [formType, setFormType] = useState<AssessmentType>('CODING_CHALLENGE');
   const [formDifficulty, setFormDifficulty] = useState<AssessmentDifficulty>('INTERMEDIATE');
   const [formStatus, setFormStatus] = useState<AssessmentStatus>('ACTIVE');
+  const [formTargetAudience, setFormTargetAudience] = useState<TargetAudience>('all');
   const [formTimeLimit, setFormTimeLimit] = useState(45);
   const [formPassingScore, setFormPassingScore] = useState(75);
   const [formProblemStatement, setFormProblemStatement] = useState('');
@@ -237,6 +239,7 @@ export default function AdminDashboardPage() {
     setFormType('CODING_CHALLENGE');
     setFormDifficulty('INTERMEDIATE');
     setFormStatus('ACTIVE');
+    setFormTargetAudience('all');
     setFormTimeLimit(45);
     setFormPassingScore(75);
     setFormProblemStatement('### Problem Description\n\nDescribe the technical challenge, architectural goals, and performance constraints here...');
@@ -264,6 +267,7 @@ export default function AdminDashboardPage() {
     setFormType(a.type);
     setFormDifficulty(a.difficulty);
     setFormStatus(a.status);
+    setFormTargetAudience(a.targetAudience || 'all');
     setFormTimeLimit(a.timeLimitMinutes);
     setFormPassingScore(a.passingScore);
     setFormProblemStatement(a.problemStatement);
@@ -309,6 +313,7 @@ export default function AdminDashboardPage() {
         type: formType,
         difficulty: formDifficulty,
         status: formStatus,
+        targetAudience: formTargetAudience,
         timeLimitMinutes: Number(formTimeLimit) || 45,
         passingScore: Number(formPassingScore) || 75,
         problemStatement: formProblemStatement,
@@ -329,6 +334,7 @@ export default function AdminDashboardPage() {
         type: formType,
         difficulty: formDifficulty,
         status: formStatus,
+        targetAudience: formTargetAudience,
         timeLimitMinutes: Number(formTimeLimit) || 45,
         passingScore: Number(formPassingScore) || 75,
         problemStatement: formProblemStatement,

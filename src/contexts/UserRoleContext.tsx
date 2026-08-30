@@ -7,7 +7,7 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
    technical track binding upon initial account registration.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-export type UserRole = 'student' | 'graduate';
+export type UserRole = 'student' | 'grad' | 'graduate';
 
 export interface UserRoleContextType {
   userRole: UserRole | null;
@@ -30,7 +30,9 @@ export function UserRoleProvider({ children }: { children: React.ReactNode }) {
   const [userRole, setUserRoleState] = useState<UserRole | null>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored === 'student' || stored === 'graduate') return stored;
+      if (stored === 'student' || stored === 'grad' || stored === 'graduate') {
+        return stored === 'graduate' ? 'grad' : (stored as UserRole);
+      }
     } catch {
       // localStorage unavailable
     }
@@ -46,9 +48,10 @@ export function UserRoleProvider({ children }: { children: React.ReactNode }) {
   });
 
   const setUserRole = useCallback((role: UserRole) => {
-    setUserRoleState(role);
+    const normalizedRole = role === 'graduate' ? 'grad' : role;
+    setUserRoleState(normalizedRole);
     try {
-      localStorage.setItem(STORAGE_KEY, role);
+      localStorage.setItem(STORAGE_KEY, normalizedRole);
     } catch {
       // localStorage unavailable
     }
@@ -81,7 +84,7 @@ export function UserRoleProvider({ children }: { children: React.ReactNode }) {
         setUserRole,
         clearUserRole,
         isStudent: userRole === 'student',
-        isGraduate: userRole === 'graduate',
+        isGraduate: userRole === 'grad' || userRole === 'graduate',
         lockedTrack,
         isTrackLocked: Boolean(lockedTrack),
         bindTrack,

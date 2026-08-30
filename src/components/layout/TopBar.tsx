@@ -42,16 +42,18 @@ export default function TopBar() {
   const { user: clerkUser } = useUser();
   const { profile: userProfile } = useUserProfile();
   const { toggleMobile, isCollapsed } = useSidebar();
-  const { isStudent, isGraduate, userRole, clearUserRole } = useUserRole();
+  const { clearUserRole } = useUserRole();
   const location = useLocation();
+
+  const currentRole: 'student' | 'grad' = userProfile.role === 'student' ? 'student' : 'grad';
 
   const clerkName = clerkUser?.fullName || clerkUser?.firstName || clerkUser?.username;
   const clerkEmail = clerkUser?.primaryEmailAddress?.emailAddress;
   const clerkImage = clerkUser?.imageUrl;
-  const displayName = userProfile.fullName || clerkName || (isStudent ? 'Ahmad Student' : 'Ahmad Al-Hassan');
+  const displayName = userProfile.fullName || clerkName || (currentRole === 'student' ? 'Ahmad Student' : 'Ahmad Al-Hassan');
   const displayEmail = userProfile.email || clerkEmail;
   const displayImage = userProfile.imageUrl || clerkImage;
-  const displayRoleTitle = userProfile.title || (isStudent ? 'Computer Science Student' : 'Junior Software Engineer');
+  const displayRoleTitle = userProfile.title || (currentRole === 'student' ? 'University Student' : 'Junior Software Engineer');
   const initials = displayName
     .split(' ')
     .map((w) => w[0])
@@ -71,13 +73,8 @@ export default function TopBar() {
 
   const pageTitle = breadcrumbs[breadcrumbs.length - 1]?.label || 'Dashboard';
 
-  /* Root breadcrumb label based on role */
-  const rootLabel = isStudent ? 'Jadeer Student' : isGraduate ? 'Jadeer Graduate' : 'Jadeer Candidate';
-
-  /* Role badge config */
-  const roleBadge = isStudent
-    ? { label: 'Student', color: 'bg-student-50 text-student-600' }
-    : { label: 'Junior', color: 'bg-[#6E8F75]/10 text-[#6E8F75]' };
+  /* Root breadcrumb label */
+  const rootLabel = 'Jadeer Talent Portal';
 
   return (
     <header
@@ -117,9 +114,7 @@ export default function TopBar() {
                 <span
                   className={`transition-colors capitalize ${
                     i === breadcrumbs.length - 1
-                      ? isStudent
-                        ? 'text-student-500 font-semibold'
-                        : 'text-[#6E8F75] font-semibold'
+                      ? 'text-[#6E8F75] font-semibold'
                       : 'hover:text-[#0B0F19]/70'
                   }`}
                 >
@@ -132,8 +127,27 @@ export default function TopBar() {
         </div>
       </div>
 
-      {/* ── Right Section: Candidate Profile & Actions ────────────────── */}
-      <div className="flex items-center gap-2">
+      {/* ── Right Section: Candidate Profile & Read-Only Status ────────── */}
+      <div className="flex items-center gap-2.5">
+        {/* ── READ-ONLY CANDIDATE ROLE BADGE (LOCKED) ── */}
+        <div
+          id="candidate-role-badge"
+          className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-xs font-bold text-[#0B0F19]/75 shadow-2xs"
+          title="Candidate Role: Verified and read-only. Status upgrades are managed by institution administrators."
+        >
+          {currentRole === 'student' ? (
+            <>
+              <GraduationCap className="w-3.5 h-3.5 text-[#6E8F75]" />
+              <span>University Student</span>
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-3.5 h-3.5 text-[#6E8F75]" />
+              <span>Graduate Engineer</span>
+            </>
+          )}
+        </div>
+
         {/* Search */}
         <button
           id="global-search"
@@ -150,16 +164,18 @@ export default function TopBar() {
           title="Notifications"
         >
           <Bell className="w-[18px] h-[18px]" />
-          <span className={`absolute top-2 right-2 w-2 h-2 rounded-full ring-2 ring-white ${isStudent ? 'bg-student-500' : 'bg-[#6E8F75]'}`} />
+          <span className="absolute top-2 right-2 w-2 h-2 rounded-full ring-2 ring-white bg-[#6E8F75]" />
         </button>
 
         {/* Divider */}
-        <div className="w-px h-7 bg-[#0B0F19]/[0.08] mx-2 hidden sm:block" />
+        <div className="w-px h-7 bg-[#0B0F19]/[0.08] mx-1 hidden sm:block" />
 
         {/* User Profile */}
         <div
           id="candidate-user-menu"
-          className="flex items-center gap-3 p-1.5 rounded-xl hover:bg-[#0B0F19]/[0.03] transition-colors cursor-pointer"
+          onClick={() => navigate('/profile')}
+          className="flex items-center gap-3 p-1.5 rounded-xl hover:bg-[#0B0F19]/[0.04] transition-colors cursor-pointer"
+          title="View & Edit Profile"
         >
           {/* Avatar */}
           <div className="relative">
@@ -170,11 +186,7 @@ export default function TopBar() {
                 className="w-9 h-9 rounded-full object-cover ring-2 ring-[#6E8F75]/20 shadow-sm"
               />
             ) : (
-              <div className={`w-9 h-9 rounded-full text-white flex items-center justify-center text-xs font-bold ring-2 ${
-                isStudent
-                  ? 'bg-student-500 ring-student-500/20 shadow-[0_2px_6px_rgba(0,86,214,0.25)]'
-                  : 'bg-[#6E8F75] ring-[#6E8F75]/20 shadow-[0_2px_6px_rgba(110,143,117,0.25)]'
-              }`}>
+              <div className="w-9 h-9 rounded-full text-white flex items-center justify-center text-xs font-bold ring-2 bg-[#6E8F75] ring-[#6E8F75]/20 shadow-[0_2px_6px_rgba(110,143,117,0.25)]">
                 {initials}
               </div>
             )}
@@ -187,8 +199,8 @@ export default function TopBar() {
               <p className="text-[13px] font-bold text-[#0B0F19] leading-tight">
                 {displayName}
               </p>
-              <span className={`px-1.5 py-0.2 text-[10px] font-semibold ${roleBadge.color} rounded-md`}>
-                {roleBadge.label}
+              <span className="px-1.5 py-0.2 text-[10px] font-semibold bg-[#6E8F75]/10 text-[#6E8F75] rounded-md uppercase">
+                {currentRole === 'student' ? 'Student' : 'Graduate'}
               </span>
             </div>
             <p className="text-[11px] text-[#0B0F19]/40 leading-tight mt-0.5">

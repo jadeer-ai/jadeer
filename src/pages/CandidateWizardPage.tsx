@@ -1005,7 +1005,7 @@ function CompletionView() {
             text-white text-[15px] font-semibold rounded-xl
             transition-all duration-300 active:scale-[0.97]
             ${isStudent
-              ? 'bg-student-500 hover:bg-student-600 hover:shadow-[0_8px_24px_rgba(0,86,214,0.3)]'
+              ? 'bg-[#6E8F75] hover:bg-[#5d7d64] hover:shadow-[0_8px_24px_rgba(110,143,117,0.3)]'
               : 'bg-[#6E8F75] hover:bg-[#5d7d64] hover:shadow-[0_8px_24px_rgba(110,143,117,0.3)]'
             }
           `}
@@ -1101,7 +1101,7 @@ export default function CandidateWizard({ embedded = false }: { embedded?: boole
     if (isAnimating) return;
     if (currentStep === STEPS.length - 1) {
       // Save profile metadata locally and mark onboarded
-      const effectiveRole = formData.selectedRole || (isStudent ? 'student' : 'graduate');
+      const effectiveRole: 'student' | 'grad' = (formData.selectedRole === 'student' || isStudent) ? 'student' : 'grad';
       const effectiveTrack = lockedTrack || 'Backend Development';
 
       updateProfile({
@@ -1223,10 +1223,10 @@ export default function CandidateWizard({ embedded = false }: { embedded?: boole
                   text-[14px] font-semibold transition-all duration-300
                   ${canProceed()
                     ? isStudent
-                      ? 'bg-student-500 text-white hover:bg-student-600 hover:shadow-[0_4px_16px_rgba(0,86,214,0.25)] active:scale-[0.97]'
+                      ? 'bg-[#6E8F75] text-white hover:bg-[#5d7d64] hover:shadow-[0_4px_16px_rgba(110,143,117,0.25)] active:scale-[0.97]'
                       : 'bg-[#6E8F75] text-white hover:bg-[#5d7d64] hover:shadow-[0_4px_16px_rgba(110,143,117,0.25)] active:scale-[0.97]'
                     : isStudent
-                      ? 'bg-student-500/30 text-white/60 cursor-not-allowed'
+                      ? 'bg-[#6E8F75]/30 text-white/60 cursor-not-allowed'
                       : 'bg-[#6E8F75]/30 text-white/60 cursor-not-allowed'
                   }
                 `}

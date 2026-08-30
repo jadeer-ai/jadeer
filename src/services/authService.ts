@@ -113,13 +113,14 @@ export const AuthService = {
     email: string;
     password: string;
     name: string;
-    role?: 'student' | 'graduate';
+    role?: 'student' | 'grad' | 'graduate';
     track?: string;
   }): Promise<AuthResult> {
     const cleanEmail = params.email.toLowerCase().trim();
     const cleanPass = params.password.trim();
     const cleanName = params.name.trim();
-    const role = params.role || 'graduate';
+    const rawRole = params.role || 'grad';
+    const role = rawRole === 'student' ? 'STUDENT' : 'GRADUATE';
     const track = params.track || 'Full-Stack Engineering';
 
     try {

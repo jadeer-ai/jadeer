@@ -24,6 +24,7 @@ import {
   Zap,
   Building2,
   ExternalLink,
+  UserCheck,
 } from 'lucide-react';
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -134,7 +135,7 @@ export default function StudentDashboardPage() {
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-[#0B0F19]/50">
-              <span className="px-2.5 py-0.5 rounded-full bg-student-500/10 text-student-600 font-bold">
+              <span className="px-2.5 py-0.5 rounded-full bg-[#6E8F75]/10 text-[#6E8F75] font-bold border border-[#6E8F75]/20">
                 {activeTrack}
               </span>
               <span>•</span>
@@ -142,9 +143,9 @@ export default function StudentDashboardPage() {
               <span>•</span>
               <span className="font-mono text-[#0B0F19]/60">Student_ID: {profile?.id || 'stu-001'}</span>
               <span>•</span>
-              <span className="inline-flex items-center gap-1 text-student-700 bg-student-50 px-2 py-0.5 rounded-full font-bold text-[11px]">
-                <span className="w-1.5 h-1.5 rounded-full bg-student-500" />
-                Single Unified Entity Active
+              <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-bold text-[11px] border border-emerald-200/50">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                Verified Candidate Profile
               </span>
             </div>
 
@@ -153,12 +154,12 @@ export default function StudentDashboardPage() {
                 <img
                   src={clerkImage}
                   alt={effectiveName}
-                  className="w-12 h-12 rounded-2xl object-cover ring-2 ring-student-500/20 shadow-sm"
+                  className="w-12 h-12 rounded-2xl object-cover ring-2 ring-[#6E8F75]/20 shadow-sm"
                 />
               ) : null}
               <div>
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#0B0F19] tracking-tight">
-                  Welcome back, <span className="text-student-500">{effectiveName}</span>
+                  Welcome back, <span className="text-[#6E8F75]">{effectiveName}</span>
                 </h1>
                 {effectiveEmail && (
                   <p className="text-xs text-[#0B0F19]/40 font-mono mt-0.5">{effectiveEmail}</p>
@@ -180,7 +181,7 @@ export default function StudentDashboardPage() {
               </p>
             </div>
             <div className="text-right">
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-student-600 bg-student-500/10 px-2.5 py-0.5 rounded-full">
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#45624c] bg-[#dce8de] px-2.5 py-0.5 rounded-full border border-[#b9d1bf]">
                 Track Locked • Class of {profile?.graduationYear || 2025}
               </span>
             </div>
@@ -195,7 +196,7 @@ export default function StudentDashboardPage() {
           </div>
           <div className="p-3.5 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.04]">
             <p className="text-[11px] font-bold uppercase tracking-wider text-[#0B0F19]/45">Consultations</p>
-            <p className="text-base font-extrabold text-student-600 mt-0.5">{consultations.length} Active Bookings</p>
+            <p className="text-base font-extrabold text-[#6E8F75] mt-0.5">{consultations.length} Active Bookings</p>
           </div>
           <div className="p-3.5 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.04]">
             <p className="text-[11px] font-bold uppercase tracking-wider text-[#0B0F19]/45">Telemetry Score</p>
@@ -203,7 +204,7 @@ export default function StudentDashboardPage() {
           </div>
           <div className="p-3.5 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.04]">
             <p className="text-[11px] font-bold uppercase tracking-wider text-[#0B0F19]/45">Internship Pipeline</p>
-            <p className="text-base font-extrabold text-employer-600 mt-0.5">{(userProfile.applications || []).length || 3} Active Applications</p>
+            <p className="text-base font-extrabold text-[#0B0F19] mt-0.5">{(userProfile.applications || []).length || 3} Active Applications</p>
           </div>
         </div>
       </div>
@@ -214,7 +215,7 @@ export default function StudentDashboardPage() {
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#0B0F19]/[0.05] shadow-[0_2px_16px_rgba(0,0,0,0.02)] space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <ShieldCheck className="w-5 h-5 text-student-500" />
+            <ShieldCheck className="w-5 h-5 text-[#6E8F75]" />
             <div>
               <h2 className="text-xs font-bold uppercase tracking-wider text-[#0B0F19]/50">
                 Internship & Engineering Validation Pipeline
@@ -222,7 +223,7 @@ export default function StudentDashboardPage() {
               <p className="text-[13px] font-bold text-[#0B0F19]">Continuous End-to-End Competence Tracking</p>
             </div>
           </div>
-          <span className="text-xs font-bold text-student-500 bg-student-500/10 px-3 py-1 rounded-full">
+          <span className="text-xs font-bold text-[#6E8F75] bg-[#6E8F75]/10 px-3 py-1 rounded-full border border-[#6E8F75]/20">
             Phase 2 of 5 Active
           </span>
         </div>
@@ -233,14 +234,27 @@ export default function StudentDashboardPage() {
             const isCompleted = phase.status === 'completed';
             const isCurrent = phase.status === 'current';
 
+            const phaseRouteMap: Record<string, string> = {
+              'profile-onboarding': '/profile',
+              'ai-assessment': '/candidates/ai-interview',
+              'human-calibration': '/candidates/human-interview',
+              'evidence-dossier': '/candidates/portfolio',
+              'job-matching': '/candidates/jobs',
+            };
+            const targetRoute = phaseRouteMap[phase.id] || '/candidates/human-interview';
+
             return (
-              <div key={phase.id} className="flex sm:flex-col items-start gap-4 sm:gap-3 relative">
+              <Link
+                key={phase.id}
+                to={targetRoute}
+                className="flex sm:flex-col items-start gap-4 sm:gap-3 relative group hover:opacity-90 transition-opacity"
+              >
                 {/* Horizontal connector line on desktop */}
                 {idx < journeyPhases.length - 1 && (
                   <div
                     className={`
                       hidden sm:block absolute top-4 left-[28px] right-[-14px] h-[2px] z-0
-                      ${isCompleted ? 'bg-student-500' : 'bg-[#0B0F19]/[0.06]'}
+                      ${isCompleted ? 'bg-[#6E8F75]' : 'bg-[#0B0F19]/[0.06]'}
                     `}
                   />
                 )}
@@ -248,15 +262,15 @@ export default function StudentDashboardPage() {
                 {/* Step indicator icon/circle */}
                 <div className="relative z-10 shrink-0">
                   {isCompleted ? (
-                    <div className="w-8 h-8 rounded-full bg-student-500 text-white flex items-center justify-center shadow-[0_2px_8px_rgba(0,86,214,0.3)]">
+                    <div className="w-8 h-8 rounded-full bg-[#6E8F75] text-white flex items-center justify-center shadow-[0_2px_8px_rgba(110,143,117,0.3)] group-hover:scale-105 transition-transform">
                       <Check className="w-4 h-4" strokeWidth={2.5} />
                     </div>
                   ) : isCurrent ? (
-                    <div className="w-8 h-8 rounded-full bg-white border-2 border-student-500 flex items-center justify-center shadow-[0_0_12px_rgba(0,86,214,0.25)]">
-                      <span className="w-2.5 h-2.5 rounded-full bg-student-500 animate-pulse" />
+                    <div className="w-8 h-8 rounded-full bg-white border-2 border-[#6E8F75] flex items-center justify-center shadow-[0_0_12px_rgba(110,143,117,0.25)] group-hover:scale-105 transition-transform">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#6E8F75] animate-pulse" />
                     </div>
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-[#0B0F19]/30 flex items-center justify-center text-xs font-bold">
+                    <div className="w-8 h-8 rounded-full bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-[#0B0F19]/30 flex items-center justify-center text-xs font-bold group-hover:border-[#6E8F75]/40 transition-colors">
                       {phase.step}
                     </div>
                   )}
@@ -266,7 +280,7 @@ export default function StudentDashboardPage() {
                 <div className="space-y-0.5 min-w-0">
                   <p
                     className={`
-                      text-[13px] font-bold leading-tight
+                      text-[13px] font-bold leading-tight group-hover:text-[#6E8F75] transition-colors
                       ${isCurrent ? 'text-[#0B0F19]' : isCompleted ? 'text-[#0B0F19]/80' : 'text-[#0B0F19]/35'}
                     `}
                   >
@@ -276,7 +290,7 @@ export default function StudentDashboardPage() {
                     {phase.desc}
                   </p>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>
@@ -285,15 +299,15 @@ export default function StudentDashboardPage() {
       {/* ═══════════════════════════════════════════════════════════════
          3. SEAMLESS BRIDGE FLOW: DIRECT 'START INTERNSHIP VALIDATION' CTA
          ═══════════════════════════════════════════════════════════════ */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0B0F19] via-[#112038] to-[#1A3158] p-7 sm:p-9 text-white shadow-[0_8px_32px_rgba(11,15,25,0.18)] border border-white/[0.08]">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0B0F19] via-[#111A29] to-[#1A2638] p-7 sm:p-9 text-white shadow-[0_8px_32px_rgba(11,15,25,0.18)] border border-white/[0.08]">
         {/* Subtle Background Glow */}
-        <div className="absolute top-0 right-0 w-80 h-80 bg-student-500/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/3 w-60 h-60 bg-[#6E8F75]/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-80 h-80 bg-[#6E8F75]/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-1/3 w-60 h-60 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
           <div className="space-y-3 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 backdrop-blur-md">
-              <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+              <Zap className="w-3.5 h-3.5 text-emerald-400 fill-emerald-400" />
               <span className="text-xs font-bold text-white uppercase tracking-wider">
                 Seamless Bridge • 1-Click Transition
               </span>
@@ -312,8 +326,8 @@ export default function StudentDashboardPage() {
               to="/candidates/ai-interview"
               className="
                 inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl
-                bg-student-500 text-white text-[15px] font-bold
-                hover:bg-student-600 hover:shadow-[0_10px_28px_rgba(0,86,214,0.45)]
+                bg-[#6E8F75] text-white text-[15px] font-bold
+                hover:bg-[#587a60] hover:shadow-[0_10px_28px_rgba(110,143,117,0.45)]
                 transition-all duration-200 active:scale-[0.98] shadow-lg
               "
             >
@@ -322,14 +336,14 @@ export default function StudentDashboardPage() {
             </Link>
 
             <Link
-              to="/consultations/book"
+              to="/consultations"
               className="
                 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl
                 bg-white/10 text-white/90 text-xs font-bold border border-white/15
                 hover:bg-white/15 hover:text-white transition-colors
               "
             >
-              <Calendar className="w-3.5 h-3.5 text-student-400" />
+              <Calendar className="w-3.5 h-3.5 text-[#82a78a]" />
               <span>Book Follow-up Consultation</span>
             </Link>
           </div>
@@ -350,7 +364,7 @@ export default function StudentDashboardPage() {
               {/* Widget Header */}
               <div className="flex items-center justify-between pb-3 border-b border-[#0B0F19]/[0.05]">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-student-500/10 text-student-500 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-[#6E8F75]/10 text-[#6E8F75] flex items-center justify-center">
                     <Calendar className="w-4 h-4" />
                   </div>
                   <div>
@@ -361,7 +375,7 @@ export default function StudentDashboardPage() {
 
                 <Link
                   to="/consultations"
-                  className="text-xs font-bold text-student-500 hover:text-student-600 transition-colors"
+                  className="text-xs font-bold text-[#6E8F75] hover:text-[#587a60] transition-colors"
                 >
                   View All ({consultations.length}) →
                 </Link>
@@ -381,11 +395,11 @@ export default function StudentDashboardPage() {
                     return (
                       <div
                         key={session.id}
-                        className="p-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.04] hover:border-student-500/20 transition-all space-y-3"
+                        className="p-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.04] hover:border-[#6E8F75]/20 transition-all space-y-3"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-10 h-10 rounded-full bg-student-500 text-white flex items-center justify-center text-xs font-bold shrink-0 shadow-[0_2px_8px_rgba(0,86,214,0.25)]">
+                            <div className="w-10 h-10 rounded-full bg-[#6E8F75] text-white flex items-center justify-center text-xs font-bold shrink-0 shadow-[0_2px_8px_rgba(110,143,117,0.25)]">
                               {session.mentorName
                                 .split(' ')
                                 .map((n) => n[0])
@@ -395,7 +409,7 @@ export default function StudentDashboardPage() {
                             <div className="min-w-0">
                               <p className="text-[13.5px] font-bold text-[#0B0F19] truncate">{session.mentorName}</p>
                               <p className="text-[11px] text-[#0B0F19]/50 truncate">
-                                {session.mentorTitle} • <span className="font-semibold text-student-600">{session.mentorCompany}</span>
+                                {session.mentorTitle} • <span className="font-semibold text-[#6E8F75]">{session.mentorCompany}</span>
                               </p>
                             </div>
                           </div>
@@ -403,10 +417,10 @@ export default function StudentDashboardPage() {
                           <span
                             className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shrink-0 ${
                               isCompleted
-                                ? 'bg-blue-100 text-blue-700'
+                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                                 : isConfirmed
-                                ? 'bg-emerald-100 text-emerald-700'
-                                : 'bg-amber-100 text-amber-700'
+                                ? 'bg-[#6E8F75]/10 text-[#6E8F75] border border-[#6E8F75]/20'
+                                : 'bg-amber-100 text-amber-800 border border-amber-200'
                             }`}
                           >
                             {session.status.replace('_', ' ')}
@@ -418,7 +432,7 @@ export default function StudentDashboardPage() {
                           <p className="text-[12px] font-semibold text-[#0B0F19]">{session.topicTitle}</p>
                           <div className="flex flex-wrap items-center gap-3 text-[11px] text-[#0B0F19]/50">
                             <span className="flex items-center gap-1 font-medium">
-                              <Clock className="w-3 h-3 text-student-500" />
+                              <Clock className="w-3 h-3 text-[#6E8F75]" />
                               {new Date(session.scheduledAt).toLocaleDateString(undefined, {
                                 weekday: 'short',
                                 month: 'short',
@@ -434,7 +448,7 @@ export default function StudentDashboardPage() {
                                   href={session.meetingLink}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 font-bold text-student-600 hover:text-student-700"
+                                  className="inline-flex items-center gap-1 font-bold text-[#6E8F75] hover:text-[#587a60]"
                                 >
                                   <Video className="w-3 h-3" />
                                   Join Room
@@ -459,11 +473,11 @@ export default function StudentDashboardPage() {
             {/* Book Session CTA */}
             <div className="pt-3 border-t border-[#0B0F19]/[0.05]">
               <Link
-                to="/consultations/book"
+                to="/consultations"
                 className="
                   flex items-center justify-center gap-2 w-full px-5 py-3 rounded-2xl
-                  bg-student-500 text-white text-[13px] font-bold
-                  hover:bg-student-600 hover:shadow-[0_6px_20px_rgba(0,86,214,0.25)]
+                  bg-[#6E8F75] text-white text-[13px] font-bold
+                  hover:bg-[#587a60] hover:shadow-[0_6px_20px_rgba(110,143,117,0.25)]
                   transition-all active:scale-[0.99]
                 "
               >
@@ -481,7 +495,7 @@ export default function StudentDashboardPage() {
               {/* Widget Header */}
               <div className="flex items-center justify-between pb-3 border-b border-[#0B0F19]/[0.05]">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-student-500/10 text-student-500 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-[#6E8F75]/10 text-[#6E8F75] flex items-center justify-center">
                     <ShieldCheck className="w-4 h-4" />
                   </div>
                   <div>
@@ -492,7 +506,7 @@ export default function StudentDashboardPage() {
 
                 <Link
                   to="/candidates/portfolio"
-                  className="text-xs font-bold text-student-500 hover:text-student-600 transition-colors"
+                  className="text-xs font-bold text-[#6E8F75] hover:text-[#587a60] transition-colors"
                 >
                   Evidence Portfolio →
                 </Link>
@@ -504,7 +518,7 @@ export default function StudentDashboardPage() {
                   <span className="text-[11px] font-bold uppercase tracking-wider text-[#0B0F19]/45">
                     Target Technical Assessment
                   </span>
-                  <span className="text-[11px] font-bold text-student-600 bg-student-500/10 px-2.5 py-0.5 rounded-full">
+                  <span className="text-[11px] font-bold text-[#45624c] bg-[#dce8de] px-2.5 py-0.5 rounded-full border border-[#b9d1bf]">
                     Adaptive C++ & Systems
                   </span>
                 </div>
@@ -525,7 +539,7 @@ export default function StudentDashboardPage() {
                     <span className="font-bold text-[#0B0F19]">92%</span>
                   </div>
                   <div className="w-full h-2 rounded-full bg-[#FAF9F6] border border-[#0B0F19]/[0.06] overflow-hidden">
-                    <div className="h-full rounded-full bg-student-500" style={{ width: '92%' }} />
+                    <div className="h-full rounded-full bg-[#6E8F75]" style={{ width: '92%' }} />
                   </div>
 
                   <div className="flex items-center justify-between text-[11px] font-medium pt-1">
@@ -547,9 +561,9 @@ export default function StudentDashboardPage() {
                   {(userProfile.verifiedBadges || ['Verified Backend Engineer', 'Jadeer AI Technical Badge']).map((b) => (
                     <span
                       key={b}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-student-50/50 border border-student-500/20 text-[11px] font-bold text-student-700 shadow-2xs"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-50/70 border border-emerald-200/60 text-[11px] font-bold text-emerald-800 shadow-2xs"
                     >
-                      <CheckCircle2 className="w-3 h-3 text-student-500" />
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                       {b}
                     </span>
                   ))}
@@ -557,19 +571,32 @@ export default function StudentDashboardPage() {
               </div>
             </div>
 
-            {/* Begin AI Assessment Action */}
-            <div className="pt-3 border-t border-[#0B0F19]/[0.05]">
+            {/* Validation Actions */}
+            <div className="pt-3 border-t border-[#0B0F19]/[0.05] grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <Link
                 to="/candidates/ai-interview"
                 className="
-                  flex items-center justify-center gap-2 w-full px-5 py-3 rounded-2xl
-                  bg-student-500 text-white text-[13px] font-bold
-                  hover:bg-student-600 hover:shadow-[0_6px_20px_rgba(0,86,214,0.3)]
+                  flex items-center justify-center gap-2 px-4 py-3 rounded-2xl
+                  bg-[#6E8F75] text-white text-[13px] font-bold
+                  hover:bg-[#587a60] hover:shadow-[0_6px_20px_rgba(110,143,117,0.3)]
                   transition-all active:scale-[0.99]
                 "
               >
-                <span>Launch AI Interview Module</span>
+                <span>AI Interview</span>
                 <ArrowRight className="w-4 h-4" />
+              </Link>
+
+              <Link
+                to="/candidates/human-interview"
+                className="
+                  flex items-center justify-center gap-2 px-4 py-3 rounded-2xl
+                  bg-[#FAF9F6] text-[#0B0F19] text-[13px] font-bold border border-[#0B0F19]/[0.08]
+                  hover:bg-[#6E8F75]/10 hover:border-[#6E8F75]/30 hover:text-[#6E8F75]
+                  transition-all active:scale-[0.99]
+                "
+              >
+                <UserCheck className="w-4 h-4 text-[#6E8F75]" />
+                <span>Human Interview</span>
               </Link>
             </div>
           </div>

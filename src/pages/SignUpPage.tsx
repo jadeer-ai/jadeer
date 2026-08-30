@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useUserRole } from '@/contexts/UserRoleContext';
+import { useUserProfile } from '@/contexts/UserProfileContext';
 import { AuthService } from '@/services/authService';
 import { BrandLogo } from '@/components/common';
 import { useSignUp } from '@clerk/clerk-react';
@@ -14,6 +15,8 @@ import {
   Sparkles,
   Loader2,
   AlertCircle,
+  GraduationCap,
+  Briefcase,
 } from 'lucide-react';
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -87,8 +90,9 @@ const softwareTracks = [
 export default function SignUpPage() {
   const navigate = useNavigate();
   const { userRole, setUserRole, bindTrack } = useUserRole();
-  const [candidateType, setCandidateType] = useState<'student' | 'graduate'>(
-    userRole === 'student' ? 'student' : 'graduate'
+  const { updateProfile } = useUserProfile();
+  const [candidateType, setCandidateType] = useState<'student' | 'grad'>(
+    userRole === 'student' ? 'student' : 'grad'
   );
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -102,9 +106,15 @@ export default function SignUpPage() {
 
   const { isLoaded: isClerkLoaded, signUp } = useSignUp();
 
-  const handleRoleToggle = (type: 'student' | 'graduate') => {
+  const handleRoleToggle = (type: 'student' | 'grad') => {
     setCandidateType(type);
     setUserRole(type);
+    updateProfile({ role: type });
+    try {
+      localStorage.setItem('jadeer-user-role', type);
+    } catch {
+      // ignore
+    }
   };
 
   const isCustomTrack = selectedTrack === 'Add Custom Track...';
@@ -122,11 +132,23 @@ export default function SignUpPage() {
     };
 
     try {
+      setUserRole(candidateType);
+      updateProfile({ role: candidateType, track: effectiveTrack || 'General Engineering' });
+      try {
+        localStorage.setItem('jadeer-user-role', candidateType);
+      } catch {
+        // ignore
+      }
+
       if (signUp) {
         await signUp.authenticateWithRedirect({
           strategy: (strategyMap[provider] || `oauth_${provider}`) as any,
           redirectUrl: '/sso-callback',
           redirectUrlComplete: '/dashboard',
+          unsafeMetadata: {
+            role: candidateType,
+            track: effectiveTrack || 'General Engineering',
+          },
         });
         return;
       }
@@ -163,6 +185,24 @@ export default function SignUpPage() {
     setError(null);
     setIsLoading(true);
 
+    // If Clerk signUp is available, attempt Clerk signup with unsafeMetadata
+    if (signUp) {
+      try {
+        await signUp.create({
+          emailAddress: email,
+          password,
+          firstName: fullName.split(' ')[0] || fullName,
+          lastName: fullName.split(' ').slice(1).join(' ') || '',
+          unsafeMetadata: {
+            role: candidateType,
+            track: effectiveTrack || 'General Engineering',
+          },
+        });
+      } catch (clerkErr) {
+        console.warn('Clerk background registration note:', clerkErr);
+      }
+    }
+
     const res = await AuthService.register({
       name: fullName,
       email,
@@ -175,7 +215,18 @@ export default function SignUpPage() {
 
     if (res.success) {
       setUserRole(candidateType);
+      updateProfile({
+        fullName,
+        email,
+        role: candidateType,
+        track: effectiveTrack || 'General Engineering',
+      });
       bindTrack(effectiveTrack || 'General Engineering');
+      try {
+        localStorage.setItem('jadeer-user-role', candidateType);
+      } catch {
+        // ignore
+      }
       navigate(res.redirectUrl || '/candidates/wizard');
     } else {
       setError(res.error || 'Registration failed. Please check your information and try again.');
@@ -218,7 +269,7 @@ export default function SignUpPage() {
       </header>
 
       {/* ── Central Floating Card Container ─────────────────────────── */}
-      <main className="relative z-10 w-full max-w-[520px] mx-auto px-5 py-4 my-auto animate-[fade-in_0.4s_ease]">
+      <main className="relative z-10 w-full max-w-[540px] mx-auto px-5 py-4 my-auto animate-[fade-in_0.4s_ease]">
         <div className="bg-white rounded-3xl p-7 sm:p-9 border border-[#0B0F19]/[0.05] shadow-[0_24px_70px_-20px_rgba(0,0,0,0.04)] space-y-6">
 
           {/* Heading */}
@@ -248,47 +299,69 @@ export default function SignUpPage() {
             </div>
           )}
 
-          {/* ── 'I AM JOINING AS' DUAL ROLE SELECTION TOGGLE (EMERALD/DARK THEMED) ── */}
-          <div className="space-y-1.5 pt-1">
-            <label className="block text-xs font-bold uppercase tracking-wider text-[#0B0F19]/60">
-              I am joining as <span className="text-rose-500">*</span>
+          {/* ── REQUIRED ROLE SELECTOR STEP: "I am a: [Student...] | [Graduate...]" ── */}
+          <div className="space-y-2 pt-1">
+            <label className="block text-xs font-bold uppercase tracking-wider text-[#0B0F19]/70">
+              I am a: <span className="text-rose-500">*</span>
             </label>
-            <div className="grid grid-cols-2 gap-2 p-1.5 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <button
                 type="button"
                 id="toggle-candidate-student"
                 onClick={() => handleRoleToggle('student')}
                 className={`
-                  flex items-center justify-center py-2.5 px-3 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer
+                  flex flex-col items-start text-left p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer relative
                   ${candidateType === 'student'
-                    ? 'bg-[#6E8F75] text-white shadow-sm'
-                    : 'bg-transparent text-[#0B0F19]/60 hover:text-[#0B0F19] hover:bg-white/60'
+                    ? 'bg-[#6E8F75]/10 border-[#6E8F75] text-[#0B0F19] shadow-sm ring-1 ring-[#6E8F75]/30'
+                    : 'bg-[#FAF9F6] border-[#0B0F19]/[0.08] text-[#0B0F19]/70 hover:border-[#0B0F19]/20 hover:bg-white'
                   }
                 `}
               >
-                <span>University Student</span>
+                <div className="flex items-center gap-2 mb-1 w-full justify-between">
+                  <div className="flex items-center gap-1.5 font-bold text-xs">
+                    <GraduationCap className={`w-4 h-4 ${candidateType === 'student' ? 'text-[#6E8F75]' : 'text-[#0B0F19]/50'}`} />
+                    <span>Student</span>
+                  </div>
+                  {candidateType === 'student' && (
+                    <span className="w-2 h-2 rounded-full bg-[#6E8F75]" />
+                  )}
+                </div>
+                <span className="text-[11px] text-[#0B0F19]/55 font-medium leading-snug">
+                  Seeking Internships & Co-ops
+                </span>
               </button>
 
               <button
                 type="button"
                 id="toggle-candidate-graduate"
-                onClick={() => handleRoleToggle('graduate')}
+                onClick={() => handleRoleToggle('grad')}
                 className={`
-                  flex items-center justify-center py-2.5 px-3 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer
-                  ${candidateType === 'graduate'
-                    ? 'bg-[#6E8F75] text-white shadow-sm'
-                    : 'bg-transparent text-[#0B0F19]/60 hover:text-[#0B0F19] hover:bg-white/60'
+                  flex flex-col items-start text-left p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer relative
+                  ${candidateType === 'grad'
+                    ? 'bg-[#6E8F75]/10 border-[#6E8F75] text-[#0B0F19] shadow-sm ring-1 ring-[#6E8F75]/30'
+                    : 'bg-[#FAF9F6] border-[#0B0F19]/[0.08] text-[#0B0F19]/70 hover:border-[#0B0F19]/20 hover:bg-white'
                   }
                 `}
               >
-                <span>Graduate Engineer</span>
+                <div className="flex items-center gap-2 mb-1 w-full justify-between">
+                  <div className="flex items-center gap-1.5 font-bold text-xs">
+                    <Briefcase className={`w-4 h-4 ${candidateType === 'grad' ? 'text-[#6E8F75]' : 'text-[#0B0F19]/50'}`} />
+                    <span>Graduate</span>
+                  </div>
+                  {candidateType === 'grad' && (
+                    <span className="w-2 h-2 rounded-full bg-[#6E8F75]" />
+                  )}
+                </div>
+                <span className="text-[11px] text-[#0B0F19]/55 font-medium leading-snug">
+                  Seeking Full-Time Roles
+                </span>
               </button>
             </div>
 
             <p className="text-[11px] text-[#0B0F19]/45 italic pt-0.5">
               {candidateType === 'student'
-                ? '• Tailors AI assessments for university internship benchmarks & mentor calibration.'
-                : '• Calibrates AI assessments for junior & full-time engineering hiring gates.'
+                ? '• Tailors AI assessments and matching feeds for university internship and co-op benchmarks.'
+                : '• Calibrates AI assessments and matching feeds for junior & full-time engineering hiring gates.'
               }
             </p>
           </div>

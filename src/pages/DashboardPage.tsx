@@ -267,8 +267,21 @@ export default function DashboardPage() {
             const isCompleted = phase.status === 'completed';
             const isCurrent = phase.status === 'current';
 
+            const phaseRouteMap: Record<string, string> = {
+              'profile-onboarding': '/profile',
+              'ai-assessment': '/candidates/ai-interview',
+              'human-calibration': '/candidates/human-interview',
+              'evidence-dossier': '/candidates/portfolio',
+              'job-matching': '/candidates/jobs',
+            };
+            const targetRoute = phaseRouteMap[phase.id] || '/candidates/human-interview';
+
             return (
-              <div key={phase.id} className="flex sm:flex-col items-start gap-4 sm:gap-3 relative">
+              <Link
+                key={phase.id}
+                to={targetRoute}
+                className="flex sm:flex-col items-start gap-4 sm:gap-3 relative group hover:opacity-90 transition-opacity"
+              >
                 {/* Horizontal connector line on desktop */}
                 {idx < journeyPhases.length - 1 && (
                   <div
@@ -282,15 +295,15 @@ export default function DashboardPage() {
                 {/* Step indicator icon/circle */}
                 <div className="relative z-10 shrink-0">
                   {isCompleted ? (
-                    <div className="w-8 h-8 rounded-full bg-[#6E8F75] text-white flex items-center justify-center shadow-[0_2px_8px_rgba(110,143,117,0.3)]">
+                    <div className="w-8 h-8 rounded-full bg-[#6E8F75] text-white flex items-center justify-center shadow-[0_2px_8px_rgba(110,143,117,0.3)] group-hover:scale-105 transition-transform">
                       <Check className="w-4 h-4" strokeWidth={2.5} />
                     </div>
                   ) : isCurrent ? (
-                    <div className="w-8 h-8 rounded-full bg-white border-2 border-[#6E8F75] flex items-center justify-center shadow-[0_0_12px_rgba(110,143,117,0.25)]">
+                    <div className="w-8 h-8 rounded-full bg-white border-2 border-[#6E8F75] flex items-center justify-center shadow-[0_0_12px_rgba(110,143,117,0.25)] group-hover:scale-105 transition-transform">
                       <span className="w-2.5 h-2.5 rounded-full bg-[#6E8F75] animate-pulse" />
                     </div>
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-[#0B0F19]/30 flex items-center justify-center text-xs font-bold">
+                    <div className="w-8 h-8 rounded-full bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-[#0B0F19]/30 flex items-center justify-center text-xs font-bold group-hover:border-[#6E8F75]/40 transition-colors">
                       {phase.step}
                     </div>
                   )}
@@ -300,7 +313,7 @@ export default function DashboardPage() {
                 <div className="space-y-0.5 min-w-0">
                   <p
                     className={`
-                      text-[13px] font-bold leading-tight
+                      text-[13px] font-bold leading-tight group-hover:text-[#6E8F75] transition-colors
                       ${isCurrent ? 'text-[#0B0F19]' : isCompleted ? 'text-[#0B0F19]/80' : 'text-[#0B0F19]/35'}
                     `}
                   >
@@ -310,7 +323,7 @@ export default function DashboardPage() {
                     {phase.desc}
                   </p>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>
@@ -415,11 +428,11 @@ export default function DashboardPage() {
                     return (
                       <div
                         key={session.id}
-                        className="p-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.04] hover:border-student-500/20 transition-all space-y-3"
+                        className="p-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.04] hover:border-[#6E8F75]/20 transition-all space-y-3"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-10 h-10 rounded-full bg-student-500 text-white flex items-center justify-center text-xs font-bold shrink-0 shadow-[0_2px_8px_rgba(0,86,214,0.25)]">
+                            <div className="w-10 h-10 rounded-full bg-[#6E8F75] text-white flex items-center justify-center text-xs font-bold shrink-0 shadow-[0_2px_8px_rgba(110,143,117,0.25)]">
                               {session.mentorName
                                 .split(' ')
                                 .map((n) => n[0])
@@ -429,7 +442,7 @@ export default function DashboardPage() {
                             <div className="min-w-0">
                               <p className="text-[13.5px] font-bold text-[#0B0F19] truncate">{session.mentorName}</p>
                               <p className="text-[11px] text-[#0B0F19]/50 truncate">
-                                {session.mentorTitle} • <span className="font-semibold text-student-600">{session.mentorCompany}</span>
+                                {session.mentorTitle} • <span className="font-semibold text-[#6E8F75]">{session.mentorCompany}</span>
                               </p>
                             </div>
                           </div>
@@ -437,10 +450,10 @@ export default function DashboardPage() {
                           <span
                             className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shrink-0 ${
                               isCompleted
-                                ? 'bg-blue-100 text-blue-700'
+                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                                 : isConfirmed
-                                ? 'bg-emerald-100 text-emerald-700'
-                                : 'bg-amber-100 text-amber-700'
+                                ? 'bg-[#6E8F75]/10 text-[#6E8F75] border border-[#6E8F75]/20'
+                                : 'bg-amber-100 text-amber-800 border border-amber-200'
                             }`}
                           >
                             {session.status.replace('_', ' ')}
@@ -452,7 +465,7 @@ export default function DashboardPage() {
                           <p className="text-[12px] font-semibold text-[#0B0F19]">{session.topicTitle}</p>
                           <div className="flex flex-wrap items-center gap-3 text-[11px] text-[#0B0F19]/50">
                             <span className="flex items-center gap-1 font-medium">
-                              <Clock className="w-3 h-3 text-student-500" />
+                              <Clock className="w-3 h-3 text-[#6E8F75]" />
                               {new Date(session.scheduledAt).toLocaleDateString(undefined, {
                                 weekday: 'short',
                                 month: 'short',
@@ -468,7 +481,7 @@ export default function DashboardPage() {
                                   href={session.meetingLink}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 font-bold text-student-600 hover:text-student-700"
+                                  className="inline-flex items-center gap-1 font-bold text-[#6E8F75] hover:text-[#587a60]"
                                 >
                                   <Video className="w-3 h-3" />
                                   Join Room
@@ -493,11 +506,11 @@ export default function DashboardPage() {
             {/* Book Session CTA */}
             <div className="pt-3 border-t border-[#0B0F19]/[0.05]">
               <Link
-                to="/consultations/book"
+                to="/consultations"
                 className="
                   flex items-center justify-center gap-2 w-full px-5 py-3 rounded-2xl
-                  bg-student-500 text-white text-[13px] font-bold
-                  hover:bg-student-600 hover:shadow-[0_6px_20px_rgba(0,86,214,0.25)]
+                  bg-[#6E8F75] text-white text-[13px] font-bold
+                  hover:bg-[#587a60] hover:shadow-[0_6px_20px_rgba(110,143,117,0.25)]
                   transition-all active:scale-[0.99]
                 "
               >
@@ -591,19 +604,32 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Begin AI Assessment Action */}
-            <div className="pt-3 border-t border-[#0B0F19]/[0.05]">
+            {/* Validation Actions */}
+            <div className="pt-3 border-t border-[#0B0F19]/[0.05] grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <Link
                 to="/candidates/ai-interview"
                 className="
-                  flex items-center justify-center gap-2 w-full px-5 py-3 rounded-2xl
+                  flex items-center justify-center gap-2 px-4 py-3 rounded-2xl
                   bg-[#6E8F75] text-white text-[13px] font-bold
-                  hover:bg-[#5d7d64] hover:shadow-[0_6px_20px_rgba(110,143,117,0.3)]
+                  hover:bg-[#587a60] hover:shadow-[0_6px_20px_rgba(110,143,117,0.3)]
                   transition-all active:scale-[0.99]
                 "
               >
-                <span>Launch AI Interview Module</span>
+                <span>AI Interview</span>
                 <ArrowRight className="w-4 h-4" />
+              </Link>
+
+              <Link
+                to="/candidates/human-interview"
+                className="
+                  flex items-center justify-center gap-2 px-4 py-3 rounded-2xl
+                  bg-[#FAF9F6] text-[#0B0F19] text-[13px] font-bold border border-[#0B0F19]/[0.08]
+                  hover:bg-[#6E8F75]/10 hover:border-[#6E8F75]/30 hover:text-[#6E8F75]
+                  transition-all active:scale-[0.99]
+                "
+              >
+                <UserCheck className="w-4 h-4 text-[#6E8F75]" />
+                <span>Human Interview</span>
               </Link>
             </div>
           </div>

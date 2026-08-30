@@ -38,6 +38,8 @@ export type AssessmentType =
   | 'CODE_REVIEW'
   | 'TECHNICAL_QUIZ';
 
+export type TargetAudience = 'student' | 'grad' | 'all';
+
 export type AssessmentDifficulty = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
 export type AssessmentStatus = 'ACTIVE' | 'DRAFT' | 'ARCHIVED';
 
@@ -65,6 +67,7 @@ export interface AdminAssessmentRecord {
   type: AssessmentType;
   difficulty: AssessmentDifficulty;
   status: AssessmentStatus;
+  targetAudience: TargetAudience;
   timeLimitMinutes: number;
   passingScore: number;
   problemStatement: string;
@@ -174,6 +177,7 @@ export interface AdminJobListingRecord {
   requirements: string;
   skills: string[];
   status: JobStatus;
+  targetAudience: TargetAudience;
   minimumMatchScore: number;
   enableAIInterview: boolean;
   enableProjectAssessment: boolean;
@@ -437,6 +441,7 @@ const initialJobListingsSeed: AdminJobListingRecord[] = [
     requirements: 'BS in Computer Science or equivalent. Strong understanding of REST APIs, SQL, and distributed systems.',
     skills: ['Node.js', 'TypeScript', 'PostgreSQL', 'Docker', 'REST API', 'Microservices'],
     status: 'ACTIVE',
+    targetAudience: 'grad',
     minimumMatchScore: 72,
     enableAIInterview: true,
     enableProjectAssessment: true,
@@ -461,6 +466,7 @@ const initialJobListingsSeed: AdminJobListingRecord[] = [
     requirements: 'Strong React/TypeScript skills. Eye for detail and UI/UX sensibility.',
     skills: ['React', 'TypeScript', 'Tailwind CSS', 'Figma', 'Storybook', 'Next.js'],
     status: 'ACTIVE',
+    targetAudience: 'all',
     minimumMatchScore: 68,
     enableAIInterview: true,
     enableProjectAssessment: true,
@@ -485,6 +491,7 @@ const initialJobListingsSeed: AdminJobListingRecord[] = [
     requirements: 'Currently pursuing CS or related degree. Familiarity with Linux, Docker, and basic AWS services.',
     skills: ['AWS', 'Docker', 'Kubernetes', 'CI/CD', 'Linux', 'Terraform'],
     status: 'ACTIVE',
+    targetAudience: 'student',
     minimumMatchScore: 60,
     enableAIInterview: true,
     enableProjectAssessment: false,
@@ -509,6 +516,7 @@ const initialJobListingsSeed: AdminJobListingRecord[] = [
     requirements: '2+ years of full-stack experience. Proficiency in React, Node.js, and SQL databases.',
     skills: ['React', 'Node.js', 'TypeScript', 'PostgreSQL', 'GraphQL', 'System Design'],
     status: 'ACTIVE',
+    targetAudience: 'grad',
     minimumMatchScore: 75,
     enableAIInterview: true,
     enableProjectAssessment: true,
@@ -533,6 +541,7 @@ const initialJobListingsSeed: AdminJobListingRecord[] = [
     requirements: 'Experience with Flutter/Dart. Understanding of mobile UX patterns and platform guidelines.',
     skills: ['Flutter', 'Dart', 'REST API', 'Firebase', 'Figma', 'Kotlin'],
     status: 'PAUSED',
+    targetAudience: 'student',
     minimumMatchScore: 65,
     enableAIInterview: true,
     enableProjectAssessment: true,
@@ -557,6 +566,7 @@ const initialJobListingsSeed: AdminJobListingRecord[] = [
     requirements: 'MS in CS/Stats or equivalent experience. Proficiency in Python, scikit-learn, and TensorFlow/PyTorch.',
     skills: ['Python', 'TensorFlow', 'Machine Learning', 'Data Engineering', 'PostgreSQL', 'Docker'],
     status: 'DRAFT',
+    targetAudience: 'all',
     minimumMatchScore: 80,
     enableAIInterview: true,
     enableProjectAssessment: true,
@@ -674,6 +684,7 @@ export const initialAssessmentsSeed: AdminAssessmentRecord[] = [
     type: 'CODING_CHALLENGE',
     difficulty: 'INTERMEDIATE',
     status: 'ACTIVE',
+    targetAudience: 'grad',
     timeLimitMinutes: 45,
     passingScore: 75,
     problemStatement: `### Problem Description
@@ -752,6 +763,7 @@ You must implement a \`SlidingWindowRateLimiter\` class that:
     type: 'CODING_CHALLENGE',
     difficulty: 'INTERMEDIATE',
     status: 'ACTIVE',
+    targetAudience: 'all',
     timeLimitMinutes: 60,
     passingScore: 80,
     problemStatement: `### Problem Description
@@ -829,6 +841,7 @@ export function calculateVirtualSlice(
     type: 'CODING_CHALLENGE',
     difficulty: 'ADVANCED',
     status: 'ACTIVE',
+    targetAudience: 'grad',
     timeLimitMinutes: 60,
     passingScore: 80,
     problemStatement: `### Problem Description
@@ -893,6 +906,7 @@ def search_top_k(query_vec: list[float], corpus: list[dict], top_k: int = 5, min
     type: 'CODING_CHALLENGE',
     difficulty: 'INTERMEDIATE',
     status: 'ACTIVE',
+    targetAudience: 'student',
     timeLimitMinutes: 45,
     passingScore: 70,
     problemStatement: `### Problem Description

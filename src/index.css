@@ -25,17 +25,17 @@
   --color-primary-900: #2a3e30;
   --color-primary-950: #1a2a1f;
 
-  /* Student Accent: Vibrant Ocean Blue (#0056D6 / hover: #0048B5) */
-  --color-student-50:  #E6EEFB;
-  --color-student-100: #BFCFF2;
-  --color-student-200: #80A3E8;
-  --color-student-300: #4D85E0;
-  --color-student-400: #2B6FDB;
-  --color-student-500: #0056D6;
-  --color-student-600: #0048B5;
-  --color-student-700: #003A94;
-  --color-student-800: #002C73;
-  --color-student-900: #001F52;
+  /* Student Accent: Aligned with Jadeer Brand Sage Green & Emerald */
+  --color-student-50:  #f0f5f1;
+  --color-student-100: #dce8de;
+  --color-student-200: #b9d1bf;
+  --color-student-300: #96ba9f;
+  --color-student-400: #82a78a;
+  --color-student-500: #6E8F75;
+  --color-student-600: #587a60;
+  --color-student-700: #45624c;
+  --color-student-800: #364d3c;
+  --color-student-900: #2a3e30;
 
   /* Employer Accent: Warm Amber/Gold (#D97706) */
   --color-employer-50:  #FFFBEB;
