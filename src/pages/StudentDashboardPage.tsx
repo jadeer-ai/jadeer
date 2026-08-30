@@ -1,6 +1,7 @@
 import { useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
+import { useUserProfile } from '@/contexts/UserProfileContext';
 import { useUserRole } from '@/contexts/UserRoleContext';
 import { useCandidateJourney } from '@/contexts/CandidateJourneyContext';
 import { AdminApiService } from '@/services/adminService';
@@ -84,6 +85,7 @@ const journeyPhases: JourneyPhase[] = [
 export default function StudentDashboardPage() {
   const { userRole, lockedTrack } = useUserRole();
   const { isOnboarded } = useCandidateJourney();
+  const { profile: userProfile } = useUserProfile();
   const navigate = useNavigate();
 
   // Extract full Clerk user data
@@ -100,26 +102,27 @@ export default function StudentDashboardPage() {
   const consultations = unifiedData.consultations;
   const user = unifiedData.user;
   const profile = user.studentProfile;
-  const activeTrack = lockedTrack || (clerkUser?.publicMetadata?.track as string) || profile?.softwareTrack || 'Backend Development';
-  const effectiveName = clerkName || profile?.fullName || 'Ahmad';
-  const effectiveEmail = clerkEmail || user?.email || 'ahmad.student@example.com';
-  const effectiveUniversity = (clerkUser?.publicMetadata?.university as string) || profile?.university || 'KFUPM';
+  const activeTrack = userProfile.track || lockedTrack || (clerkUser?.publicMetadata?.track as string) || profile?.softwareTrack || 'Backend Development';
+  const effectiveName = userProfile.fullName || clerkName || profile?.fullName || 'Ahmad';
+  const effectiveEmail = userProfile.email || clerkEmail || user?.email || 'ahmad.student@example.com';
+  const effectiveImage = userProfile.imageUrl || clerkImage;
+  const effectiveUniversity = userProfile.university || (clerkUser?.publicMetadata?.university as string) || profile?.university || 'KFUPM';
 
   // Auto-redirect if user signed up via social login and lacks custom profile fields
   useEffect(() => {
     if (!isClerkLoaded) return;
 
     if (clerkUser) {
-      const hasRole = Boolean(userRole || clerkUser.publicMetadata?.role);
-      const hasTrack = Boolean(lockedTrack || clerkUser.publicMetadata?.track);
-      const hasUniversity = Boolean(localStorage.getItem('jadeer-user-university') || clerkUser.publicMetadata?.university);
+      const hasRole = Boolean(userProfile.role || userRole || clerkUser.publicMetadata?.role);
+      const hasTrack = Boolean(userProfile.track || lockedTrack || clerkUser.publicMetadata?.track);
+      const hasUniversity = Boolean(userProfile.university || localStorage.getItem('jadeer-user-university') || clerkUser.publicMetadata?.university);
       const isComplete = isOnboarded || (hasRole && hasTrack && hasUniversity);
 
       if (!isComplete && !localStorage.getItem('jadeer-graduate-onboarded')) {
         navigate('/onboarding', { replace: true });
       }
     }
-  }, [isClerkLoaded, clerkUser, userRole, lockedTrack, isOnboarded, navigate]);
+  }, [isClerkLoaded, clerkUser, userProfile, userRole, lockedTrack, isOnboarded, navigate]);
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 sm:space-y-10 animate-[fade-in_0.4s_ease] py-2 sm:py-6">

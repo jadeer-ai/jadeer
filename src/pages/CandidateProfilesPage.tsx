@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
+import { useUserProfile } from '@/contexts/UserProfileContext';
 import { useInterviewSchedule } from '@/contexts/InterviewScheduleContext';
 import { useCompanyProfile } from '@/contexts/CompanyProfileContext';
 import {
@@ -224,6 +225,7 @@ export default function CandidateProfilesPage() {
   const [scheduledDone, setScheduledDone] = useState(false);
 
   const { user: clerkUser, isLoaded: isClerkLoaded } = useUser();
+  const { profile: userProfile, updateProfile } = useUserProfile();
   const clerkName = clerkUser?.fullName || clerkUser?.firstName || clerkUser?.username;
   const clerkEmail = clerkUser?.primaryEmailAddress?.emailAddress;
 
@@ -242,12 +244,25 @@ export default function CandidateProfilesPage() {
     }
 
     const base = candidateDatabase['JAD-8492'];
-    if (clerkUser && !queryId && !queryName) {
+    if (!queryId && !queryName) {
+      const name = userProfile.fullName || clerkName || base.fullName;
       return {
         ...base,
-        fullName: clerkName || base.fullName,
-        email: clerkEmail || base.email,
-        initials: (clerkName || base.fullName)
+        fullName: name,
+        email: userProfile.email || clerkEmail || base.email,
+        title: userProfile.title || base.title,
+        location: userProfile.location || base.location,
+        bio: userProfile.bio || base.bio,
+        githubUrl: userProfile.githubUrl || base.githubUrl,
+        linkedinUrl: userProfile.linkedinUrl || base.linkedinUrl,
+        portfolioUrl: userProfile.portfolioUrl || base.portfolioUrl,
+        education: {
+          ...base.education,
+          institution: userProfile.university || base.education.institution,
+          degree: userProfile.major || base.education.degree,
+          graduationYear: userProfile.graduationYear ? `Class of ${userProfile.graduationYear}` : base.education.graduationYear,
+        },
+        initials: name
           .split(' ')
           .map((w) => w[0])
           .filter(Boolean)
@@ -258,7 +273,7 @@ export default function CandidateProfilesPage() {
     }
 
     return base;
-  }, [queryId, queryName, clerkUser, clerkName, clerkEmail]);
+  }, [queryId, queryName, clerkUser, clerkName, clerkEmail, userProfile]);
 
   const [profile, setProfile] = useState<CandidateData>(matchedCandidate);
   const [isEditing, setIsEditing] = useState(false);
@@ -284,6 +299,25 @@ export default function CandidateProfilesPage() {
 
   const handleSaveEdit = () => {
     setProfile(draft);
+    // Persist changes to custom platform state and localStorage
+    updateProfile({
+      fullName: draft.fullName,
+      email: draft.email,
+      title: draft.title,
+      location: draft.location,
+      bio: draft.bio,
+      university: draft.education.institution,
+      major: draft.education.degree,
+      graduationYear: draft.education.graduationYear.replace(/[^0-9]/g, '') || draft.education.graduationYear,
+      githubUrl: draft.githubUrl,
+      linkedinUrl: draft.linkedinUrl,
+      portfolioUrl: draft.portfolioUrl,
+      skills: [
+        ...draft.skills.languages,
+        ...draft.skills.systems,
+        ...draft.skills.tools,
+      ],
+    });
     setIsEditing(false);
     setShowSavedToast(true);
     setTimeout(() => setShowSavedToast(false), 3000);

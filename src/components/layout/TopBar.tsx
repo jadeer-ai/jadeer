@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useUser, useClerk } from '@clerk/clerk-react';
+import { useUserProfile } from '@/contexts/UserProfileContext';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { useUserRole } from '@/contexts/UserRoleContext';
 import { AuthService } from '@/services/authService';
@@ -39,6 +40,7 @@ export default function TopBar() {
   const navigate = useNavigate();
   const { signOut } = useClerk();
   const { user: clerkUser } = useUser();
+  const { profile: userProfile } = useUserProfile();
   const { toggleMobile, isCollapsed } = useSidebar();
   const { isStudent, isGraduate, userRole, clearUserRole } = useUserRole();
   const location = useLocation();
@@ -46,7 +48,10 @@ export default function TopBar() {
   const clerkName = clerkUser?.fullName || clerkUser?.firstName || clerkUser?.username;
   const clerkEmail = clerkUser?.primaryEmailAddress?.emailAddress;
   const clerkImage = clerkUser?.imageUrl;
-  const displayName = clerkName || (isStudent ? 'Ahmad Student' : 'Ahmad Al-Hassan');
+  const displayName = userProfile.fullName || clerkName || (isStudent ? 'Ahmad Student' : 'Ahmad Al-Hassan');
+  const displayEmail = userProfile.email || clerkEmail;
+  const displayImage = userProfile.imageUrl || clerkImage;
+  const displayRoleTitle = userProfile.title || (isStudent ? 'Computer Science Student' : 'Junior Software Engineer');
   const initials = displayName
     .split(' ')
     .map((w) => w[0])
@@ -158,9 +163,9 @@ export default function TopBar() {
         >
           {/* Avatar */}
           <div className="relative">
-            {clerkImage ? (
+            {displayImage ? (
               <img
-                src={clerkImage}
+                src={displayImage}
                 alt={displayName}
                 className="w-9 h-9 rounded-full object-cover ring-2 ring-[#6E8F75]/20 shadow-sm"
               />
@@ -187,7 +192,7 @@ export default function TopBar() {
               </span>
             </div>
             <p className="text-[11px] text-[#0B0F19]/40 leading-tight mt-0.5">
-              {clerkEmail || (isStudent ? 'Computer Science Student' : 'Junior Software Engineer')}
+              {displayEmail || displayRoleTitle}
             </p>
           </div>
         </div>

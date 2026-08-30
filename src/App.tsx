@@ -1,5 +1,6 @@
 import { RouterProvider } from 'react-router-dom';
 import { ClerkProvider } from '@clerk/clerk-react';
+import { UserProfileProvider } from '@/contexts/UserProfileContext';
 import { SidebarProvider } from '@/contexts/SidebarContext';
 import { CandidateJourneyProvider } from '@/contexts/CandidateJourneyContext';
 import { UserRoleProvider } from '@/contexts/UserRoleContext';
@@ -17,19 +18,21 @@ if (!PUBLISHABLE_KEY) {
 export default function App() {
   return (
     <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
-      <UserRoleProvider>
-        <CandidateJourneyProvider>
-          <InterviewScheduleProvider>
-            <CompanyProfileProvider>
-              <AdminAuthProvider>
-                <SidebarProvider>
-                  <RouterProvider router={router} />
-                </SidebarProvider>
-              </AdminAuthProvider>
-            </CompanyProfileProvider>
-          </InterviewScheduleProvider>
-        </CandidateJourneyProvider>
-      </UserRoleProvider>
+      <UserProfileProvider>
+        <UserRoleProvider>
+          <CandidateJourneyProvider>
+            <InterviewScheduleProvider>
+              <CompanyProfileProvider>
+                <AdminAuthProvider>
+                  <SidebarProvider>
+                    <RouterProvider router={router} />
+                  </SidebarProvider>
+                </AdminAuthProvider>
+              </CompanyProfileProvider>
+            </InterviewScheduleProvider>
+          </CandidateJourneyProvider>
+        </UserRoleProvider>
+      </UserProfileProvider>
     </ClerkProvider>
   );
 }

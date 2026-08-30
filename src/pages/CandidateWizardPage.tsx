@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, type DragEvent, type ChangeEvent } from 'react';
 import { useUser } from '@clerk/clerk-react';
+import { useUserProfile } from '@/contexts/UserProfileContext';
 import { BrandLogo } from '@/components/common';
 import { useUserRole } from '@/contexts/UserRoleContext';
 import { useCandidateJourney } from '@/contexts/CandidateJourneyContext';
@@ -1036,6 +1037,7 @@ function CompletionView() {
 export default function CandidateWizard({ embedded = false }: { embedded?: boolean }) {
   const { isStudent, setUserRole, bindTrack, lockedTrack } = useUserRole();
   const { completeOnboarding } = useCandidateJourney();
+  const { profile: userProfile, updateProfile } = useUserProfile();
   const { user: clerkUser, isLoaded: isClerkLoaded } = useUser();
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -1050,13 +1052,17 @@ export default function CandidateWizard({ embedded = false }: { embedded?: boole
     const session = typeof window !== 'undefined' ? AuthService.getCurrentSession() : null;
     return {
       ...initialFormData,
-      fullName: session?.user?.name || '',
-      title: session?.user?.name ? (isStudent ? 'Software Engineering Intern' : 'Junior Software Engineer') : '',
+      fullName: session?.user?.name || userProfile.fullName || '',
+      title: session?.user?.name ? (isStudent ? 'Software Engineering Intern' : 'Junior Software Engineer') : userProfile.title,
+      location: userProfile.location || '',
+      bio: userProfile.bio || '',
+      university: userProfile.university || 'King Fahd University of Petroleum & Minerals (KFUPM)',
       githubUrl: session?.user?.githubUsername
         ? `https://github.com/${session.user.githubUsername}`
-        : session?.user?.email?.includes('github')
-          ? 'https://github.com/ahmad-dev-engineer'
-          : '',
+        : userProfile.githubUrl || '',
+      linkedinUrl: userProfile.linkedinUrl || '',
+      portfolioUrl: userProfile.portfolioUrl || '',
+      selectedSkills: userProfile.skills && userProfile.skills.length > 0 ? userProfile.skills : [],
     };
   });
 
@@ -1095,14 +1101,26 @@ export default function CandidateWizard({ embedded = false }: { embedded?: boole
     if (isAnimating) return;
     if (currentStep === STEPS.length - 1) {
       // Save profile metadata locally and mark onboarded
-      try {
-        localStorage.setItem('jadeer-graduate-onboarded', 'true');
-        localStorage.setItem('jadeer-user-university', formData.university || 'KFUPM');
-        if (formData.selectedRole) setUserRole(formData.selectedRole);
-        bindTrack(lockedTrack || 'Backend Development');
-      } catch {
-        // localStorage unavailable
-      }
+      const effectiveRole = formData.selectedRole || (isStudent ? 'student' : 'graduate');
+      const effectiveTrack = lockedTrack || 'Backend Development';
+
+      updateProfile({
+        fullName: formData.fullName,
+        title: formData.title,
+        location: formData.location,
+        bio: formData.bio,
+        university: formData.university || 'King Fahd University of Petroleum & Minerals (KFUPM)',
+        role: effectiveRole,
+        track: effectiveTrack,
+        githubUrl: formData.githubUrl,
+        linkedinUrl: formData.linkedinUrl,
+        portfolioUrl: formData.portfolioUrl,
+        skills: formData.selectedSkills,
+        resumeFileName: formData.resumeFile ? formData.resumeFile.name : undefined,
+      });
+
+      if (formData.selectedRole) setUserRole(formData.selectedRole);
+      bindTrack(effectiveTrack);
       completeOnboarding();
       setIsComplete(true);
       return;

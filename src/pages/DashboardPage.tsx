@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
+import { useUserProfile } from '@/contexts/UserProfileContext';
 import { useUserRole } from '@/contexts/UserRoleContext';
 import { useCandidateJourney } from '@/contexts/CandidateJourneyContext';
 import { useInterviewSchedule, type InterviewType } from '@/contexts/InterviewScheduleContext';
@@ -112,6 +113,7 @@ const journeyPhases: JourneyPhase[] = [
 export default function DashboardPage() {
   const { isStudent, userRole, lockedTrack } = useUserRole();
   const { isOnboarded } = useCandidateJourney();
+  const { profile: userProfile } = useUserProfile();
   const navigate = useNavigate();
   const { getInterviewsForCandidate } = useInterviewSchedule();
 
@@ -134,26 +136,27 @@ export default function DashboardPage() {
   const consultations = unifiedData.consultations;
   const user = unifiedData.user;
   const profile = user.studentProfile;
-  const activeTrack = lockedTrack || (clerkUser?.publicMetadata?.track as string) || profile?.softwareTrack || 'Backend Development';
-  const effectiveName = clerkName || profile?.fullName || 'Ahmad Al-Hassan';
-  const effectiveEmail = clerkEmail || user?.email || 'ahmad.hassan@example.com';
-  const effectiveUniversity = (clerkUser?.publicMetadata?.university as string) || profile?.university || 'KFUPM';
+  const activeTrack = userProfile.track || lockedTrack || (clerkUser?.publicMetadata?.track as string) || profile?.softwareTrack || 'Backend Development';
+  const effectiveName = userProfile.fullName || clerkName || profile?.fullName || 'Ahmad Al-Hassan';
+  const effectiveEmail = userProfile.email || clerkEmail || user?.email || 'ahmad.hassan@example.com';
+  const effectiveImage = userProfile.imageUrl || clerkImage;
+  const effectiveUniversity = userProfile.university || (clerkUser?.publicMetadata?.university as string) || profile?.university || 'KFUPM';
 
   // Auto-redirect if user signed up via social login and lacks required profile fields
   useEffect(() => {
     if (!isClerkLoaded) return;
 
     if (clerkUser) {
-      const hasRole = Boolean(userRole || clerkUser.publicMetadata?.role);
-      const hasTrack = Boolean(lockedTrack || clerkUser.publicMetadata?.track);
-      const hasUniversity = Boolean(localStorage.getItem('jadeer-user-university') || clerkUser.publicMetadata?.university);
+      const hasRole = Boolean(userProfile.role || userRole || clerkUser.publicMetadata?.role);
+      const hasTrack = Boolean(userProfile.track || lockedTrack || clerkUser.publicMetadata?.track);
+      const hasUniversity = Boolean(userProfile.university || localStorage.getItem('jadeer-user-university') || clerkUser.publicMetadata?.university);
       const isComplete = isOnboarded || (hasRole && hasTrack && hasUniversity);
 
       if (!isComplete && !localStorage.getItem('jadeer-graduate-onboarded')) {
         navigate('/onboarding', { replace: true });
       }
     }
-  }, [isClerkLoaded, clerkUser, userRole, lockedTrack, isOnboarded, navigate]);
+  }, [isClerkLoaded, clerkUser, userProfile, userRole, lockedTrack, isOnboarded, navigate]);
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 sm:space-y-10 animate-[fade-in_0.4s_ease] py-2 sm:py-6">
@@ -180,9 +183,9 @@ export default function DashboardPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              {clerkImage ? (
+              {effectiveImage ? (
                 <img
-                  src={clerkImage}
+                  src={effectiveImage}
                   alt={effectiveName}
                   className="w-12 h-12 rounded-2xl object-cover ring-2 ring-[#6E8F75]/20 shadow-sm"
                 />
