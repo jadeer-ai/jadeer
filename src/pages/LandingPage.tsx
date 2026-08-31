@@ -29,10 +29,13 @@ import spiderMatrixImg from '@/assets/spider-matrix-emblem.jpg';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    JADEER LANDING PAGE — "DIGITAL HAVEN" (STEEL BLUE & WARM TERRACOTTA)
-   - Expansive Background Matrix:
-     • Central origin 3D metallic hexagon & spider emblem (opacity 25% + blur-md)
-     • Geometric spider web matrix extending dynamically outwards to all 4 corners
-   - Clean, Centered Typography, Subtext, Dual CTAs & Trust Markers
+   - Hexagonal Tech Constellation Web:
+     • Concentric, smooth expanding hexagonal web rings
+     • Ultra-fine radial fiber lines connecting at 12 astrological spokes
+     • Tiny glowing circular nodes in Deep Navy (#172132) & Warm Copper (#C4846C)
+     • Soft opacity (18%-24%) naturally fading into the Porcelain Off-White canvas
+   - Central 3D Metallic Hexagonal Spider Origin Emblem (Watermark Backdrop)
+   - Centered 3-Line Editorial Headline, Subtext, & Dual CTAs
    - 3 Detached Floating Feature Cards Below Hero
    - Dynamic Scroll-Reactive Floating Capsule Navbar
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -44,17 +47,17 @@ const navLinks = [
   { label: 'Evidence Dossier', href: '#evidence' },
 ];
 
-/* ── Expansive Geometric Spider Web Matrix with Central 3D Emblem ────────── */
-function ExpansiveSpiderMatrixBackdrop() {
+/* ── Hexagonal Tech Constellation Web with Central 3D Emblem Backdrop ────── */
+function HexagonalTechConstellationBackdrop() {
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden select-none flex items-center justify-center">
-      {/* 1. Underlying Perspective Wireframe Grid */}
+      {/* 1. Ultra-Subtle Underlying Micro-Grid */}
       <div
-        className="absolute inset-0 opacity-[0.20]"
+        className="absolute inset-0 opacity-[0.15]"
         style={{
           backgroundImage: `
-            linear-gradient(to right, rgba(83, 120, 155, 0.08) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(83, 120, 155, 0.08) 1px, transparent 1px)
+            linear-gradient(to right, rgba(83, 120, 155, 0.06) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(83, 120, 155, 0.06) 1px, transparent 1px)
           `,
           backgroundSize: '48px 48px',
           maskImage: 'radial-gradient(ellipse 95% 75% at 50% 45%, #000 30%, transparent 85%)',
@@ -62,124 +65,125 @@ function ExpansiveSpiderMatrixBackdrop() {
         }}
       />
 
-      {/* 2. Full-Screen Expansive Geometric Spider Web Matrix SVG (Origin: 960, 480) */}
+      {/* 2. Smooth Hexagonal Tech Constellation Web SVG (Origin: 960, 480) */}
       <svg
-        className="absolute inset-0 w-full h-full opacity-[0.32] mix-blend-multiply"
+        className="absolute inset-0 w-full h-full opacity-[0.22] mix-blend-multiply"
         viewBox="0 0 1920 980"
         preserveAspectRatio="xMidYMid slice"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
-        <g stroke="#53789B" strokeWidth="1">
+        <g strokeWidth="0.85">
           {/* ═══════════════════════════════════════════════════════════════
-             CONCENTRIC EXPANDING HEXAGONAL MATRIX RINGS FROM CENTER (960, 480)
+             CONCENTRIC EXPANDING HEXAGONAL WEBS (Radii: 280, 440, 620, 840, 1100, 1400)
              ═══════════════════════════════════════════════════════════════ */}
 
-          {/* Ring 1: Inner Web Ring (Radius ~360) */}
+          {/* Ring 1: Inner Constellation Web (Radius ~280) */}
           <polygon
-            points="960,120 1272,300 1272,660 960,840 648,660 648,300"
+            points="960,200 1202,340 1202,620 960,760 718,620 718,340"
             stroke="#53789B"
-            strokeWidth="1.2"
-            strokeDasharray="4 4"
-            fill="#53789B"
-            fillOpacity="0.02"
+            strokeOpacity="0.7"
+            strokeDasharray="3 3"
           />
 
-          {/* Ring 2: Mid Web Ring (Radius ~560) */}
+          {/* Ring 2: Primary Mid Constellation Web (Radius ~440) */}
           <polygon
-            points="960,-80 1445,200 1445,760 960,1040 475,760 475,200"
+            points="960,40 1341,260 1341,700 960,920 579,700 579,260"
             stroke="#C4846C"
-            strokeWidth="1.3"
-            strokeOpacity="0.75"
-            fill="#C4846C"
-            fillOpacity="0.015"
+            strokeOpacity="0.8"
           />
 
-          {/* Ring 3: Expanded Outer Web Ring (Radius ~820) */}
+          {/* Ring 3: Expanded Secondary Web (Radius ~620) */}
           <polygon
-            points="960,-340 1670,70 1670,890 960,1300 250,890 250,70"
+            points="960,-140 1497,170 1497,790 960,1100 423,790 423,170"
             stroke="#53789B"
-            strokeWidth="1.2"
-            strokeDasharray="6 4"
             strokeOpacity="0.65"
+            strokeDasharray="4 4"
           />
 
-          {/* Ring 4: Giant Outer Boundary Ring Spanning Full Screen (Radius ~1150) */}
+          {/* Ring 4: Outer Horizon Constellation Web (Radius ~840) */}
           <polygon
-            points="960,-670 1956,-95 1956,1055 960,1630 -36,1055 -36,-95"
+            points="960,-360 1687,60 1687,900 960,1320 233,900 233,60"
+            stroke="#C4846C"
+            strokeOpacity="0.7"
+          />
+
+          {/* Ring 5: Full-Canvas Expansive Boundary Ring (Radius ~1100) */}
+          <polygon
+            points="960,-620 1912,-70 1912,1030 960,1580 8,1030 8,-70"
             stroke="#172132"
-            strokeWidth="1.1"
-            strokeOpacity="0.45"
+            strokeOpacity="0.5"
+            strokeDasharray="6 5"
+          />
+
+          {/* Ring 6: Edge Atmosphere Constellation Ring (Radius ~1400) */}
+          <polygon
+            points="960,-920 2172,-220 2172,1180 960,1880 -252,1180 -252,-220"
+            stroke="#53789B"
+            strokeOpacity="0.35"
             strokeDasharray="8 6"
           />
 
           {/* ═══════════════════════════════════════════════════════════════
-             RADIAL SPIDER WEB SPOKES RADIATING OUT TO ALL CORNERS & EDGES
+             ULTRA-FINE RADIAL FIBER LINES (12 Spokes from Origin: 960, 480)
              ═══════════════════════════════════════════════════════════════ */}
-          {/* North Spoke */}
-          <line x1="960" y1="480" x2="960" y2="-670" stroke="#53789B" strokeWidth="1.4" strokeOpacity="0.6" />
-          {/* North-East Corner Spoke */}
-          <line x1="960" y1="480" x2="2050" y2="-150" stroke="#C4846C" strokeWidth="1.6" strokeOpacity="0.75" />
-          {/* East Spoke */}
-          <line x1="960" y1="480" x2="2100" y2="480" stroke="#53789B" strokeWidth="1.2" strokeDasharray="3 3" strokeOpacity="0.5" />
-          {/* South-East Corner Spoke */}
-          <line x1="960" y1="480" x2="2050" y2="1110" stroke="#53789B" strokeWidth="1.5" strokeOpacity="0.7" />
-          {/* South Spoke */}
-          <line x1="960" y1="480" x2="960" y2="1630" stroke="#172132" strokeWidth="1.4" strokeOpacity="0.5" />
-          {/* South-West Corner Spoke */}
-          <line x1="960" y1="480" x2="-130" y2="1110" stroke="#C4846C" strokeWidth="1.6" strokeOpacity="0.75" />
-          {/* West Spoke */}
-          <line x1="960" y1="480" x2="-180" y2="480" stroke="#53789B" strokeWidth="1.2" strokeDasharray="3 3" strokeOpacity="0.5" />
-          {/* North-West Corner Spoke */}
-          <line x1="960" y1="480" x2="-130" y2="-150" stroke="#53789B" strokeWidth="1.5" strokeOpacity="0.7" />
+          {/* Main 6 Hexagonal Vertex Spokes */}
+          <line x1="960" y1="480" x2="960" y2="-920" stroke="#53789B" strokeOpacity="0.65" />
+          <line x1="960" y1="480" x2="2172" y2="-220" stroke="#C4846C" strokeOpacity="0.75" />
+          <line x1="960" y1="480" x2="2172" y2="1180" stroke="#53789B" strokeOpacity="0.65" />
+          <line x1="960" y1="480" x2="960" y2="1880" stroke="#172132" strokeOpacity="0.5" />
+          <line x1="960" y1="480" x2="-252" y2="1180" stroke="#C4846C" strokeOpacity="0.75" />
+          <line x1="960" y1="480" x2="-252" y2="-220" stroke="#53789B" strokeOpacity="0.65" />
+
+          {/* Intermediate 6 Facet Midpoint Spoke Lines */}
+          <line x1="960" y1="480" x2="1680" y2="-520" stroke="#53789B" strokeOpacity="0.45" strokeDasharray="2 3" />
+          <line x1="960" y1="480" x2="2200" y2="480" stroke="#C4846C" strokeOpacity="0.5" strokeDasharray="2 3" />
+          <line x1="960" y1="480" x2="1680" y2="1480" stroke="#53789B" strokeOpacity="0.45" strokeDasharray="2 3" />
+          <line x1="960" y1="480" x2="240" y2="1480" stroke="#53789B" strokeOpacity="0.45" strokeDasharray="2 3" />
+          <line x1="960" y1="480" x2="-280" y2="480" stroke="#C4846C" strokeOpacity="0.5" strokeDasharray="2 3" />
+          <line x1="960" y1="480" x2="240" y2="-520" stroke="#53789B" strokeOpacity="0.45" strokeDasharray="2 3" />
 
           {/* ═══════════════════════════════════════════════════════════════
-             SECONDARY DIAGONAL CIRCUIT TRACES & CONNECTING LATTICE STRUTS
+             TINY GLOWING CONSTELLATION NODES (Deep Navy & Warm Copper)
              ═══════════════════════════════════════════════════════════════ */}
-          <line x1="1272" y1="300" x2="1670" y2="70" stroke="#C4846C" strokeWidth="1" strokeDasharray="2 2" strokeOpacity="0.6" />
-          <line x1="1272" y1="660" x2="1670" y2="890" stroke="#53789B" strokeWidth="1" strokeDasharray="2 2" strokeOpacity="0.5" />
-          <line x1="648" y1="660" x2="250" y2="890" stroke="#C4846C" strokeWidth="1" strokeDasharray="2 2" strokeOpacity="0.6" />
-          <line x1="648" y1="300" x2="250" y2="70" stroke="#53789B" strokeWidth="1" strokeDasharray="2 2" strokeOpacity="0.5" />
+          {/* Ring 1 Intersection Nodes */}
+          <circle cx="960" cy="200" r="3" fill="#53789B" />
+          <circle cx="1202" cy="340" r="3.5" fill="#C4846C" />
+          <circle cx="1202" cy="620" r="3" fill="#53789B" />
+          <circle cx="960" cy="760" r="3.5" fill="#C4846C" />
+          <circle cx="718" cy="620" r="3" fill="#53789B" />
+          <circle cx="718" cy="340" r="3.5" fill="#C4846C" />
 
-          {/* Corner Branch Circuit Lines */}
-          <line x1="1670" y1="70" x2="1956" y2="-95" stroke="#C4846C" strokeWidth="1.2" strokeOpacity="0.7" />
-          <line x1="1670" y1="890" x2="1956" y2="1055" stroke="#53789B" strokeWidth="1.2" strokeOpacity="0.6" />
-          <line x1="250" y1="890" x2="-36" y2="1055" stroke="#C4846C" strokeWidth="1.2" strokeOpacity="0.7" />
-          <line x1="250" y1="70" x2="-36" y2="-95" stroke="#53789B" strokeWidth="1.2" strokeOpacity="0.6" />
-
-          {/* ═══════════════════════════════════════════════════════════════
-             GLOWING TELEMETRY VERTEX NODES & CORNER DATA CIRCUITS
-             ═══════════════════════════════════════════════════════════════ */}
-          {/* Ring 1 Nodes */}
-          <circle cx="960" cy="120" r="4.5" fill="#53789B" />
-          <circle cx="1272" cy="300" r="5" fill="#C4846C" />
-          <circle cx="1272" cy="660" r="4.5" fill="#53789B" />
-          <circle cx="960" cy="840" r="5" fill="#C4846C" />
-          <circle cx="648" cy="660" r="4.5" fill="#53789B" />
-          <circle cx="648" cy="300" r="5" fill="#C4846C" />
-
-          {/* Ring 2 Nodes */}
-          <circle cx="1445" cy="200" r="5.5" fill="#C4846C" />
-          <circle cx="1445" cy="760" r="5" fill="#53789B" />
-          <circle cx="475" cy="760" r="5.5" fill="#C4846C" />
-          <circle cx="475" cy="200" r="5" fill="#53789B" />
+          {/* Ring 2 Intersection Nodes */}
+          <circle cx="960" cy="40" r="3.5" fill="#C4846C" />
+          <circle cx="1341" cy="260" r="4" fill="#C4846C" />
+          <circle cx="1341" cy="700" r="3.5" fill="#53789B" />
+          <circle cx="960" cy="920" r="4" fill="#C4846C" />
+          <circle cx="579" cy="700" r="3.5" fill="#53789B" />
+          <circle cx="579" cy="260" r="4" fill="#C4846C" />
 
           {/* Ring 3 Outer Nodes */}
-          <circle cx="1670" cy="70" r="6" fill="#C4846C" />
-          <circle cx="1670" cy="890" r="5.5" fill="#53789B" />
-          <circle cx="250" cy="890" r="6" fill="#C4846C" />
-          <circle cx="250" cy="70" r="5.5" fill="#53789B" />
+          <circle cx="1497" cy="170" r="3.5" fill="#53789B" />
+          <circle cx="1497" cy="790" r="3.5" fill="#C4846C" />
+          <circle cx="423" cy="790" r="3.5" fill="#53789B" />
+          <circle cx="423" cy="170" r="3.5" fill="#C4846C" />
 
-          {/* Node Orbit Rings */}
-          <circle cx="1670" cy="70" r="12" stroke="#C4846C" strokeWidth="1" strokeDasharray="3 3" />
-          <circle cx="250" cy="890" r="12" stroke="#C4846C" strokeWidth="1" strokeDasharray="3 3" />
-          <circle cx="1272" cy="300" r="10" stroke="#C4846C" strokeWidth="0.8" strokeDasharray="2 2" />
-          <circle cx="648" cy="300" r="10" stroke="#C4846C" strokeWidth="0.8" strokeDasharray="2 2" />
+          {/* Ring 4 Horizon Constellation Nodes */}
+          <circle cx="1687" cy="60" r="4.5" fill="#C4846C" />
+          <circle cx="1687" cy="900" r="4" fill="#53789B" />
+          <circle cx="233" cy="900" r="4.5" fill="#C4846C" />
+          <circle cx="233" cy="60" r="4" fill="#53789B" />
+
+          {/* Delicate Satellite Orbit Halos on Key Copper Nodes */}
+          <circle cx="1687" cy="60" r="9" stroke="#C4846C" strokeWidth="0.75" strokeDasharray="2 2" strokeOpacity="0.8" />
+          <circle cx="233" cy="900" r="9" stroke="#C4846C" strokeWidth="0.75" strokeDasharray="2 2" strokeOpacity="0.8" />
+          <circle cx="1341" cy="260" r="7.5" stroke="#C4846C" strokeWidth="0.75" strokeDasharray="2 2" strokeOpacity="0.8" />
+          <circle cx="579" cy="260" r="7.5" stroke="#C4846C" strokeWidth="0.75" strokeDasharray="2 2" strokeOpacity="0.8" />
         </g>
       </svg>
 
-      {/* 3. Scaled Dead-Center 3D Metallic Hexagonal Spider Origin Emblem */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[540px] sm:w-[680px] lg:w-[780px] aspect-square flex items-center justify-center opacity-[0.25] blur-[2.5px] mix-blend-multiply transition-opacity duration-700">
+      {/* 3. Central 3D Metallic Hexagonal Spider Origin Emblem Watermark */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] sm:w-[650px] lg:w-[740px] aspect-square flex items-center justify-center opacity-[0.24] blur-[2px] mix-blend-multiply transition-opacity duration-700">
         <img
           src={spiderMatrixImg}
           alt="Jadeer 3D Spider Matrix Core Origin"
@@ -188,13 +192,13 @@ function ExpansiveSpiderMatrixBackdrop() {
         />
       </div>
 
-      {/* 4. Soft Radial Fog Gradient Mask for High Foreground Contrast */}
+      {/* 4. Soft Radial Fog Gradient Mask for Effortless Text Readability */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           background: `
-            radial-gradient(ellipse 70% 60% at 50% 45%, rgba(240, 242, 244, 0.45) 0%, rgba(240, 242, 244, 0.18) 60%, transparent 85%),
-            linear-gradient(to bottom, rgba(240, 242, 244, 0) 0%, rgba(240, 242, 244, 0.4) 65%, #F0F2F4 95%, #F0F2F4 100%)
+            radial-gradient(ellipse 70% 60% at 50% 45%, rgba(240, 242, 244, 0.42) 0%, rgba(240, 242, 244, 0.15) 60%, transparent 85%),
+            linear-gradient(to bottom, rgba(240, 242, 244, 0) 0%, rgba(240, 242, 244, 0.35) 65%, #F0F2F4 95%, #F0F2F4 100%)
           `,
         }}
       />
@@ -385,14 +389,14 @@ function ScrollReactiveNavbar() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   HERO SECTION: EXPANSIVE SPIDER MATRIX WATERMARK & CENTERED TYPOGRAPHY
+   HERO SECTION: HEXAGONAL CONSTELLATION WEB & CENTERED TYPOGRAPHY
    ═══════════════════════════════════════════════════════════════════════════ */
 
 function HeroSection() {
   return (
     <section className="relative overflow-hidden pt-44 sm:pt-52 pb-16 sm:pb-24">
-      {/* Expansive Full-Canvas Spider Matrix with Central 3D Origin Emblem */}
-      <ExpansiveSpiderMatrixBackdrop />
+      {/* Smooth Hexagonal Tech Constellation Web Backdrop */}
+      <HexagonalTechConstellationBackdrop />
 
       <div className="relative mx-auto max-w-4xl px-6 sm:px-10 text-center z-10 space-y-8 sm:space-y-10">
 
