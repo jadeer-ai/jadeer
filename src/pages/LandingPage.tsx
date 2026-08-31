@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { SignedIn, SignedOut, UserButton } from '@clerk/clerk-react';
 import {
@@ -28,18 +28,15 @@ import {
 
 /* ═══════════════════════════════════════════════════════════════════════════
    JADEER LANDING PAGE — "DIGITAL HAVEN" (STEEL BLUE & WARM TERRACOTTA)
-   - Exact Color Tokens:
-     • Canvas Background: Soft Porcelain Off-White (#F0F2F4 / #F8FAFC)
-     • Card & Interactive Surfaces: Crisp White (#FFFFFF) with border-slate-200/80
-     • Primary Typography / Heavy Anchors: Deep Charcoal Navy (#172132)
-     • Secondary Typography / Sub-headings: Steel Denim Blue (#53789B)
-     • Accent / High-Intent Action CTAs: Warm Terracotta (#C4846C, hover #B37357)
-     • Muted Copy / Borders / Icons: Slate Gray (#64748B)
-   - Layout:
-     • Floating centered capsule navbar (fixed top-6 left-1/2 -translate-x-1/2)
-     • Centered 3-line headline with exact palette tokens
-     • Lightweight vector isometric wireframe grid (opacity 25%-35%)
-     • Zero photo skyline layers — clean, airy daylight architecture
+   - Dynamic Scroll-Reactive Capsule Navbar:
+     • Top of page: Natural full-width bar with transparent, soft styling
+     • Scrolled state: Transitions into a floating, centered pill capsule
+   - Ambient 3D Hexagonal "Spider Matrix" Backdrop:
+     • Center-right 3D hexagonal web & radial spider matrix topology
+     • Blending #172132 (Navy), #53789B (Steel Blue), and #C4846C (Copper) nodes
+     • Smooth depth-of-field blur & radial fog mask fading into #F0F2F4
+   - Soft Clay UI Accents:
+     • Pillow-soft shadows, rounded-full pills, and tranquil daylight surfaces
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ── Navigation Links ───────────────────────────────────────────────────── */
@@ -49,17 +46,17 @@ const navLinks = [
   { label: 'Evidence Dossier', href: '#evidence' },
 ];
 
-/* ── Lightweight Vector Isometric Wireframe Background ───────────────────── */
-function IsometricWireframeBackground() {
+/* ── 3D Hexagonal "Spider Matrix" & Neural Mesh Backdrop ─────────────────── */
+function HexagonalSpiderMatrixBackground() {
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
-      {/* 1. Underlying Perspective Wireframe Grid (opacity-25 to opacity-35) */}
+      {/* 1. Underlying Perspective Wireframe Grid Layer */}
       <div
-        className="absolute inset-0 opacity-[0.28]"
+        className="absolute inset-0 opacity-[0.25]"
         style={{
           backgroundImage: `
-            linear-gradient(to right, rgba(83, 120, 155, 0.09) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(83, 120, 155, 0.09) 1px, transparent 1px)
+            linear-gradient(to right, rgba(83, 120, 155, 0.08) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(83, 120, 155, 0.08) 1px, transparent 1px)
           `,
           backgroundSize: '48px 48px',
           maskImage: 'radial-gradient(ellipse 90% 70% at 50% 35%, #000 30%, transparent 80%)',
@@ -67,61 +64,152 @@ function IsometricWireframeBackground() {
         }}
       />
 
-      {/* 2. Vector Isometric Wireframe Cubes & Neural Telemetry Lines */}
+      {/* 2. Ambient 3D Hexagonal Spider Matrix SVG (Center-Right Anchored) */}
       <svg
-        className="absolute top-8 left-1/2 -translate-x-1/2 w-[1500px] h-[850px] opacity-[0.3]"
-        viewBox="0 0 1500 850"
+        className="absolute top-12 sm:top-16 right-[-80px] sm:right-[-40px] lg:right-[40px] w-[850px] sm:w-[1050px] lg:w-[1250px] h-[780px] opacity-[0.38] mix-blend-multiply"
+        viewBox="0 0 1200 800"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
-        <g stroke="#53789B" strokeWidth="1">
-          {/* ── Cube 1: Far Left High (Terracotta Accent) ── */}
-          <polygon points="180,180 230,150 280,180 230,210" fill="#FFFFFF" fillOpacity="0.8" stroke="#C4846C" strokeWidth="1.2" />
-          <polygon points="180,180 230,210 230,265 180,235" fill="#C4846C" fillOpacity="0.08" stroke="#C4846C" strokeWidth="1.2" />
-          <polygon points="230,210 280,180 280,235 230,265" fill="#172132" fillOpacity="0.04" stroke="#C4846C" strokeWidth="1.2" />
+        <defs>
+          {/* Depth of Field Blur Filter */}
+          <filter id="soft-dof" x="-10%" y="-10%" width="120%" height="120%">
+            <feGaussianBlur stdDeviation="1.2" />
+          </filter>
 
-          {/* ── Cube 2: Mid-Left Floating Cubelet ── */}
-          <polygon points="380,280 420,255 460,280 420,305" fill="#FFFFFF" fillOpacity="0.75" stroke="#64748B" strokeWidth="0.9" />
-          <polygon points="380,280 420,305 420,350 380,325" fill="#64748B" fillOpacity="0.06" stroke="#64748B" strokeWidth="0.9" />
-          <polygon points="420,305 460,280 460,325 420,350" fill="#172132" fillOpacity="0.04" stroke="#64748B" strokeWidth="0.9" />
+          {/* Copper Gradient */}
+          <linearGradient id="copper-radial" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#D7ACA4" />
+            <stop offset="60%" stopColor="#C4846C" />
+            <stop offset="100%" stopColor="#B37357" />
+          </linearGradient>
 
-          {/* ── Cube 3: Top Center Subtly Hovering Wireframe ── */}
-          <polygon points="700,95 755,60 810,95 755,130" fill="#FFFFFF" fillOpacity="0.85" stroke="#53789B" strokeWidth="1.2" strokeDasharray="3 3" />
-          <polygon points="700,95 755,130 755,190 700,155" fill="#53789B" fillOpacity="0.06" stroke="#53789B" strokeWidth="1.2" strokeDasharray="3 3" />
-          <polygon points="755,130 810,95 810,155 755,190" fill="#172132" fillOpacity="0.03" stroke="#53789B" strokeWidth="1.2" strokeDasharray="3 3" />
+          {/* Steel Denim Gradient */}
+          <linearGradient id="steel-radial" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#8FAECB" />
+            <stop offset="100%" stopColor="#53789B" />
+          </linearGradient>
+        </defs>
 
-          {/* ── Cube 4: Mid-Right Floating Isometric Block ── */}
-          <polygon points="1060,260 1105,235 1150,260 1105,285" fill="#FFFFFF" fillOpacity="0.75" stroke="#64748B" strokeWidth="0.9" />
-          <polygon points="1060,260 1105,285 1105,335 1060,310" fill="#64748B" fillOpacity="0.06" stroke="#64748B" strokeWidth="0.9" />
-          <polygon points="1105,285 1150,260 1150,310 1105,335" fill="#172132" fillOpacity="0.04" stroke="#64748B" strokeWidth="0.9" />
+        <g filter="url(#soft-dof)">
+          {/* ═══════════════════════════════════════════════════════════════
+             CONCENTRIC 3D HEXAGONAL SPIDER MATRIX RINGS (Center: 680, 360)
+             ═══════════════════════════════════════════════════════════════ */}
 
-          {/* ── Cube 5: Far Right High (Terracotta Accent) ── */}
-          <polygon points="1240,160 1290,130 1340,160 1290,190" fill="#FFFFFF" fillOpacity="0.8" stroke="#C4846C" strokeWidth="1.2" />
-          <polygon points="1240,160 1290,190 1290,245 1240,215" fill="#C4846C" fillOpacity="0.08" stroke="#C4846C" strokeWidth="1.2" />
-          <polygon points="1290,190 1340,160 1340,215 1290,245" fill="#172132" fillOpacity="0.04" stroke="#C4846C" strokeWidth="1.2" />
+          {/* Ring 1: Inner Hexagon Core */}
+          <polygon
+            points="680,290 740,325 740,395 680,430 620,395 620,325"
+            stroke="#53789B"
+            strokeWidth="1.2"
+            fill="#53789B"
+            fillOpacity="0.04"
+          />
 
-          {/* ── Connecting Vector Telemetry Grid & Data Nodes ── */}
-          <line x1="230" y1="265" x2="420" y2="255" stroke="#C4846C" strokeWidth="0.8" strokeDasharray="3 3" strokeOpacity="0.45" />
-          <line x1="420" y1="305" x2="755" y2="190" stroke="#64748B" strokeWidth="0.8" strokeDasharray="3 3" strokeOpacity="0.4" />
-          <line x1="755" y1="190" x2="1105" y2="235" stroke="#64748B" strokeWidth="0.8" strokeDasharray="3 3" strokeOpacity="0.4" />
-          <line x1="1105" y1="285" x2="1290" y2="245" stroke="#C4846C" strokeWidth="0.8" strokeDasharray="3 3" strokeOpacity="0.45" />
+          {/* Ring 2: Primary Mid Hexagon Web */}
+          <polygon
+            points="680,210 810,285 810,435 680,510 550,435 550,285"
+            stroke="#172132"
+            strokeWidth="1.1"
+            strokeDasharray="4 4"
+            fill="#172132"
+            fillOpacity="0.02"
+          />
 
-          {/* Neural Vertex Markers */}
-          <circle cx="230" cy="210" r="3" fill="#C4846C" />
-          <circle cx="420" cy="280" r="2.5" fill="#64748B" />
-          <circle cx="755" cy="130" r="3.5" fill="#53789B" />
-          <circle cx="1105" cy="260" r="2.5" fill="#64748B" />
-          <circle cx="1290" cy="190" r="3" fill="#C4846C" />
+          {/* Ring 3: Expanded Outer Hexagon Mesh */}
+          <polygon
+            points="680,120 890,240 890,480 680,600 470,480 470,240"
+            stroke="#53789B"
+            strokeWidth="1.3"
+            strokeOpacity="0.7"
+          />
+
+          {/* Ring 4: Giant Atmospheric Boundary Ring */}
+          <polygon
+            points="680,20 980,190 980,530 680,700 380,530 380,190"
+            stroke="#C4846C"
+            strokeWidth="1.2"
+            strokeDasharray="6 4"
+            strokeOpacity="0.6"
+          />
+
+          {/* ═══════════════════════════════════════════════════════════════
+             RADIAL SPIDER WEB LINES & NEURAL DIAGONAL SPOKES
+             ═══════════════════════════════════════════════════════════════ */}
+          {/* North Spoke */}
+          <line x1="680" y1="360" x2="680" y2="20" stroke="#53789B" strokeWidth="1" strokeOpacity="0.6" />
+          {/* North-East Spoke */}
+          <line x1="680" y1="360" x2="980" y2="190" stroke="#C4846C" strokeWidth="1.2" strokeOpacity="0.7" />
+          {/* South-East Spoke */}
+          <line x1="680" y1="360" x2="980" y2="530" stroke="#53789B" strokeWidth="1" strokeOpacity="0.6" />
+          {/* South Spoke */}
+          <line x1="680" y1="360" x2="680" y2="700" stroke="#172132" strokeWidth="1" strokeOpacity="0.5" />
+          {/* South-West Spoke */}
+          <line x1="680" y1="360" x2="380" y2="530" stroke="#53789B" strokeWidth="1" strokeOpacity="0.6" />
+          {/* North-West Spoke */}
+          <line x1="680" y1="360" x2="380" y2="190" stroke="#C4846C" strokeWidth="1.2" strokeOpacity="0.7" />
+
+          {/* ═══════════════════════════════════════════════════════════════
+             3D FLOATING ISOMETRIC DATA PRISMS & HONEYCOMB CELLS
+             ═══════════════════════════════════════════════════════════════ */}
+
+          {/* Core Central 3D Cubelet */}
+          <polygon points="680,320 715,340 715,380 680,360" fill="#FFFFFF" fillOpacity="0.9" stroke="#C4846C" strokeWidth="1.2" />
+          <polygon points="680,320 645,340 645,380 680,360" fill="#D7ACA4" fillOpacity="0.25" stroke="#C4846C" strokeWidth="1.2" />
+          <polygon points="645,340 680,320 715,340 680,360" fill="#C4846C" fillOpacity="0.15" stroke="#C4846C" strokeWidth="1.2" />
+
+          {/* Floating Top-Right Hex-Prism */}
+          <polygon points="850,180 890,160 930,180 890,200" fill="#FFFFFF" fillOpacity="0.8" stroke="#53789B" strokeWidth="1.1" />
+          <polygon points="850,180 890,200 890,240 850,220" fill="#53789B" fillOpacity="0.12" stroke="#53789B" strokeWidth="1.1" />
+          <polygon points="890,200 930,180 930,220 890,240" fill="#172132" fillOpacity="0.06" stroke="#53789B" strokeWidth="1.1" />
+
+          {/* Floating Bottom-Right Prism */}
+          <polygon points="920,440 960,420 1000,440 960,460" fill="#FFFFFF" fillOpacity="0.8" stroke="#C4846C" strokeWidth="1.1" />
+          <polygon points="920,440 960,460 960,500 920,480" fill="#C4846C" fillOpacity="0.1" stroke="#C4846C" strokeWidth="1.1" />
+          <polygon points="960,460 1000,440 1000,480 960,500" fill="#D7ACA4" fillOpacity="0.2" stroke="#C4846C" strokeWidth="1.1" />
+
+          {/* Floating Left Outer Node */}
+          <polygon points="420,290 460,270 500,290 460,310" fill="#FFFFFF" fillOpacity="0.8" stroke="#53789B" strokeWidth="1" />
+          <polygon points="420,290 460,310 460,350 420,330" fill="#53789B" fillOpacity="0.1" stroke="#53789B" strokeWidth="1" />
+          <polygon points="460,310 500,290 500,330 460,350" fill="#172132" fillOpacity="0.05" stroke="#53789B" strokeWidth="1" />
+
+          {/* ═══════════════════════════════════════════════════════════════
+             GLOWING VERTEX TELEMETRY NODES (Copper & Steel Blue)
+             ═══════════════════════════════════════════════════════════════ */}
+          <circle cx="680" cy="290" r="3.5" fill="#53789B" />
+          <circle cx="740" cy="325" r="4" fill="#C4846C" />
+          <circle cx="740" cy="395" r="3.5" fill="#53789B" />
+          <circle cx="680" cy="430" r="4" fill="#C4846C" />
+          <circle cx="620" cy="395" r="3.5" fill="#53789B" />
+          <circle cx="620" cy="325" r="3.5" fill="#53789B" />
+
+          <circle cx="680" cy="210" r="4.5" fill="#C4846C" />
+          <circle cx="810" cy="285" r="4" fill="#53789B" />
+          <circle cx="810" cy="435" r="4.5" fill="#C4846C" />
+          <circle cx="680" cy="510" r="4" fill="#53789B" />
+          <circle cx="550" cy="435" r="4.5" fill="#C4846C" />
+          <circle cx="550" cy="285" r="4" fill="#53789B" />
+
+          <circle cx="680" cy="120" r="5" fill="#53789B" />
+          <circle cx="890" cy="240" r="5.5" fill="#C4846C" />
+          <circle cx="890" cy="480" r="5" fill="#53789B" />
+          <circle cx="680" cy="600" r="5.5" fill="#C4846C" />
+          <circle cx="470" cy="480" r="5" fill="#53789B" />
+          <circle cx="470" cy="240" r="5.5" fill="#C4846C" />
+
+          {/* Radiating Micro-Particle Orbits */}
+          <circle cx="890" cy="240" r="10" stroke="#C4846C" strokeWidth="0.8" strokeDasharray="2 2" />
+          <circle cx="470" cy="240" r="10" stroke="#53789B" strokeWidth="0.8" strokeDasharray="2 2" />
         </g>
       </svg>
 
-      {/* 3. Soft Radial Glow Halo */}
+      {/* 3. Soft Radial Fog Gradient Mask Melting into Porcelain (#F0F2F4) */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           background: `
-            radial-gradient(ellipse 80% 55% at 50% 25%, rgba(196, 132, 108, 0.06) 0%, rgba(83, 120, 155, 0.04) 40%, transparent 75%),
-            linear-gradient(to bottom, rgba(240, 242, 244, 0) 0%, rgba(240, 242, 244, 0.5) 50%, #F0F2F4 90%, #F0F2F4 100%)
+            radial-gradient(ellipse 75% 60% at 65% 35%, rgba(196, 132, 108, 0.05) 0%, rgba(83, 120, 155, 0.05) 40%, transparent 75%),
+            linear-gradient(to right, #F0F2F4 0%, #F0F2F4 25%, rgba(240, 242, 244, 0.7) 60%, rgba(240, 242, 244, 0.15) 100%),
+            linear-gradient(to bottom, rgba(240, 242, 244, 0) 0%, rgba(240, 242, 244, 0.45) 55%, #F0F2F4 90%, #F0F2F4 100%)
           `,
         }}
       />
@@ -129,111 +217,130 @@ function IsometricWireframeBackground() {
   );
 }
 
-/* ── Smooth Floating Capsule Navbar Component ────────────────────────────── */
-function FloatingCapsuleNavbar() {
+/* ── Dynamic Scroll-Reactive Capsule Navbar Component ────────────────────── */
+function ScrollReactiveNavbar() {
+  const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   return (
     <>
-      <header className="fixed top-6 left-1/2 -translate-x-1/2 z-50 rounded-full bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-sm px-6 py-3 flex items-center justify-between gap-8 max-w-5xl w-[92%] transition-all">
-        {/* ── Brand Logo (Left): "Jadeer" in Deep Charcoal Navy with Terracotta Dot ── */}
-        <Link to="/" className="inline-flex items-center gap-2 select-none group shrink-0">
-          <svg
-            width="22"
-            height="28"
-            viewBox="0 0 60 85"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="shrink-0 transition-transform duration-200 group-hover:scale-105"
-          >
-            <path
-              d="M38 12C38 12 48 8 52 16C56 24 48 36 38 48C28 60 16 72 8 68C0 64 2 48 12 36C22 24 38 12 38 12Z"
-              fill="url(#jadeer-terracotta-grad)"
-            />
-            <circle cx="48" cy="14" r="5.5" fill="#C4846C" />
-            <defs>
-              <linearGradient id="jadeer-terracotta-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#D7ACA4" />
-                <stop offset="50%" stopColor="#C4846C" />
-                <stop offset="100%" stopColor="#B37357" />
-              </linearGradient>
-            </defs>
-          </svg>
-          <span className="text-[19px] font-extrabold tracking-tight text-[#172132]">
-            Jadeer<span className="text-[#C4846C]">.</span>
-          </span>
-        </Link>
-
-        {/* ── Center Nav Links: Slate Gray (#64748B) hover to Deep Charcoal Navy (#172132) ── */}
-        <nav className="hidden md:flex items-center gap-6">
-          {navLinks.map((link) => (
-            <a
-              key={link.label}
-              href={link.href}
-              className="text-sm font-medium text-[#64748B] hover:text-[#172132] transition-colors"
+      <header
+        className={`
+          z-50 transition-all duration-500 ease-out
+          ${scrolled
+            ? 'fixed top-4 left-1/2 -translate-x-1/2 rounded-full bg-white/80 backdrop-blur-md border border-slate-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] px-6 py-2.5 max-w-5xl w-[92%]'
+            : 'fixed top-0 left-0 right-0 bg-transparent border-b border-transparent max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 py-5'
+          }
+        `}
+      >
+        <div className="flex items-center justify-between gap-6 sm:gap-8">
+          {/* ── Brand Logo (Left): "Jadeer" with Terracotta Accent Dot ── */}
+          <Link to="/" className="inline-flex items-center gap-2 select-none group shrink-0">
+            <svg
+              width="22"
+              height="28"
+              viewBox="0 0 60 85"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="shrink-0 transition-transform duration-200 group-hover:scale-105"
             >
-              {link.label}
-            </a>
-          ))}
-        </nav>
-
-        {/* ── Right Actions: For Companies, Sign In & Primary Terracotta Pill CTA ── */}
-        <div className="hidden md:flex items-center gap-5 shrink-0">
-          <Link
-            to="/employer"
-            id="nav-for-companies"
-            className="text-sm font-medium text-[#64748B] hover:text-[#172132] transition-colors"
-          >
-            For Companies
+              <path
+                d="M38 12C38 12 48 8 52 16C56 24 48 36 38 48C28 60 16 72 8 68C0 64 2 48 12 36C22 24 38 12 38 12Z"
+                fill="url(#jadeer-terracotta-grad)"
+              />
+              <circle cx="48" cy="14" r="5.5" fill="#C4846C" />
+              <defs>
+                <linearGradient id="jadeer-terracotta-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#D7ACA4" />
+                  <stop offset="50%" stopColor="#C4846C" />
+                  <stop offset="100%" stopColor="#B37357" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <span className="text-[19px] font-extrabold tracking-tight text-[#172132]">
+              Jadeer<span className="text-[#C4846C]">.</span>
+            </span>
           </Link>
 
-          <SignedOut>
+          {/* ── Center Nav Links: Slate Gray (#64748B) hover to Deep Charcoal Navy (#172132) ── */}
+          <nav className="hidden md:flex items-center gap-6">
+            {navLinks.map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                className="text-sm font-medium text-[#64748B] hover:text-[#172132] transition-colors"
+              >
+                {link.label}
+              </a>
+            ))}
+          </nav>
+
+          {/* ── Right Actions: For Companies, Sign In & Primary Terracotta Pill CTA ── */}
+          <div className="hidden md:flex items-center gap-5 shrink-0">
             <Link
-              to="/signin"
-              id="nav-signin"
+              to="/employer"
+              id="nav-for-companies"
               className="text-sm font-medium text-[#64748B] hover:text-[#172132] transition-colors"
             >
-              Sign In
+              For Companies
             </Link>
 
-            <Link
-              to="/signup"
-              id="nav-join-talent"
-              className="inline-flex items-center gap-1.5 bg-[#C4846C] hover:bg-[#B37357] text-white text-sm font-medium rounded-full px-5 py-2 transition-all shadow-sm active:scale-95"
-            >
-              <span>Join as Talent</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </SignedOut>
+            <SignedOut>
+              <Link
+                to="/signin"
+                id="nav-signin"
+                className="text-sm font-medium text-[#64748B] hover:text-[#172132] transition-colors"
+              >
+                Sign In
+              </Link>
 
-          <SignedIn>
-            <Link
-              to="/dashboard"
-              id="nav-dashboard"
-              className="text-sm font-medium text-[#172132] hover:text-[#C4846C] transition-colors"
-            >
-              Dashboard
-            </Link>
-            <div className="flex items-center pl-1">
-              <UserButton />
-            </div>
-          </SignedIn>
+              <Link
+                to="/signup"
+                id="nav-join-talent"
+                className="inline-flex items-center gap-1.5 bg-[#C4846C] hover:bg-[#B37357] text-white text-sm font-medium rounded-full px-5 py-2 transition-all shadow-sm active:scale-95"
+              >
+                <span>Join as Talent</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </SignedOut>
+
+            <SignedIn>
+              <Link
+                to="/dashboard"
+                id="nav-dashboard"
+                className="text-sm font-medium text-[#172132] hover:text-[#C4846C] transition-colors"
+              >
+                Dashboard
+              </Link>
+              <div className="flex items-center pl-1">
+                <UserButton />
+              </div>
+            </SignedIn>
+          </div>
+
+          {/* ── Mobile Menu Toggle ── */}
+          <button
+            id="mobile-nav-toggle"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="md:hidden p-1.5 rounded-full text-[#172132] hover:bg-slate-100 transition-colors"
+            aria-label="Toggle navigation menu"
+          >
+            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
         </div>
-
-        {/* ── Mobile Menu Toggle ── */}
-        <button
-          id="mobile-nav-toggle"
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="md:hidden p-1.5 rounded-full text-[#172132] hover:bg-slate-100 transition-colors"
-          aria-label="Toggle navigation menu"
-        >
-          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
       </header>
 
       {/* ── Mobile Dropdown Panel ── */}
       {mobileOpen && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-sm rounded-3xl bg-white/95 backdrop-blur-md border border-slate-200/80 p-5 shadow-xl space-y-4 md:hidden animate-[fade-in_0.2s_ease]">
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-sm rounded-3xl bg-white/95 backdrop-blur-md border border-slate-200/80 p-5 shadow-xl space-y-4 md:hidden animate-[fade-in_0.2s_ease]">
           <div className="flex flex-col space-y-2">
             {navLinks.map((link) => (
               <a
@@ -293,14 +400,14 @@ function FloatingCapsuleNavbar() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   HERO SECTION: CENTERED 3-LINE HEADLINE & CURATED PALETTE HIERARCHY
+   HERO SECTION: CENTERED 3-LINE HEADLINE & 3D SPIDER MATRIX BACKDROP
    ═══════════════════════════════════════════════════════════════════════════ */
 
 function HeroSection() {
   return (
     <section className="relative overflow-hidden pt-44 sm:pt-52 pb-20 sm:pb-28">
-      {/* Lightweight Vector Isometric Wireframe Background */}
-      <IsometricWireframeBackground />
+      {/* Ambient 3D Hexagonal Spider Matrix Backdrop */}
+      <HexagonalSpiderMatrixBackground />
 
       <div className="relative mx-auto max-w-5xl px-6 sm:px-10 lg:px-12 text-center z-10 space-y-8 sm:space-y-10">
 
@@ -337,12 +444,12 @@ function HeroSection() {
           A unified engineering validation platform designed to certify true technical depth through adaptive AI code probing, 1-to-1 Principal Architect defense, and verifiable evidence dossiers.
         </p>
 
-        {/* ── Dual Action Buttons (Centered) ── */}
+        {/* ── Dual Action Buttons (Centered with Soft Clay UI) ── */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
           <Link
             to="/signup"
             id="hero-join-talent-btn"
-            className="w-full sm:w-auto bg-[#C4846C] hover:bg-[#B37357] text-white font-medium rounded-full px-7 py-3.5 shadow-sm transition-all inline-flex items-center justify-center gap-2 active:scale-95"
+            className="w-full sm:w-auto bg-[#C4846C] hover:bg-[#B37357] text-white font-medium rounded-full px-7 py-3.5 shadow-[0_8px_20px_rgba(196,132,108,0.28)] hover:shadow-[0_12px_28px_rgba(196,132,108,0.35)] transition-all inline-flex items-center justify-center gap-2 active:scale-95"
           >
             <span>Launch Assessment</span>
             <ArrowRight className="w-4 h-4 text-white" />
@@ -351,7 +458,7 @@ function HeroSection() {
           <Link
             to="/signin"
             id="hero-signin-btn"
-            className="w-full sm:w-auto bg-white hover:bg-slate-50 text-[#172132] border border-slate-300 font-medium rounded-full px-7 py-3.5 shadow-sm transition-all inline-flex items-center justify-center active:scale-95"
+            className="w-full sm:w-auto bg-white hover:bg-slate-50 text-[#172132] border border-slate-300 font-medium rounded-full px-7 py-3.5 shadow-2xs transition-all inline-flex items-center justify-center active:scale-95"
           >
             <span>Access Candidate Portal</span>
           </Link>
@@ -381,7 +488,7 @@ function HeroSection() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   LOWER FEATURE GRID: 3-COLUMN PORCELAIN CARDS
+   LOWER FEATURE GRID: 3-COLUMN PORCELAIN CARDS WITH SOFT CLAY UI
    ═══════════════════════════════════════════════════════════════════════════ */
 
 function LowerFeatureGridSection() {
@@ -411,15 +518,15 @@ function LowerFeatureGridSection() {
 
               {/* Sub-Metrics Counter Grid */}
               <div className="grid grid-cols-3 gap-3 pt-4 border-t border-slate-100 text-center">
-                <div className="p-3 rounded-2xl bg-[#F8FAFC] border border-slate-200/60">
+                <div className="p-3 rounded-2xl bg-[#F8FAFC] border border-slate-200/60 shadow-2xs">
                   <span className="text-xl font-black text-[#172132]">94%</span>
                   <span className="text-[10px] font-bold text-[#64748B] block">Accuracy</span>
                 </div>
-                <div className="p-3 rounded-2xl bg-[#F8FAFC] border border-slate-200/60">
+                <div className="p-3 rounded-2xl bg-[#F8FAFC] border border-slate-200/60 shadow-2xs">
                   <span className="text-xl font-black text-[#53789B]">4.95</span>
                   <span className="text-[10px] font-bold text-[#64748B] block">Rating</span>
                 </div>
-                <div className="p-3 rounded-2xl bg-[#F8FAFC] border border-slate-200/60">
+                <div className="p-3 rounded-2xl bg-[#F8FAFC] border border-slate-200/60 shadow-2xs">
                   <span className="text-xl font-black text-[#C4846C]">&lt;48h</span>
                   <span className="text-[10px] font-bold text-[#64748B] block">Fast-Track</span>
                 </div>
@@ -479,7 +586,7 @@ function LowerFeatureGridSection() {
                   className="
                     w-full py-3.5 px-5 rounded-full bg-[#C4846C] text-white text-sm font-medium
                     hover:bg-[#B37357] transition-all flex items-center justify-between
-                    shadow-[0_10px_24px_rgba(196,132,108,0.28)] active:scale-[0.99] group
+                    shadow-[0_8px_20px_rgba(196,132,108,0.28)] active:scale-[0.99] group
                   "
                 >
                   <span>Launch Candidate Assessment</span>
@@ -754,7 +861,7 @@ function Footer() {
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-[#F0F2F4] text-[#172132] selection:bg-[#D7ACA4]/30 selection:text-[#172132] relative overflow-hidden">
-      <FloatingCapsuleNavbar />
+      <ScrollReactiveNavbar />
       <HeroSection />
       <LowerFeatureGridSection />
       <ValidationArchitectureSection />
