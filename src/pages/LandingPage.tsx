@@ -25,11 +25,12 @@ import {
   Sliders,
   Check,
 } from 'lucide-react';
+import spiderMatrixImg from '@/assets/spider-matrix-emblem.jpg';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    JADEER LANDING PAGE — "DIGITAL HAVEN" (STEEL BLUE & WARM TERRACOTTA)
-   - Left: Crisp Editorial Typography & Actions
-   - Right: Ultra-Crisp, Prominent, Opaque 3D Hexagonal Spider Matrix Emblem
+   - Left Column: Crisp Editorial Typography, Subtext, CTAs & Trust Markers
+   - Right Column: High-Fidelity, Opaque 3D Hexagonal Spider Matrix Emblem
    - 3 Detached Floating Feature Cards Below Hero
    - Dynamic Scroll-Reactive Floating Capsule Navbar
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -41,275 +42,22 @@ const navLinks = [
   { label: 'Evidence Dossier', href: '#evidence' },
 ];
 
-/* ── Crisp, Prominent 3D Hexagonal Spider Matrix Emblem (Right Hero Visual) ── */
-function HexagonalSpiderEmblem3D() {
+/* ── 3D Hexagonal Spider Matrix Emblem (Right Hero Visual Anchor) ────────── */
+function SpiderMatrixEmblemHeroGraphic() {
   return (
-    <div className="relative w-full max-w-[460px] sm:max-w-[500px] lg:max-w-[540px] aspect-square flex items-center justify-center select-none">
-      {/* Ambient Depth Glow Behind Emblem */}
-      <div className="absolute inset-4 rounded-full bg-gradient-to-tr from-[#53789B]/15 via-[#C4846C]/15 to-transparent blur-3xl opacity-70 pointer-events-none" />
+    <div className="relative w-full max-w-[440px] sm:max-w-[480px] lg:max-w-[510px] aspect-square flex items-center justify-center select-none">
+      {/* Subtle Ambient Radial Glow */}
+      <div className="absolute inset-2 rounded-full bg-gradient-to-tr from-[#53789B]/20 via-[#C4846C]/15 to-transparent blur-3xl opacity-60 pointer-events-none" />
 
-      <svg
-        className="w-full h-full drop-shadow-[0_24px_48px_rgba(23,33,50,0.18)] transition-transform duration-500 hover:scale-[1.02]"
-        viewBox="0 0 600 600"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <defs>
-          {/* Metallic Navy Primary Gradient */}
-          <linearGradient id="metal-navy" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#2A3B52" />
-            <stop offset="40%" stopColor="#172132" />
-            <stop offset="100%" stopColor="#0B111C" />
-          </linearGradient>
-
-          {/* Metallic Copper Primary Gradient */}
-          <linearGradient id="metal-copper" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#E8AA97" />
-            <stop offset="35%" stopColor="#C4846C" />
-            <stop offset="80%" stopColor="#A75C41" />
-            <stop offset="100%" stopColor="#7D3B23" />
-          </linearGradient>
-
-          {/* Steel Denim Gradient */}
-          <linearGradient id="metal-steel" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#A4C2E0" />
-            <stop offset="50%" stopColor="#53789B" />
-            <stop offset="100%" stopColor="#314B66" />
-          </linearGradient>
-
-          {/* Gloss Top Bevel Highlight */}
-          <linearGradient id="gloss-light" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.75" />
-            <stop offset="30%" stopColor="#FFFFFF" stopOpacity="0.2" />
-            <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.0" />
-          </linearGradient>
-
-          {/* Dark Chamfer Underside */}
-          <linearGradient id="chamfer-dark" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#0F172A" />
-            <stop offset="100%" stopColor="#050B14" />
-          </linearGradient>
-
-          {/* Inner Core Recessed Radial Shading */}
-          <radialGradient id="inner-recess" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#FFFFFF" />
-            <stop offset="70%" stopColor="#F1F5F9" />
-            <stop offset="100%" stopColor="#E2E8F0" />
-          </radialGradient>
-
-          {/* 3D Leg Shadow Filter */}
-          <filter id="leg-shadow" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#0F172A" floodOpacity="0.3" />
-          </filter>
-        </defs>
-
-        {/* ═══════════════════════════════════════════════════════════════════
-           OUTER 3D METALLIC HEXAGONAL RIM (Center: 300, 300 / Radius: 250)
-           ═══════════════════════════════════════════════════════════════════ */}
-
-        {/* 1. Outer Hexagon Base Shadow Border */}
-        <polygon
-          points="300,35 525,165 525,435 300,565 75,435 75,165"
-          fill="#0B111C"
-          stroke="#334155"
-          strokeWidth="3"
+      {/* High-Fidelity 3D Textured Spider Matrix Emblem Image */}
+      <div className="relative w-full h-full rounded-[32px] overflow-hidden p-2 flex items-center justify-center">
+        <img
+          src={spiderMatrixImg}
+          alt="Jadeer 3D Hexagonal Spider Matrix Emblem"
+          className="w-full h-full object-contain drop-shadow-[0_20px_45px_rgba(23,33,50,0.18)] transition-transform duration-500 hover:scale-[1.03]"
+          loading="eager"
         />
-
-        {/* 2. Top-Right Metallic Copper Hex Rim Facet */}
-        <path
-          d="M 300,35 L 525,165 L 525,435 L 485,410 L 485,185 L 300,80 Z"
-          fill="url(#metal-copper)"
-        />
-
-        {/* 3. Left & Bottom Metallic Navy Hex Rim Facet */}
-        <path
-          d="M 300,35 L 300,80 L 115,185 L 115,410 L 300,520 L 300,565 L 75,435 L 75,165 Z"
-          fill="url(#metal-navy)"
-        />
-
-        {/* 4. Bottom-Right Metallic Copper Chamfer Facet */}
-        <path
-          d="M 525,435 L 300,565 L 300,520 L 485,410 Z"
-          fill="url(#metal-copper)"
-          fillOpacity="0.9"
-        />
-
-        {/* 5. 3D Bevel Corner Joint Accents */}
-        <line x1="300" y1="35" x2="300" y2="80" stroke="#FFFFFF" strokeWidth="2" strokeOpacity="0.6" />
-        <line x1="525" y1="165" x2="485" y2="185" stroke="#FFFFFF" strokeWidth="2" strokeOpacity="0.6" />
-        <line x1="525" y1="435" x2="485" y2="410" stroke="#172132" strokeWidth="2" strokeOpacity="0.5" />
-        <line x1="300" y1="565" x2="300" y2="520" stroke="#172132" strokeWidth="2" strokeOpacity="0.5" />
-        <line x1="75" y1="435" x2="115" y2="410" stroke="#53789B" strokeWidth="2" strokeOpacity="0.5" />
-        <line x1="75" y1="165" x2="115" y2="185" stroke="#FFFFFF" strokeWidth="2" strokeOpacity="0.6" />
-
-        {/* 6. Gloss Specular Light Reflection Overlay on Top Rim */}
-        <path
-          d="M 300,35 L 525,165 L 485,185 L 300,80 L 115,185 L 75,165 Z"
-          fill="url(#gloss-light)"
-        />
-
-        {/* 7. Inner Recessed Hexagon Plate Base */}
-        <polygon
-          points="300,86 480,190 480,405 300,514 120,405 120,190"
-          fill="url(#inner-recess)"
-          stroke="#CBD5E1"
-          strokeWidth="2"
-        />
-
-        {/* ═══════════════════════════════════════════════════════════════════
-           INNER SPIDER MATRIX WEB / CONCENTRIC RADIAL LATTICE
-           ═══════════════════════════════════════════════════════════════════ */}
-
-        {/* Radial Web Spokes from Center (300, 300) */}
-        <line x1="300" y1="300" x2="300" y2="86" stroke="#53789B" strokeWidth="2" strokeDasharray="4 3" />
-        <line x1="300" y1="300" x2="480" y2="190" stroke="#C4846C" strokeWidth="2.5" />
-        <line x1="300" y1="300" x2="480" y2="405" stroke="#53789B" strokeWidth="2" strokeDasharray="4 3" />
-        <line x1="300" y1="300" x2="300" y2="514" stroke="#172132" strokeWidth="2" strokeDasharray="4 3" />
-        <line x1="300" y1="300" x2="120" y2="405" stroke="#53789B" strokeWidth="2" strokeDasharray="4 3" />
-        <line x1="300" y1="300" x2="120" y2="190" stroke="#C4846C" strokeWidth="2.5" />
-
-        {/* Concentric Web Ring 1 (Outer Matrix Ring) */}
-        <polygon
-          points="300,150 425,225 425,375 300,450 175,375 175,225"
-          stroke="#53789B"
-          strokeWidth="1.8"
-          strokeOpacity="0.8"
-          fill="#53789B"
-          fillOpacity="0.04"
-        />
-
-        {/* Concentric Web Ring 2 (Inner Matrix Ring) */}
-        <polygon
-          points="300,215 375,260 375,340 300,385 225,340 225,260"
-          stroke="#C4846C"
-          strokeWidth="1.8"
-          strokeDasharray="5 3"
-          fill="#C4846C"
-          fillOpacity="0.05"
-        />
-
-        {/* ═══════════════════════════════════════════════════════════════════
-           HIGH-FIDELITY 3D CYBER SPIDER ICON
-           ═══════════════════════════════════════════════════════════════════ */}
-
-        {/* ── 8 Articulated Cyber Spider Legs with Metallic Gradients ── */}
-        <g filter="url(#leg-shadow)">
-          {/* Leg 1: Front-Left Leg */}
-          <polyline
-            points="285,270 245,230 195,245 150,215"
-            fill="none"
-            stroke="url(#metal-copper)"
-            strokeWidth="4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          {/* Leg 2: Front-Right Leg */}
-          <polyline
-            points="315,270 355,230 405,245 450,215"
-            fill="none"
-            stroke="url(#metal-copper)"
-            strokeWidth="4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-
-          {/* Leg 3: Mid-Upper Left Leg */}
-          <polyline
-            points="280,285 220,270 170,305 125,290"
-            fill="none"
-            stroke="url(#metal-steel)"
-            strokeWidth="3.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          {/* Leg 4: Mid-Upper Right Leg */}
-          <polyline
-            points="320,285 380,270 430,305 475,290"
-            fill="none"
-            stroke="url(#metal-steel)"
-            strokeWidth="3.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-
-          {/* Leg 5: Mid-Lower Left Leg */}
-          <polyline
-            points="280,310 225,330 180,380 135,400"
-            fill="none"
-            stroke="url(#metal-steel)"
-            strokeWidth="3.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          {/* Leg 6: Mid-Lower Right Leg */}
-          <polyline
-            points="320,310 375,330 420,380 465,400"
-            fill="none"
-            stroke="url(#metal-steel)"
-            strokeWidth="3.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-
-          {/* Leg 7: Rear-Left Leg */}
-          <polyline
-            points="285,340 240,385 205,435 170,485"
-            fill="none"
-            stroke="url(#metal-copper)"
-            strokeWidth="4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          {/* Leg 8: Rear-Right Leg */}
-          <polyline
-            points="315,340 360,385 395,435 430,485"
-            fill="none"
-            stroke="url(#metal-copper)"
-            strokeWidth="4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-
-          {/* Leg Joint Pivot Rings */}
-          <circle cx="245" cy="230" r="3" fill="#FFFFFF" />
-          <circle cx="355" cy="230" r="3" fill="#FFFFFF" />
-          <circle cx="220" cy="270" r="3" fill="#FFFFFF" />
-          <circle cx="380" cy="270" r="3" fill="#FFFFFF" />
-          <circle cx="225" cy="330" r="3" fill="#FFFFFF" />
-          <circle cx="375" cy="330" r="3" fill="#FFFFFF" />
-          <circle cx="240" cy="385" r="3" fill="#FFFFFF" />
-          <circle cx="360" cy="385" r="3" fill="#FFFFFF" />
-        </g>
-
-        {/* ── Spider Central Head & Abdomen Body ── */}
-        {/* Abdomen (Metallic Navy & Copper Core) */}
-        <ellipse cx="300" cy="330" rx="30" ry="40" fill="url(#metal-navy)" stroke="#53789B" strokeWidth="2.5" />
-        <ellipse cx="300" cy="330" rx="18" ry="25" fill="url(#metal-copper)" />
-        {/* Glowing Fusion Abdomen Node */}
-        <circle cx="300" cy="330" r="7" fill="#FFFFFF" stroke="#C4846C" strokeWidth="2" />
-
-        {/* Cephalothorax (Front Head) */}
-        <circle cx="300" cy="275" r="22" fill="url(#metal-navy)" stroke="#53789B" strokeWidth="2.5" />
-        {/* Glowing Optic Sensors */}
-        <circle cx="292" cy="270" r="3.5" fill="#C4846C" />
-        <circle cx="308" cy="270" r="3.5" fill="#C4846C" />
-        <circle cx="292" cy="270" r="1.5" fill="#FFFFFF" />
-        <circle cx="308" cy="270" r="1.5" fill="#FFFFFF" />
-
-        {/* ═══════════════════════════════════════════════════════════════════
-           GLOWING TELEMETRY VERTEX NODES
-           ═══════════════════════════════════════════════════════════════════ */}
-        <circle cx="300" cy="86" r="6.5" fill="#53789B" stroke="#FFFFFF" strokeWidth="2" />
-        <circle cx="480" cy="190" r="8" fill="#C4846C" stroke="#FFFFFF" strokeWidth="2.5" />
-        <circle cx="480" cy="405" r="6.5" fill="#53789B" stroke="#FFFFFF" strokeWidth="2" />
-        <circle cx="300" cy="514" r="6.5" fill="#172132" stroke="#FFFFFF" strokeWidth="2" />
-        <circle cx="120" cy="405" r="6.5" fill="#53789B" stroke="#FFFFFF" strokeWidth="2" />
-        <circle cx="120" cy="190" r="8" fill="#C4846C" stroke="#FFFFFF" strokeWidth="2.5" />
-
-        {/* Concentric Telemetry Orbit Rings */}
-        <circle cx="480" cy="190" r="14" stroke="#C4846C" strokeWidth="1.2" strokeDasharray="3 3" />
-        <circle cx="120" cy="190" r="14" stroke="#C4846C" strokeWidth="1.2" strokeDasharray="3 3" />
-      </svg>
+      </div>
     </div>
   );
 }
@@ -586,9 +334,9 @@ function HeroSection() {
 
           </div>
 
-          {/* ── Right Column: Crisp, Opaque 3D Hexagonal Spider Emblem (lg:col-span-5) ── */}
+          {/* ── Right Column: High-Fidelity 3D Hexagonal Spider Emblem (lg:col-span-5) ── */}
           <div className="lg:col-span-5 flex justify-center items-center relative">
-            <HexagonalSpiderEmblem3D />
+            <SpiderMatrixEmblemHeroGraphic />
           </div>
 
         </div>
