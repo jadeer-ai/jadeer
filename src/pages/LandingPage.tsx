@@ -28,15 +28,9 @@ import {
 
 /* ═══════════════════════════════════════════════════════════════════════════
    JADEER LANDING PAGE — "DIGITAL HAVEN" (STEEL BLUE & WARM TERRACOTTA)
-   - Dynamic Scroll-Reactive Capsule Navbar:
-     • Top of page: Natural full-width bar with transparent, soft styling
-     • Scrolled state: Transitions into a floating, centered pill capsule
-   - Ambient 3D Hexagonal "Spider Matrix" Backdrop:
-     • Center-right 3D hexagonal web & radial spider matrix topology
-     • Blending #172132 (Navy), #53789B (Steel Blue), and #C4846C (Copper) nodes
-     • Smooth depth-of-field blur & radial fog mask fading into #F0F2F4
-   - Soft Clay UI Accents:
-     • Pillow-soft shadows, rounded-full pills, and tranquil daylight surfaces
+   - 3D Hexagonal Spider Matrix Emblem (Center-Right Hero Background)
+   - 3 Individual Detached Floating Feature Cards
+   - Dynamic Scroll-Reactive Floating Capsule Navbar
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ── Navigation Links ───────────────────────────────────────────────────── */
@@ -46,11 +40,11 @@ const navLinks = [
   { label: 'Evidence Dossier', href: '#evidence' },
 ];
 
-/* ── 3D Hexagonal "Spider Matrix" & Neural Mesh Backdrop ─────────────────── */
-function HexagonalSpiderMatrixBackground() {
+/* ── 3D Hexagonal Spider Matrix Emblem SVG Component ────────────────────── */
+function HexagonalSpiderEmblemBackground() {
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
-      {/* 1. Underlying Perspective Wireframe Grid Layer */}
+      {/* 1. Underlying Perspective Wireframe Grid */}
       <div
         className="absolute inset-0 opacity-[0.25]"
         style={{
@@ -64,152 +58,245 @@ function HexagonalSpiderMatrixBackground() {
         }}
       />
 
-      {/* 2. Ambient 3D Hexagonal Spider Matrix SVG (Center-Right Anchored) */}
+      {/* 2. Sharp 3D Hexagonal Spider Matrix Emblem (Center-Right Hero) */}
       <svg
-        className="absolute top-12 sm:top-16 right-[-80px] sm:right-[-40px] lg:right-[40px] w-[850px] sm:w-[1050px] lg:w-[1250px] h-[780px] opacity-[0.38] mix-blend-multiply"
-        viewBox="0 0 1200 800"
+        className="absolute top-12 sm:top-16 right-[-60px] sm:right-[-20px] lg:right-[30px] w-[650px] sm:w-[820px] lg:w-[980px] h-[720px] opacity-[0.72] transition-opacity duration-700"
+        viewBox="0 0 1000 750"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          {/* Depth of Field Blur Filter */}
-          <filter id="soft-dof" x="-10%" y="-10%" width="120%" height="120%">
-            <feGaussianBlur stdDeviation="1.2" />
-          </filter>
+          {/* Metallic Navy Gradient */}
+          <linearGradient id="emblem-navy" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#1E293B" />
+            <stop offset="50%" stopColor="#172132" />
+            <stop offset="100%" stopColor="#0B132B" />
+          </linearGradient>
 
-          {/* Copper Gradient */}
-          <linearGradient id="copper-radial" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#D7ACA4" />
-            <stop offset="60%" stopColor="#C4846C" />
-            <stop offset="100%" stopColor="#B37357" />
+          {/* Metallic Copper / Terracotta Gradient */}
+          <linearGradient id="emblem-copper" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#E2A693" />
+            <stop offset="50%" stopColor="#C4846C" />
+            <stop offset="100%" stopColor="#9C5D47" />
           </linearGradient>
 
           {/* Steel Denim Gradient */}
-          <linearGradient id="steel-radial" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#8FAECB" />
-            <stop offset="100%" stopColor="#53789B" />
+          <linearGradient id="emblem-steel" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#9AB8D6" />
+            <stop offset="60%" stopColor="#53789B" />
+            <stop offset="100%" stopColor="#365472" />
           </linearGradient>
+
+          {/* Chrome / Gloss Highlight Gradient */}
+          <linearGradient id="emblem-gloss" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.45" />
+            <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.02" />
+          </linearGradient>
+
+          {/* Soft Depth Shadow */}
+          <filter id="emblem-shadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="16" stdDeviation="24" floodColor="#172132" floodOpacity="0.14" />
+            <feDropShadow dx="0" dy="4" stdDeviation="8" floodColor="#C4846C" floodOpacity="0.12" />
+          </filter>
         </defs>
 
-        <g filter="url(#soft-dof)">
+        <g filter="url(#emblem-shadow)">
           {/* ═══════════════════════════════════════════════════════════════
-             CONCENTRIC 3D HEXAGONAL SPIDER MATRIX RINGS (Center: 680, 360)
+             OUTER 3D METALLIC HEXAGONAL RIM (Center: 620, 360)
              ═══════════════════════════════════════════════════════════════ */}
 
-          {/* Ring 1: Inner Hexagon Core */}
+          {/* Outer Hexagon Bevel Shadow Ring */}
           <polygon
-            points="680,290 740,325 740,395 680,430 620,395 620,325"
+            points="620,60 880,210 880,510 620,660 360,510 360,210"
+            fill="#FFFFFF"
+            fillOpacity="0.85"
+            stroke="url(#emblem-steel)"
+            strokeWidth="2"
+          />
+
+          {/* Top-Right Metallic Copper Rim Segment */}
+          <path
+            d="M 620,60 L 880,210 L 880,510 L 840,485 L 840,230 L 620,105 Z"
+            fill="url(#emblem-copper)"
+          />
+
+          {/* Left/Bottom Metallic Navy Rim Segment */}
+          <path
+            d="M 620,60 L 620,105 L 400,230 L 400,485 L 620,615 L 620,660 L 360,510 L 360,210 Z"
+            fill="url(#emblem-navy)"
+          />
+
+          {/* Bottom-Right Chamfer Connector */}
+          <path
+            d="M 880,510 L 620,660 L 620,615 L 840,485 Z"
+            fill="url(#emblem-copper)"
+            fillOpacity="0.9"
+          />
+
+          {/* Gloss Light Reflection Overlay on Top Rim */}
+          <path
+            d="M 620,60 L 880,210 L 840,230 L 620,105 L 400,230 L 360,210 Z"
+            fill="url(#emblem-gloss)"
+          />
+
+          {/* Inner Hexagon Recessed Base */}
+          <polygon
+            points="620,115 830,235 830,485 620,605 410,485 410,235"
+            fill="#F8FAFC"
+            fillOpacity="0.92"
+            stroke="#E2E8F0"
+            strokeWidth="1.5"
+          />
+
+          {/* ═══════════════════════════════════════════════════════════════
+             INNER SPIDER MATRIX WEB / CONCENTRIC RADIAL LATTICE
+             ═══════════════════════════════════════════════════════════════ */}
+
+          {/* Radial Spokes from Hexagon Center (620, 360) */}
+          <line x1="620" y1="360" x2="620" y2="115" stroke="#53789B" strokeWidth="1.5" strokeDasharray="3 3" />
+          <line x1="620" y1="360" x2="830" y2="235" stroke="#C4846C" strokeWidth="1.5" />
+          <line x1="620" y1="360" x2="830" y2="485" stroke="#53789B" strokeWidth="1.5" strokeDasharray="3 3" />
+          <line x1="620" y1="360" x2="620" y2="605" stroke="#172132" strokeWidth="1.5" strokeDasharray="3 3" />
+          <line x1="620" y1="360" x2="410" y2="485" stroke="#53789B" strokeWidth="1.5" strokeDasharray="3 3" />
+          <line x1="620" y1="360" x2="410" y2="235" stroke="#C4846C" strokeWidth="1.5" />
+
+          {/* Concentric Web Ring 1 (Mid) */}
+          <polygon
+            points="620,200 760,280 760,440 620,520 480,440 480,280"
             stroke="#53789B"
             strokeWidth="1.2"
             fill="#53789B"
-            fillOpacity="0.04"
+            fillOpacity="0.03"
           />
 
-          {/* Ring 2: Primary Mid Hexagon Web */}
+          {/* Concentric Web Ring 2 (Inner) */}
           <polygon
-            points="680,210 810,285 810,435 680,510 550,435 550,285"
-            stroke="#172132"
-            strokeWidth="1.1"
-            strokeDasharray="4 4"
-            fill="#172132"
-            fillOpacity="0.02"
-          />
-
-          {/* Ring 3: Expanded Outer Hexagon Mesh */}
-          <polygon
-            points="680,120 890,240 890,480 680,600 470,480 470,240"
-            stroke="#53789B"
-            strokeWidth="1.3"
-            strokeOpacity="0.7"
-          />
-
-          {/* Ring 4: Giant Atmospheric Boundary Ring */}
-          <polygon
-            points="680,20 980,190 980,530 680,700 380,530 380,190"
+            points="620,270 700,315 700,405 620,450 540,405 540,315"
             stroke="#C4846C"
             strokeWidth="1.2"
-            strokeDasharray="6 4"
-            strokeOpacity="0.6"
+            strokeDasharray="4 3"
+            fill="#C4846C"
+            fillOpacity="0.03"
           />
 
           {/* ═══════════════════════════════════════════════════════════════
-             RADIAL SPIDER WEB LINES & NEURAL DIAGONAL SPOKES
+             SLEEK FUTURISTIC 3D TECH SPIDER ICON
              ═══════════════════════════════════════════════════════════════ */}
-          {/* North Spoke */}
-          <line x1="680" y1="360" x2="680" y2="20" stroke="#53789B" strokeWidth="1" strokeOpacity="0.6" />
-          {/* North-East Spoke */}
-          <line x1="680" y1="360" x2="980" y2="190" stroke="#C4846C" strokeWidth="1.2" strokeOpacity="0.7" />
-          {/* South-East Spoke */}
-          <line x1="680" y1="360" x2="980" y2="530" stroke="#53789B" strokeWidth="1" strokeOpacity="0.6" />
-          {/* South Spoke */}
-          <line x1="680" y1="360" x2="680" y2="700" stroke="#172132" strokeWidth="1" strokeOpacity="0.5" />
-          {/* South-West Spoke */}
-          <line x1="680" y1="360" x2="380" y2="530" stroke="#53789B" strokeWidth="1" strokeOpacity="0.6" />
-          {/* North-West Spoke */}
-          <line x1="680" y1="360" x2="380" y2="190" stroke="#C4846C" strokeWidth="1.2" strokeOpacity="0.7" />
+
+          {/* ── Spider Central Head & Abdomen ── */}
+          {/* Abdomen (Rear Oval) */}
+          <ellipse cx="620" cy="385" rx="26" ry="34" fill="url(#emblem-navy)" stroke="#53789B" strokeWidth="2" />
+          <ellipse cx="620" cy="385" rx="14" ry="20" fill="url(#emblem-copper)" fillOpacity="0.8" />
+          {/* Glowing Abdomen Core */}
+          <circle cx="620" cy="385" r="5" fill="#FFFFFF" />
+
+          {/* Cephalothorax (Front/Head) */}
+          <circle cx="620" cy="335" r="18" fill="url(#emblem-navy)" stroke="#53789B" strokeWidth="2" />
+          <circle cx="614" cy="330" r="2.5" fill="#C4846C" />
+          <circle cx="626" cy="330" r="2.5" fill="#C4846C" />
+
+          {/* ── 8 Articulated Geometric Cyber Spider Legs ── */}
+
+          {/* Leg 1: Front-Left */}
+          <polyline
+            points="606,325 565,290 520,305 480,280"
+            fill="none"
+            stroke="url(#emblem-copper)"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          {/* Leg 2: Front-Right */}
+          <polyline
+            points="634,325 675,290 720,305 760,280"
+            fill="none"
+            stroke="url(#emblem-copper)"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+
+          {/* Leg 3: Mid-Upper Left */}
+          <polyline
+            points="602,340 540,330 495,365 445,350"
+            fill="none"
+            stroke="url(#emblem-steel)"
+            strokeWidth="2.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          {/* Leg 4: Mid-Upper Right */}
+          <polyline
+            points="638,340 700,330 745,365 795,350"
+            fill="none"
+            stroke="url(#emblem-steel)"
+            strokeWidth="2.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+
+          {/* Leg 5: Mid-Lower Left */}
+          <polyline
+            points="602,365 545,385 505,430 460,450"
+            fill="none"
+            stroke="url(#emblem-steel)"
+            strokeWidth="2.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          {/* Leg 6: Mid-Lower Right */}
+          <polyline
+            points="638,365 695,385 735,430 780,450"
+            fill="none"
+            stroke="url(#emblem-steel)"
+            strokeWidth="2.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+
+          {/* Leg 7: Rear-Left */}
+          <polyline
+            points="606,395 560,435 530,480 500,530"
+            fill="none"
+            stroke="url(#emblem-copper)"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          {/* Leg 8: Rear-Right */}
+          <polyline
+            points="634,395 680,435 710,480 740,530"
+            fill="none"
+            stroke="url(#emblem-copper)"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
 
           {/* ═══════════════════════════════════════════════════════════════
-             3D FLOATING ISOMETRIC DATA PRISMS & HONEYCOMB CELLS
+             GLOWING TELEMETRY VERTEX NODES
              ═══════════════════════════════════════════════════════════════ */}
+          <circle cx="620" cy="115" r="5" fill="#53789B" stroke="#FFFFFF" strokeWidth="1.5" />
+          <circle cx="830" cy="235" r="6" fill="#C4846C" stroke="#FFFFFF" strokeWidth="2" />
+          <circle cx="830" cy="485" r="5" fill="#53789B" stroke="#FFFFFF" strokeWidth="1.5" />
+          <circle cx="620" cy="605" r="5" fill="#172132" stroke="#FFFFFF" strokeWidth="1.5" />
+          <circle cx="410" cy="485" r="5" fill="#53789B" stroke="#FFFFFF" strokeWidth="1.5" />
+          <circle cx="410" cy="235" r="6" fill="#C4846C" stroke="#FFFFFF" strokeWidth="2" />
 
-          {/* Core Central 3D Cubelet */}
-          <polygon points="680,320 715,340 715,380 680,360" fill="#FFFFFF" fillOpacity="0.9" stroke="#C4846C" strokeWidth="1.2" />
-          <polygon points="680,320 645,340 645,380 680,360" fill="#D7ACA4" fillOpacity="0.25" stroke="#C4846C" strokeWidth="1.2" />
-          <polygon points="645,340 680,320 715,340 680,360" fill="#C4846C" fillOpacity="0.15" stroke="#C4846C" strokeWidth="1.2" />
-
-          {/* Floating Top-Right Hex-Prism */}
-          <polygon points="850,180 890,160 930,180 890,200" fill="#FFFFFF" fillOpacity="0.8" stroke="#53789B" strokeWidth="1.1" />
-          <polygon points="850,180 890,200 890,240 850,220" fill="#53789B" fillOpacity="0.12" stroke="#53789B" strokeWidth="1.1" />
-          <polygon points="890,200 930,180 930,220 890,240" fill="#172132" fillOpacity="0.06" stroke="#53789B" strokeWidth="1.1" />
-
-          {/* Floating Bottom-Right Prism */}
-          <polygon points="920,440 960,420 1000,440 960,460" fill="#FFFFFF" fillOpacity="0.8" stroke="#C4846C" strokeWidth="1.1" />
-          <polygon points="920,440 960,460 960,500 920,480" fill="#C4846C" fillOpacity="0.1" stroke="#C4846C" strokeWidth="1.1" />
-          <polygon points="960,460 1000,440 1000,480 960,500" fill="#D7ACA4" fillOpacity="0.2" stroke="#C4846C" strokeWidth="1.1" />
-
-          {/* Floating Left Outer Node */}
-          <polygon points="420,290 460,270 500,290 460,310" fill="#FFFFFF" fillOpacity="0.8" stroke="#53789B" strokeWidth="1" />
-          <polygon points="420,290 460,310 460,350 420,330" fill="#53789B" fillOpacity="0.1" stroke="#53789B" strokeWidth="1" />
-          <polygon points="460,310 500,290 500,330 460,350" fill="#172132" fillOpacity="0.05" stroke="#53789B" strokeWidth="1" />
-
-          {/* ═══════════════════════════════════════════════════════════════
-             GLOWING VERTEX TELEMETRY NODES (Copper & Steel Blue)
-             ═══════════════════════════════════════════════════════════════ */}
-          <circle cx="680" cy="290" r="3.5" fill="#53789B" />
-          <circle cx="740" cy="325" r="4" fill="#C4846C" />
-          <circle cx="740" cy="395" r="3.5" fill="#53789B" />
-          <circle cx="680" cy="430" r="4" fill="#C4846C" />
-          <circle cx="620" cy="395" r="3.5" fill="#53789B" />
-          <circle cx="620" cy="325" r="3.5" fill="#53789B" />
-
-          <circle cx="680" cy="210" r="4.5" fill="#C4846C" />
-          <circle cx="810" cy="285" r="4" fill="#53789B" />
-          <circle cx="810" cy="435" r="4.5" fill="#C4846C" />
-          <circle cx="680" cy="510" r="4" fill="#53789B" />
-          <circle cx="550" cy="435" r="4.5" fill="#C4846C" />
-          <circle cx="550" cy="285" r="4" fill="#53789B" />
-
-          <circle cx="680" cy="120" r="5" fill="#53789B" />
-          <circle cx="890" cy="240" r="5.5" fill="#C4846C" />
-          <circle cx="890" cy="480" r="5" fill="#53789B" />
-          <circle cx="680" cy="600" r="5.5" fill="#C4846C" />
-          <circle cx="470" cy="480" r="5" fill="#53789B" />
-          <circle cx="470" cy="240" r="5.5" fill="#C4846C" />
-
-          {/* Radiating Micro-Particle Orbits */}
-          <circle cx="890" cy="240" r="10" stroke="#C4846C" strokeWidth="0.8" strokeDasharray="2 2" />
-          <circle cx="470" cy="240" r="10" stroke="#53789B" strokeWidth="0.8" strokeDasharray="2 2" />
+          {/* Node Orbit Indicators */}
+          <circle cx="830" cy="235" r="11" stroke="#C4846C" strokeWidth="1" strokeDasharray="2 2" />
+          <circle cx="410" cy="235" r="11" stroke="#C4846C" strokeWidth="1" strokeDasharray="2 2" />
         </g>
       </svg>
 
-      {/* 3. Soft Radial Fog Gradient Mask Melting into Porcelain (#F0F2F4) */}
+      {/* 3. Soft Radial Fog Gradient Mask */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           background: `
-            radial-gradient(ellipse 75% 60% at 65% 35%, rgba(196, 132, 108, 0.05) 0%, rgba(83, 120, 155, 0.05) 40%, transparent 75%),
-            linear-gradient(to right, #F0F2F4 0%, #F0F2F4 25%, rgba(240, 242, 244, 0.7) 60%, rgba(240, 242, 244, 0.15) 100%),
-            linear-gradient(to bottom, rgba(240, 242, 244, 0) 0%, rgba(240, 242, 244, 0.45) 55%, #F0F2F4 90%, #F0F2F4 100%)
+            radial-gradient(ellipse 75% 65% at 65% 40%, rgba(196, 132, 108, 0.06) 0%, rgba(83, 120, 155, 0.04) 40%, transparent 75%),
+            linear-gradient(to right, #F0F2F4 0%, #F0F2F4 22%, rgba(240, 242, 244, 0.65) 55%, rgba(240, 242, 244, 0.15) 100%),
+            linear-gradient(to bottom, rgba(240, 242, 244, 0) 0%, rgba(240, 242, 244, 0.45) 60%, #F0F2F4 95%, #F0F2F4 100%)
           `,
         }}
       />
@@ -400,14 +487,14 @@ function ScrollReactiveNavbar() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   HERO SECTION: CENTERED 3-LINE HEADLINE & 3D SPIDER MATRIX BACKDROP
+   HERO SECTION: CENTERED 3-LINE HEADLINE & 3D SPIDER MATRIX EMBLEM
    ═══════════════════════════════════════════════════════════════════════════ */
 
 function HeroSection() {
   return (
-    <section className="relative overflow-hidden pt-44 sm:pt-52 pb-20 sm:pb-28">
-      {/* Ambient 3D Hexagonal Spider Matrix Backdrop */}
-      <HexagonalSpiderMatrixBackground />
+    <section className="relative overflow-hidden pt-44 sm:pt-52 pb-16 sm:pb-24">
+      {/* 3D Hexagonal Spider Matrix Emblem Backdrop */}
+      <HexagonalSpiderEmblemBackground />
 
       <div className="relative mx-auto max-w-5xl px-6 sm:px-10 lg:px-12 text-center z-10 space-y-8 sm:space-y-10">
 
@@ -488,126 +575,103 @@ function HeroSection() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   LOWER FEATURE GRID: 3-COLUMN PORCELAIN CARDS WITH SOFT CLAY UI
+   3 INDIVIDUAL DETACHED FLOATING FEATURE CARDS (BELOW HERO)
    ═══════════════════════════════════════════════════════════════════════════ */
 
-function LowerFeatureGridSection() {
+function DetachedFeatureGridSection() {
   return (
-    <section className="relative pb-24 sm:pb-32">
-      <div className="mx-auto max-w-7xl px-6 sm:px-10 lg:px-12">
-        {/* Clean 3-Column Split Card in Porcelain White */}
-        <div className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_12px_40px_-15px_rgba(23,33,50,0.04)] overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-slate-200/80">
+    <section className="py-16 sm:py-20 relative">
+      <div className="max-w-6xl mx-auto px-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-            {/* ── COLUMN 1: Metric Overview & Guarantee Statement ── */}
-            <div className="p-8 sm:p-10 space-y-6 flex flex-col justify-between">
-              <div className="space-y-3">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#D7ACA4]/20 text-[#C4846C] text-[11px] font-bold border border-[#D7ACA4]/40">
-                  <Award className="w-3.5 h-3.5" />
-                  <span>100% Code-Verified Candidates</span>
-                </span>
+          {/* ── CARD 1: Validation Proof (Zero Resume Guesswork) ── */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow border border-slate-200/70 flex flex-col justify-between space-y-6">
+            <div className="space-y-3">
+              {/* Tag Pill */}
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#D7ACA4]/20 text-[#C4846C] text-xs font-semibold border border-[#D7ACA4]/40">
+                <Award className="w-3.5 h-3.5" />
+                <span>100% Code-Verified Candidates</span>
+              </span>
 
-                <h3 className="text-2xl font-extrabold text-[#172132] tracking-tight">
-                  Zero Resume Guesswork. Direct Code Proof.
-                </h3>
-
-                <p className="text-sm text-[#64748B] leading-relaxed">
-                  Every candidate dossier is backed by live AST execution logs, memory safety verification, and socket multiplexing benchmarks under 10k connections.
-                </p>
-              </div>
-
-              {/* Sub-Metrics Counter Grid */}
-              <div className="grid grid-cols-3 gap-3 pt-4 border-t border-slate-100 text-center">
-                <div className="p-3 rounded-2xl bg-[#F8FAFC] border border-slate-200/60 shadow-2xs">
-                  <span className="text-xl font-black text-[#172132]">94%</span>
-                  <span className="text-[10px] font-bold text-[#64748B] block">Accuracy</span>
-                </div>
-                <div className="p-3 rounded-2xl bg-[#F8FAFC] border border-slate-200/60 shadow-2xs">
-                  <span className="text-xl font-black text-[#53789B]">4.95</span>
-                  <span className="text-[10px] font-bold text-[#64748B] block">Rating</span>
-                </div>
-                <div className="p-3 rounded-2xl bg-[#F8FAFC] border border-slate-200/60 shadow-2xs">
-                  <span className="text-xl font-black text-[#C4846C]">&lt;48h</span>
-                  <span className="text-[10px] font-bold text-[#64748B] block">Fast-Track</span>
-                </div>
-              </div>
+              {/* Title & Description */}
+              <h3 className="text-lg font-bold text-[#172132] tracking-tight">
+                Zero Resume Guesswork
+              </h3>
+              <p className="text-sm text-[#64748B] leading-relaxed">
+                Every candidate dossier is backed by live AST execution logs, memory safety verification, and socket multiplexing benchmarks under 10k connections.
+              </p>
             </div>
 
-            {/* ── COLUMN 2: Soft Embossed Card with Stage Indicator ── */}
-            <div className="p-8 sm:p-10 space-y-5 bg-[#F8FAFC]/70 flex flex-col justify-between">
-              <div className="space-y-3">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#53789B]/15 text-[#53789B] text-[11px] font-bold border border-[#53789B]/30">
-                  <Layers className="w-3.5 h-3.5" />
-                  <span>Stage 02B: Human Calibration Pod</span>
-                </span>
-
-                <h3 className="text-xl font-extrabold text-[#172132] tracking-tight">
-                  1-to-1 Technical Defense with Senior Architects
-                </h3>
-
-                <p className="text-sm text-[#64748B] leading-relaxed">
-                  Candidates defend architectural trade-offs, space/time complexity, and cold-cache stampede strategies directly with Principal Engineers.
-                </p>
-              </div>
-
-              {/* Embossed Cardlet */}
-              <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-2xs space-y-2.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-[#172132] flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-[#53789B]" />
-                    Interactive Live Evaluation
-                  </span>
-                  <span className="text-[11px] font-mono text-[#C4846C] font-bold">STAGE 02B</span>
-                </div>
-                <p className="text-xs text-[#64748B]">
-                  Live socket I/O review, thread race detection, and distributed query optimization.
-                </p>
-              </div>
+            {/* Bottom Metrics Pill Tags */}
+            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
+              <span className="bg-[#F8FAFC] border border-slate-200/80 text-xs font-semibold px-3 py-1 rounded-full text-[#172132]">
+                94% Accuracy
+              </span>
+              <span className="bg-[#F8FAFC] border border-slate-200/80 text-xs font-semibold px-3 py-1 rounded-full text-[#53789B]">
+                4.95 Rating
+              </span>
+              <span className="bg-[#F8FAFC] border border-slate-200/80 text-xs font-semibold px-3 py-1 rounded-full text-[#C4846C]">
+                &lt;48h Fast-Track
+              </span>
             </div>
-
-            {/* ── COLUMN 3: Stacked Dual-Action Buttons in Terracotta Tones ── */}
-            <div className="p-8 sm:p-10 space-y-6 flex flex-col justify-between">
-              <div className="space-y-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] block">
-                  Actionable Next Steps
-                </span>
-                <h3 className="text-xl font-extrabold text-[#172132] tracking-tight">
-                  Fast-Track Your Journey
-                </h3>
-                <p className="text-sm text-[#64748B] leading-relaxed">
-                  Start your candidate certification or discover calibrated senior engineering talent immediately.
-                </p>
-              </div>
-
-              {/* Stacked Action Buttons */}
-              <div className="space-y-3">
-                <Link
-                  to="/signup"
-                  className="
-                    w-full py-3.5 px-5 rounded-full bg-[#C4846C] text-white text-sm font-medium
-                    hover:bg-[#B37357] transition-all flex items-center justify-between
-                    shadow-[0_8px_20px_rgba(196,132,108,0.28)] active:scale-[0.99] group
-                  "
-                >
-                  <span>Launch Candidate Assessment</span>
-                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                </Link>
-
-                <Link
-                  to="/employer"
-                  className="
-                    w-full py-3.5 px-5 rounded-full bg-white text-[#172132]
-                    border border-slate-200 text-sm font-medium hover:bg-slate-50
-                    transition-all flex items-center justify-between active:scale-[0.99] group shadow-2xs
-                  "
-                >
-                  <span>Hire Verified Talent</span>
-                  <ArrowUpRight className="w-4 h-4 text-[#53789B] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                </Link>
-              </div>
-            </div>
-
           </div>
+
+          {/* ── CARD 2: 1-to-1 Technical Defense ── */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow border border-slate-200/70 flex flex-col justify-between space-y-6">
+            <div className="space-y-3">
+              {/* Tag Pill */}
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#53789B]/15 text-[#53789B] text-xs font-semibold border border-[#53789B]/30">
+                <Layers className="w-3.5 h-3.5" />
+                <span>Stage 02B: Human Calibration Pod</span>
+              </span>
+
+              {/* Title & Description */}
+              <h3 className="text-lg font-bold text-[#172132] tracking-tight">
+                1-to-1 Technical Defense with Senior Architects
+              </h3>
+              <p className="text-sm text-[#64748B] leading-relaxed">
+                Candidates defend architectural trade-offs, space/time complexity, and cold-cache stampede strategies directly with Principal Engineers.
+              </p>
+            </div>
+
+            {/* Bottom Feature Indicator */}
+            <div className="pt-2 border-t border-slate-100 flex items-center gap-2 text-xs font-semibold text-[#53789B]">
+              <span className="w-2 h-2 rounded-full bg-[#53789B] animate-pulse" />
+              <span>Interactive Live Evaluation</span>
+            </div>
+          </div>
+
+          {/* ── CARD 3: Action & Direct Path ── */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow border border-slate-200/70 flex flex-col justify-between space-y-5">
+            <div className="space-y-2">
+              <h3 className="text-lg font-bold text-[#172132] tracking-tight">
+                Fast-Track Your Journey
+              </h3>
+              <p className="text-sm text-[#64748B] leading-relaxed">
+                Start your candidate certification or discover calibrated senior engineering talent immediately.
+              </p>
+            </div>
+
+            {/* Stacked Full-Width Action Buttons */}
+            <div className="space-y-2.5">
+              <Link
+                to="/signup"
+                className="w-full bg-[#C4846C] hover:bg-[#B37357] text-white py-3 rounded-full font-medium shadow-sm text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+              >
+                <span>Launch Candidate Assessment</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+
+              <Link
+                to="/employer"
+                className="w-full border border-slate-200 text-[#172132] hover:bg-slate-50 py-3 rounded-full font-medium text-sm flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
+              >
+                <span>Hire Verified Talent</span>
+                <ArrowUpRight className="w-4 h-4 text-[#53789B]" />
+              </Link>
+            </div>
+          </div>
+
         </div>
       </div>
     </section>
@@ -863,7 +927,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-[#F0F2F4] text-[#172132] selection:bg-[#D7ACA4]/30 selection:text-[#172132] relative overflow-hidden">
       <ScrollReactiveNavbar />
       <HeroSection />
-      <LowerFeatureGridSection />
+      <DetachedFeatureGridSection />
       <ValidationArchitectureSection />
       <TalentAdvantageSection />
       <UnifiedFinalCtaSection />
