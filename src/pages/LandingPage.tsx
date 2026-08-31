@@ -29,8 +29,8 @@ import spiderMatrixImg from '@/assets/spider-matrix-emblem.jpg';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    JADEER LANDING PAGE — "DIGITAL HAVEN" (STEEL BLUE & WARM TERRACOTTA)
-   - Left Column: Crisp Editorial Typography, Subtext, CTAs & Trust Markers
-   - Right Column: High-Fidelity, Opaque 3D Hexagonal Spider Matrix Emblem
+   - Dead-Center 3D Metallic Hexagonal Spider Watermark Background (25% opacity + blur-md)
+   - Centered 3-Line Editorial Headline, Subtext, & Dual CTAs
    - 3 Detached Floating Feature Cards Below Hero
    - Dynamic Scroll-Reactive Floating Capsule Navbar
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -42,22 +42,44 @@ const navLinks = [
   { label: 'Evidence Dossier', href: '#evidence' },
 ];
 
-/* ── 3D Hexagonal Spider Matrix Emblem (Right Hero Visual Anchor) ────────── */
-function SpiderMatrixEmblemHeroGraphic() {
+/* ── Atmospheric Dead-Center 3D Spider Matrix Watermark Backdrop ─────────── */
+function CenteredSpiderMatrixWatermark() {
   return (
-    <div className="relative w-full max-w-[440px] sm:max-w-[480px] lg:max-w-[510px] aspect-square flex items-center justify-center select-none">
-      {/* Subtle Ambient Radial Glow */}
-      <div className="absolute inset-2 rounded-full bg-gradient-to-tr from-[#53789B]/20 via-[#C4846C]/15 to-transparent blur-3xl opacity-60 pointer-events-none" />
+    <div className="absolute inset-0 pointer-events-none overflow-hidden select-none flex items-center justify-center">
+      {/* 1. Underlying Perspective Wireframe Grid */}
+      <div
+        className="absolute inset-0 opacity-[0.25]"
+        style={{
+          backgroundImage: `
+            linear-gradient(to right, rgba(83, 120, 155, 0.08) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(83, 120, 155, 0.08) 1px, transparent 1px)
+          `,
+          backgroundSize: '48px 48px',
+          maskImage: 'radial-gradient(ellipse 90% 70% at 50% 45%, #000 30%, transparent 80%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 90% 70% at 50% 45%, #000 30%, transparent 80%)',
+        }}
+      />
 
-      {/* High-Fidelity 3D Textured Spider Matrix Emblem Image */}
-      <div className="relative w-full h-full rounded-[32px] overflow-hidden p-2 flex items-center justify-center">
+      {/* 2. Scaled-up Dead-Center 3D Metallic Hexagonal Spider Watermark */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[750px] lg:w-[860px] aspect-square flex items-center justify-center opacity-[0.26] blur-[3px] mix-blend-multiply transition-opacity duration-700">
         <img
           src={spiderMatrixImg}
-          alt="Jadeer 3D Hexagonal Spider Matrix Emblem"
-          className="w-full h-full object-contain drop-shadow-[0_20px_45px_rgba(23,33,50,0.18)] transition-transform duration-500 hover:scale-[1.03]"
+          alt="Jadeer 3D Spider Matrix Atmospheric Watermark"
+          className="w-full h-full object-contain"
           loading="eager"
         />
       </div>
+
+      {/* 3. Soft Radial Fog Gradient Mask for Effortless Text Readability */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `
+            radial-gradient(ellipse 70% 60% at 50% 45%, rgba(240, 242, 244, 0.5) 0%, rgba(240, 242, 244, 0.2) 60%, transparent 85%),
+            linear-gradient(to bottom, rgba(240, 242, 244, 0) 0%, rgba(240, 242, 244, 0.4) 60%, #F0F2F4 95%, #F0F2F4 100%)
+          `,
+        }}
+      />
     </div>
   );
 }
@@ -245,101 +267,88 @@ function ScrollReactiveNavbar() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   HERO SECTION: 2-COLUMN BALANCED EDITORIAL & 3D SPIDER EMBLEM
+   HERO SECTION: CENTERED TYPOGRAPHY OVER 3D SPIDER WATERMARK BACKDROP
    ═══════════════════════════════════════════════════════════════════════════ */
 
 function HeroSection() {
   return (
-    <section className="relative overflow-hidden pt-36 sm:pt-44 pb-16 sm:pb-24">
-      {/* Background Isometric Perspective Grid */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-[0.25]"
-        style={{
-          backgroundImage: `
-            linear-gradient(to right, rgba(83, 120, 155, 0.08) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(83, 120, 155, 0.08) 1px, transparent 1px)
-          `,
-          backgroundSize: '48px 48px',
-          maskImage: 'radial-gradient(ellipse 90% 70% at 50% 35%, #000 30%, transparent 80%)',
-          WebkitMaskImage: 'radial-gradient(ellipse 90% 70% at 50% 35%, #000 30%, transparent 80%)',
-        }}
-      />
+    <section className="relative overflow-hidden pt-44 sm:pt-52 pb-16 sm:pb-24">
+      {/* Dead-Center 3D Metallic Hexagonal Spider Watermark Backdrop */}
+      <CenteredSpiderMatrixWatermark />
 
-      <div className="relative mx-auto max-w-7xl px-6 sm:px-10 lg:px-12 z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+      <div className="relative mx-auto max-w-4xl px-6 sm:px-10 text-center z-10 space-y-8 sm:space-y-10">
 
-          {/* ── Left Column: Editorial Headline & Actions (lg:col-span-7) ── */}
-          <div className="lg:col-span-7 space-y-7 sm:space-y-8 text-left">
-
-            {/* Pre-headline Pill Tag */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 border border-slate-200/80 shadow-2xs backdrop-blur-sm">
-              <span className="w-2 h-2 rounded-full bg-[#C4846C] animate-pulse" />
-              <span className="text-[11px] sm:text-xs font-extrabold text-[#64748B] uppercase tracking-widest">
-                DIGITAL HAVEN • TECHNICAL VALIDATION MATRIX
-              </span>
-            </div>
-
-            {/* Core Editorial Headline */}
-            <div className="space-y-1">
-              <h1 className="leading-[1.12] tracking-tight select-none">
-                <span className="block text-[#172132] font-bold text-4xl sm:text-5xl lg:text-[3.85rem]">
-                  Your Mentality.
-                </span>
-                <span className="block text-[#53789B] font-bold text-4xl sm:text-5xl lg:text-[3.85rem]">
-                  Our Matrix.
-                </span>
-                <span className="block text-[#C4846C] font-bold text-4xl sm:text-5xl lg:text-[3.85rem]">
-                  Their Peace of Mind.
-                </span>
-              </h1>
-            </div>
-
-            {/* Supporting Narrative */}
-            <p className="text-[#64748B] text-base sm:text-lg leading-relaxed max-w-xl font-normal">
-              A unified engineering validation platform designed to certify true technical depth through adaptive AI code probing, 1-to-1 Principal Architect defense, and verifiable evidence dossiers.
-            </p>
-
-            {/* Dual Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-1">
-              <Link
-                to="/signup"
-                id="hero-join-talent-btn"
-                className="inline-flex items-center justify-center gap-2.5 px-8 py-3.5 bg-[#C4846C] hover:bg-[#B37357] text-white font-medium rounded-full shadow-[0_8px_20px_rgba(196,132,108,0.28)] hover:shadow-[0_12px_28px_rgba(196,132,108,0.38)] transition-all active:scale-95 text-[15px]"
-              >
-                <span>Launch Assessment</span>
-                <ArrowRight className="w-4 h-4 text-white" />
-              </Link>
-
-              <Link
-                to="/signin"
-                id="hero-signin-btn"
-                className="inline-flex items-center justify-center px-7 py-3.5 bg-white hover:bg-slate-50 text-[#172132] border border-slate-300 font-medium rounded-full shadow-2xs transition-all active:scale-95 text-[15px]"
-              >
-                <span>Access Candidate Portal</span>
-              </Link>
-            </div>
-
-            {/* Trust Badges */}
-            <div className="pt-3 flex flex-wrap items-center gap-5 text-xs sm:text-sm font-medium text-[#64748B]">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-[#53789B]" />
-                <span>Verified by Architects at Microsoft, Amazon & Meta</span>
-              </div>
-              <span className="text-slate-300 hidden sm:inline">•</span>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-[#C4846C]" />
-                <span>Zero Resume Guesswork</span>
-              </div>
-            </div>
-
-          </div>
-
-          {/* ── Right Column: High-Fidelity 3D Hexagonal Spider Emblem (lg:col-span-5) ── */}
-          <div className="lg:col-span-5 flex justify-center items-center relative">
-            <SpiderMatrixEmblemHeroGraphic />
-          </div>
-
+        {/* ── Pre-headline Badge: • DIGITAL HAVEN • TECHNICAL VALIDATION MATRIX ── */}
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 border border-slate-200/80 shadow-2xs backdrop-blur-sm animate-[fade-in_0.5s_ease]">
+          <span className="w-2 h-2 rounded-full bg-[#C4846C] animate-pulse" />
+          <span className="text-[11px] sm:text-xs font-extrabold text-[#64748B] uppercase tracking-widest">
+            DIGITAL HAVEN • TECHNICAL VALIDATION MATRIX
+          </span>
         </div>
+
+        {/* ── Centered Main Headline Split into 3 Lines ── */}
+        <div className="space-y-1 sm:space-y-2">
+          <h1 className="leading-[1.12] tracking-tight select-none">
+            {/* Line 1: Deep Charcoal Navy (#172132) */}
+            <span className="block text-[#172132] font-bold text-4xl sm:text-6xl tracking-tight">
+              Your Mentality.
+            </span>
+
+            {/* Line 2: Steel Denim Blue (#53789B) */}
+            <span className="block text-[#53789B] font-bold text-4xl sm:text-6xl tracking-tight">
+              Our Matrix.
+            </span>
+
+            {/* Line 3: Warm Terracotta (#C4846C) */}
+            <span className="block text-[#C4846C] font-bold text-4xl sm:text-6xl tracking-tight">
+              Their Peace of Mind.
+            </span>
+          </h1>
+        </div>
+
+        {/* ── Supporting Narrative in Slate Gray (#64748B) ── */}
+        <p className="text-[#64748B] max-w-2xl mx-auto text-base sm:text-lg leading-relaxed mt-4 font-normal">
+          A unified engineering validation platform designed to certify true technical depth through adaptive AI code probing, 1-to-1 Principal Architect defense, and verifiable evidence dossiers.
+        </p>
+
+        {/* ── Centered Dual Action Buttons ── */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+          <Link
+            to="/signup"
+            id="hero-join-talent-btn"
+            className="w-full sm:w-auto bg-[#C4846C] hover:bg-[#B37357] text-white font-medium rounded-full px-8 py-3.5 shadow-[0_8px_20px_rgba(196,132,108,0.28)] hover:shadow-[0_12px_28px_rgba(196,132,108,0.38)] transition-all inline-flex items-center justify-center gap-2 active:scale-95 text-[15px]"
+          >
+            <span>Launch Assessment</span>
+            <ArrowRight className="w-4 h-4 text-white" />
+          </Link>
+
+          <Link
+            to="/signin"
+            id="hero-signin-btn"
+            className="w-full sm:w-auto bg-white hover:bg-slate-50 text-[#172132] border border-slate-300 font-medium rounded-full px-7 py-3.5 shadow-2xs transition-all inline-flex items-center justify-center active:scale-95 text-[15px]"
+          >
+            <span>Access Candidate Portal</span>
+          </Link>
+        </div>
+
+        {/* ── Centered Trust Badges ── */}
+        <div className="pt-6 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-[#64748B] text-xs sm:text-sm font-medium">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-[#53789B]" />
+            <span>Verified by Architects at Microsoft, Amazon & Meta</span>
+          </div>
+          <span className="text-slate-300 hidden sm:inline">•</span>
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-[#C4846C]" />
+            <span>Zero Resume Guesswork</span>
+          </div>
+          <span className="text-slate-300 hidden md:inline">•</span>
+          <div className="flex items-center gap-2">
+            <Cpu className="w-4 h-4 text-[#53789B]" />
+            <span>Real-Time Concurrency Calibration</span>
+          </div>
+        </div>
+
       </div>
     </section>
   );
