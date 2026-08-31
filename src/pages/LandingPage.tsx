@@ -28,8 +28,9 @@ import {
 
 /* ═══════════════════════════════════════════════════════════════════════════
    JADEER LANDING PAGE — "DIGITAL HAVEN" (STEEL BLUE & WARM TERRACOTTA)
-   - 3D Hexagonal Spider Matrix Emblem (Center-Right Hero Background)
-   - 3 Individual Detached Floating Feature Cards
+   - Left: Crisp Editorial Typography & Actions
+   - Right: Ultra-Crisp, Prominent, Opaque 3D Hexagonal Spider Matrix Emblem
+   - 3 Detached Floating Feature Cards Below Hero
    - Dynamic Scroll-Reactive Floating Capsule Navbar
    ═══════════════════════════════════════════════════════════════════════════ */
 
@@ -40,266 +41,275 @@ const navLinks = [
   { label: 'Evidence Dossier', href: '#evidence' },
 ];
 
-/* ── 3D Hexagonal Spider Matrix Emblem SVG Component ────────────────────── */
-function HexagonalSpiderEmblemBackground() {
+/* ── Crisp, Prominent 3D Hexagonal Spider Matrix Emblem (Right Hero Visual) ── */
+function HexagonalSpiderEmblem3D() {
   return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
-      {/* 1. Underlying Perspective Wireframe Grid */}
-      <div
-        className="absolute inset-0 opacity-[0.25]"
-        style={{
-          backgroundImage: `
-            linear-gradient(to right, rgba(83, 120, 155, 0.08) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(83, 120, 155, 0.08) 1px, transparent 1px)
-          `,
-          backgroundSize: '48px 48px',
-          maskImage: 'radial-gradient(ellipse 90% 70% at 50% 35%, #000 30%, transparent 80%)',
-          WebkitMaskImage: 'radial-gradient(ellipse 90% 70% at 50% 35%, #000 30%, transparent 80%)',
-        }}
-      />
+    <div className="relative w-full max-w-[460px] sm:max-w-[500px] lg:max-w-[540px] aspect-square flex items-center justify-center select-none">
+      {/* Ambient Depth Glow Behind Emblem */}
+      <div className="absolute inset-4 rounded-full bg-gradient-to-tr from-[#53789B]/15 via-[#C4846C]/15 to-transparent blur-3xl opacity-70 pointer-events-none" />
 
-      {/* 2. Sharp 3D Hexagonal Spider Matrix Emblem (Center-Right Hero) */}
       <svg
-        className="absolute top-12 sm:top-16 right-[-60px] sm:right-[-20px] lg:right-[30px] w-[650px] sm:w-[820px] lg:w-[980px] h-[720px] opacity-[0.72] transition-opacity duration-700"
-        viewBox="0 0 1000 750"
+        className="w-full h-full drop-shadow-[0_24px_48px_rgba(23,33,50,0.18)] transition-transform duration-500 hover:scale-[1.02]"
+        viewBox="0 0 600 600"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          {/* Metallic Navy Gradient */}
-          <linearGradient id="emblem-navy" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#1E293B" />
-            <stop offset="50%" stopColor="#172132" />
-            <stop offset="100%" stopColor="#0B132B" />
+          {/* Metallic Navy Primary Gradient */}
+          <linearGradient id="metal-navy" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#2A3B52" />
+            <stop offset="40%" stopColor="#172132" />
+            <stop offset="100%" stopColor="#0B111C" />
           </linearGradient>
 
-          {/* Metallic Copper / Terracotta Gradient */}
-          <linearGradient id="emblem-copper" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#E2A693" />
-            <stop offset="50%" stopColor="#C4846C" />
-            <stop offset="100%" stopColor="#9C5D47" />
+          {/* Metallic Copper Primary Gradient */}
+          <linearGradient id="metal-copper" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#E8AA97" />
+            <stop offset="35%" stopColor="#C4846C" />
+            <stop offset="80%" stopColor="#A75C41" />
+            <stop offset="100%" stopColor="#7D3B23" />
           </linearGradient>
 
           {/* Steel Denim Gradient */}
-          <linearGradient id="emblem-steel" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#9AB8D6" />
-            <stop offset="60%" stopColor="#53789B" />
-            <stop offset="100%" stopColor="#365472" />
+          <linearGradient id="metal-steel" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#A4C2E0" />
+            <stop offset="50%" stopColor="#53789B" />
+            <stop offset="100%" stopColor="#314B66" />
           </linearGradient>
 
-          {/* Chrome / Gloss Highlight Gradient */}
-          <linearGradient id="emblem-gloss" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.45" />
-            <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.02" />
+          {/* Gloss Top Bevel Highlight */}
+          <linearGradient id="gloss-light" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.75" />
+            <stop offset="30%" stopColor="#FFFFFF" stopOpacity="0.2" />
+            <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.0" />
           </linearGradient>
 
-          {/* Soft Depth Shadow */}
-          <filter id="emblem-shadow" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="16" stdDeviation="24" floodColor="#172132" floodOpacity="0.14" />
-            <feDropShadow dx="0" dy="4" stdDeviation="8" floodColor="#C4846C" floodOpacity="0.12" />
+          {/* Dark Chamfer Underside */}
+          <linearGradient id="chamfer-dark" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#0F172A" />
+            <stop offset="100%" stopColor="#050B14" />
+          </linearGradient>
+
+          {/* Inner Core Recessed Radial Shading */}
+          <radialGradient id="inner-recess" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#FFFFFF" />
+            <stop offset="70%" stopColor="#F1F5F9" />
+            <stop offset="100%" stopColor="#E2E8F0" />
+          </radialGradient>
+
+          {/* 3D Leg Shadow Filter */}
+          <filter id="leg-shadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#0F172A" floodOpacity="0.3" />
           </filter>
         </defs>
 
-        <g filter="url(#emblem-shadow)">
-          {/* ═══════════════════════════════════════════════════════════════
-             OUTER 3D METALLIC HEXAGONAL RIM (Center: 620, 360)
-             ═══════════════════════════════════════════════════════════════ */}
+        {/* ═══════════════════════════════════════════════════════════════════
+           OUTER 3D METALLIC HEXAGONAL RIM (Center: 300, 300 / Radius: 250)
+           ═══════════════════════════════════════════════════════════════════ */}
 
-          {/* Outer Hexagon Bevel Shadow Ring */}
-          <polygon
-            points="620,60 880,210 880,510 620,660 360,510 360,210"
-            fill="#FFFFFF"
-            fillOpacity="0.85"
-            stroke="url(#emblem-steel)"
-            strokeWidth="2"
-          />
+        {/* 1. Outer Hexagon Base Shadow Border */}
+        <polygon
+          points="300,35 525,165 525,435 300,565 75,435 75,165"
+          fill="#0B111C"
+          stroke="#334155"
+          strokeWidth="3"
+        />
 
-          {/* Top-Right Metallic Copper Rim Segment */}
-          <path
-            d="M 620,60 L 880,210 L 880,510 L 840,485 L 840,230 L 620,105 Z"
-            fill="url(#emblem-copper)"
-          />
+        {/* 2. Top-Right Metallic Copper Hex Rim Facet */}
+        <path
+          d="M 300,35 L 525,165 L 525,435 L 485,410 L 485,185 L 300,80 Z"
+          fill="url(#metal-copper)"
+        />
 
-          {/* Left/Bottom Metallic Navy Rim Segment */}
-          <path
-            d="M 620,60 L 620,105 L 400,230 L 400,485 L 620,615 L 620,660 L 360,510 L 360,210 Z"
-            fill="url(#emblem-navy)"
-          />
+        {/* 3. Left & Bottom Metallic Navy Hex Rim Facet */}
+        <path
+          d="M 300,35 L 300,80 L 115,185 L 115,410 L 300,520 L 300,565 L 75,435 L 75,165 Z"
+          fill="url(#metal-navy)"
+        />
 
-          {/* Bottom-Right Chamfer Connector */}
-          <path
-            d="M 880,510 L 620,660 L 620,615 L 840,485 Z"
-            fill="url(#emblem-copper)"
-            fillOpacity="0.9"
-          />
+        {/* 4. Bottom-Right Metallic Copper Chamfer Facet */}
+        <path
+          d="M 525,435 L 300,565 L 300,520 L 485,410 Z"
+          fill="url(#metal-copper)"
+          fillOpacity="0.9"
+        />
 
-          {/* Gloss Light Reflection Overlay on Top Rim */}
-          <path
-            d="M 620,60 L 880,210 L 840,230 L 620,105 L 400,230 L 360,210 Z"
-            fill="url(#emblem-gloss)"
-          />
+        {/* 5. 3D Bevel Corner Joint Accents */}
+        <line x1="300" y1="35" x2="300" y2="80" stroke="#FFFFFF" strokeWidth="2" strokeOpacity="0.6" />
+        <line x1="525" y1="165" x2="485" y2="185" stroke="#FFFFFF" strokeWidth="2" strokeOpacity="0.6" />
+        <line x1="525" y1="435" x2="485" y2="410" stroke="#172132" strokeWidth="2" strokeOpacity="0.5" />
+        <line x1="300" y1="565" x2="300" y2="520" stroke="#172132" strokeWidth="2" strokeOpacity="0.5" />
+        <line x1="75" y1="435" x2="115" y2="410" stroke="#53789B" strokeWidth="2" strokeOpacity="0.5" />
+        <line x1="75" y1="165" x2="115" y2="185" stroke="#FFFFFF" strokeWidth="2" strokeOpacity="0.6" />
 
-          {/* Inner Hexagon Recessed Base */}
-          <polygon
-            points="620,115 830,235 830,485 620,605 410,485 410,235"
-            fill="#F8FAFC"
-            fillOpacity="0.92"
-            stroke="#E2E8F0"
-            strokeWidth="1.5"
-          />
+        {/* 6. Gloss Specular Light Reflection Overlay on Top Rim */}
+        <path
+          d="M 300,35 L 525,165 L 485,185 L 300,80 L 115,185 L 75,165 Z"
+          fill="url(#gloss-light)"
+        />
 
-          {/* ═══════════════════════════════════════════════════════════════
-             INNER SPIDER MATRIX WEB / CONCENTRIC RADIAL LATTICE
-             ═══════════════════════════════════════════════════════════════ */}
+        {/* 7. Inner Recessed Hexagon Plate Base */}
+        <polygon
+          points="300,86 480,190 480,405 300,514 120,405 120,190"
+          fill="url(#inner-recess)"
+          stroke="#CBD5E1"
+          strokeWidth="2"
+        />
 
-          {/* Radial Spokes from Hexagon Center (620, 360) */}
-          <line x1="620" y1="360" x2="620" y2="115" stroke="#53789B" strokeWidth="1.5" strokeDasharray="3 3" />
-          <line x1="620" y1="360" x2="830" y2="235" stroke="#C4846C" strokeWidth="1.5" />
-          <line x1="620" y1="360" x2="830" y2="485" stroke="#53789B" strokeWidth="1.5" strokeDasharray="3 3" />
-          <line x1="620" y1="360" x2="620" y2="605" stroke="#172132" strokeWidth="1.5" strokeDasharray="3 3" />
-          <line x1="620" y1="360" x2="410" y2="485" stroke="#53789B" strokeWidth="1.5" strokeDasharray="3 3" />
-          <line x1="620" y1="360" x2="410" y2="235" stroke="#C4846C" strokeWidth="1.5" />
+        {/* ═══════════════════════════════════════════════════════════════════
+           INNER SPIDER MATRIX WEB / CONCENTRIC RADIAL LATTICE
+           ═══════════════════════════════════════════════════════════════════ */}
 
-          {/* Concentric Web Ring 1 (Mid) */}
-          <polygon
-            points="620,200 760,280 760,440 620,520 480,440 480,280"
-            stroke="#53789B"
-            strokeWidth="1.2"
-            fill="#53789B"
-            fillOpacity="0.03"
-          />
+        {/* Radial Web Spokes from Center (300, 300) */}
+        <line x1="300" y1="300" x2="300" y2="86" stroke="#53789B" strokeWidth="2" strokeDasharray="4 3" />
+        <line x1="300" y1="300" x2="480" y2="190" stroke="#C4846C" strokeWidth="2.5" />
+        <line x1="300" y1="300" x2="480" y2="405" stroke="#53789B" strokeWidth="2" strokeDasharray="4 3" />
+        <line x1="300" y1="300" x2="300" y2="514" stroke="#172132" strokeWidth="2" strokeDasharray="4 3" />
+        <line x1="300" y1="300" x2="120" y2="405" stroke="#53789B" strokeWidth="2" strokeDasharray="4 3" />
+        <line x1="300" y1="300" x2="120" y2="190" stroke="#C4846C" strokeWidth="2.5" />
 
-          {/* Concentric Web Ring 2 (Inner) */}
-          <polygon
-            points="620,270 700,315 700,405 620,450 540,405 540,315"
-            stroke="#C4846C"
-            strokeWidth="1.2"
-            strokeDasharray="4 3"
-            fill="#C4846C"
-            fillOpacity="0.03"
-          />
+        {/* Concentric Web Ring 1 (Outer Matrix Ring) */}
+        <polygon
+          points="300,150 425,225 425,375 300,450 175,375 175,225"
+          stroke="#53789B"
+          strokeWidth="1.8"
+          strokeOpacity="0.8"
+          fill="#53789B"
+          fillOpacity="0.04"
+        />
 
-          {/* ═══════════════════════════════════════════════════════════════
-             SLEEK FUTURISTIC 3D TECH SPIDER ICON
-             ═══════════════════════════════════════════════════════════════ */}
+        {/* Concentric Web Ring 2 (Inner Matrix Ring) */}
+        <polygon
+          points="300,215 375,260 375,340 300,385 225,340 225,260"
+          stroke="#C4846C"
+          strokeWidth="1.8"
+          strokeDasharray="5 3"
+          fill="#C4846C"
+          fillOpacity="0.05"
+        />
 
-          {/* ── Spider Central Head & Abdomen ── */}
-          {/* Abdomen (Rear Oval) */}
-          <ellipse cx="620" cy="385" rx="26" ry="34" fill="url(#emblem-navy)" stroke="#53789B" strokeWidth="2" />
-          <ellipse cx="620" cy="385" rx="14" ry="20" fill="url(#emblem-copper)" fillOpacity="0.8" />
-          {/* Glowing Abdomen Core */}
-          <circle cx="620" cy="385" r="5" fill="#FFFFFF" />
+        {/* ═══════════════════════════════════════════════════════════════════
+           HIGH-FIDELITY 3D CYBER SPIDER ICON
+           ═══════════════════════════════════════════════════════════════════ */}
 
-          {/* Cephalothorax (Front/Head) */}
-          <circle cx="620" cy="335" r="18" fill="url(#emblem-navy)" stroke="#53789B" strokeWidth="2" />
-          <circle cx="614" cy="330" r="2.5" fill="#C4846C" />
-          <circle cx="626" cy="330" r="2.5" fill="#C4846C" />
-
-          {/* ── 8 Articulated Geometric Cyber Spider Legs ── */}
-
-          {/* Leg 1: Front-Left */}
+        {/* ── 8 Articulated Cyber Spider Legs with Metallic Gradients ── */}
+        <g filter="url(#leg-shadow)">
+          {/* Leg 1: Front-Left Leg */}
           <polyline
-            points="606,325 565,290 520,305 480,280"
+            points="285,270 245,230 195,245 150,215"
             fill="none"
-            stroke="url(#emblem-copper)"
-            strokeWidth="3"
+            stroke="url(#metal-copper)"
+            strokeWidth="4"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
-          {/* Leg 2: Front-Right */}
+          {/* Leg 2: Front-Right Leg */}
           <polyline
-            points="634,325 675,290 720,305 760,280"
+            points="315,270 355,230 405,245 450,215"
             fill="none"
-            stroke="url(#emblem-copper)"
-            strokeWidth="3"
+            stroke="url(#metal-copper)"
+            strokeWidth="4"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
 
-          {/* Leg 3: Mid-Upper Left */}
+          {/* Leg 3: Mid-Upper Left Leg */}
           <polyline
-            points="602,340 540,330 495,365 445,350"
+            points="280,285 220,270 170,305 125,290"
             fill="none"
-            stroke="url(#emblem-steel)"
-            strokeWidth="2.8"
+            stroke="url(#metal-steel)"
+            strokeWidth="3.8"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
-          {/* Leg 4: Mid-Upper Right */}
+          {/* Leg 4: Mid-Upper Right Leg */}
           <polyline
-            points="638,340 700,330 745,365 795,350"
+            points="320,285 380,270 430,305 475,290"
             fill="none"
-            stroke="url(#emblem-steel)"
-            strokeWidth="2.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-
-          {/* Leg 5: Mid-Lower Left */}
-          <polyline
-            points="602,365 545,385 505,430 460,450"
-            fill="none"
-            stroke="url(#emblem-steel)"
-            strokeWidth="2.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          {/* Leg 6: Mid-Lower Right */}
-          <polyline
-            points="638,365 695,385 735,430 780,450"
-            fill="none"
-            stroke="url(#emblem-steel)"
-            strokeWidth="2.8"
+            stroke="url(#metal-steel)"
+            strokeWidth="3.8"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
 
-          {/* Leg 7: Rear-Left */}
+          {/* Leg 5: Mid-Lower Left Leg */}
           <polyline
-            points="606,395 560,435 530,480 500,530"
+            points="280,310 225,330 180,380 135,400"
             fill="none"
-            stroke="url(#emblem-copper)"
-            strokeWidth="3"
+            stroke="url(#metal-steel)"
+            strokeWidth="3.8"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
-          {/* Leg 8: Rear-Right */}
+          {/* Leg 6: Mid-Lower Right Leg */}
           <polyline
-            points="634,395 680,435 710,480 740,530"
+            points="320,310 375,330 420,380 465,400"
             fill="none"
-            stroke="url(#emblem-copper)"
-            strokeWidth="3"
+            stroke="url(#metal-steel)"
+            strokeWidth="3.8"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
 
-          {/* ═══════════════════════════════════════════════════════════════
-             GLOWING TELEMETRY VERTEX NODES
-             ═══════════════════════════════════════════════════════════════ */}
-          <circle cx="620" cy="115" r="5" fill="#53789B" stroke="#FFFFFF" strokeWidth="1.5" />
-          <circle cx="830" cy="235" r="6" fill="#C4846C" stroke="#FFFFFF" strokeWidth="2" />
-          <circle cx="830" cy="485" r="5" fill="#53789B" stroke="#FFFFFF" strokeWidth="1.5" />
-          <circle cx="620" cy="605" r="5" fill="#172132" stroke="#FFFFFF" strokeWidth="1.5" />
-          <circle cx="410" cy="485" r="5" fill="#53789B" stroke="#FFFFFF" strokeWidth="1.5" />
-          <circle cx="410" cy="235" r="6" fill="#C4846C" stroke="#FFFFFF" strokeWidth="2" />
+          {/* Leg 7: Rear-Left Leg */}
+          <polyline
+            points="285,340 240,385 205,435 170,485"
+            fill="none"
+            stroke="url(#metal-copper)"
+            strokeWidth="4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          {/* Leg 8: Rear-Right Leg */}
+          <polyline
+            points="315,340 360,385 395,435 430,485"
+            fill="none"
+            stroke="url(#metal-copper)"
+            strokeWidth="4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
 
-          {/* Node Orbit Indicators */}
-          <circle cx="830" cy="235" r="11" stroke="#C4846C" strokeWidth="1" strokeDasharray="2 2" />
-          <circle cx="410" cy="235" r="11" stroke="#C4846C" strokeWidth="1" strokeDasharray="2 2" />
+          {/* Leg Joint Pivot Rings */}
+          <circle cx="245" cy="230" r="3" fill="#FFFFFF" />
+          <circle cx="355" cy="230" r="3" fill="#FFFFFF" />
+          <circle cx="220" cy="270" r="3" fill="#FFFFFF" />
+          <circle cx="380" cy="270" r="3" fill="#FFFFFF" />
+          <circle cx="225" cy="330" r="3" fill="#FFFFFF" />
+          <circle cx="375" cy="330" r="3" fill="#FFFFFF" />
+          <circle cx="240" cy="385" r="3" fill="#FFFFFF" />
+          <circle cx="360" cy="385" r="3" fill="#FFFFFF" />
         </g>
-      </svg>
 
-      {/* 3. Soft Radial Fog Gradient Mask */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: `
-            radial-gradient(ellipse 75% 65% at 65% 40%, rgba(196, 132, 108, 0.06) 0%, rgba(83, 120, 155, 0.04) 40%, transparent 75%),
-            linear-gradient(to right, #F0F2F4 0%, #F0F2F4 22%, rgba(240, 242, 244, 0.65) 55%, rgba(240, 242, 244, 0.15) 100%),
-            linear-gradient(to bottom, rgba(240, 242, 244, 0) 0%, rgba(240, 242, 244, 0.45) 60%, #F0F2F4 95%, #F0F2F4 100%)
-          `,
-        }}
-      />
+        {/* ── Spider Central Head & Abdomen Body ── */}
+        {/* Abdomen (Metallic Navy & Copper Core) */}
+        <ellipse cx="300" cy="330" rx="30" ry="40" fill="url(#metal-navy)" stroke="#53789B" strokeWidth="2.5" />
+        <ellipse cx="300" cy="330" rx="18" ry="25" fill="url(#metal-copper)" />
+        {/* Glowing Fusion Abdomen Node */}
+        <circle cx="300" cy="330" r="7" fill="#FFFFFF" stroke="#C4846C" strokeWidth="2" />
+
+        {/* Cephalothorax (Front Head) */}
+        <circle cx="300" cy="275" r="22" fill="url(#metal-navy)" stroke="#53789B" strokeWidth="2.5" />
+        {/* Glowing Optic Sensors */}
+        <circle cx="292" cy="270" r="3.5" fill="#C4846C" />
+        <circle cx="308" cy="270" r="3.5" fill="#C4846C" />
+        <circle cx="292" cy="270" r="1.5" fill="#FFFFFF" />
+        <circle cx="308" cy="270" r="1.5" fill="#FFFFFF" />
+
+        {/* ═══════════════════════════════════════════════════════════════════
+           GLOWING TELEMETRY VERTEX NODES
+           ═══════════════════════════════════════════════════════════════════ */}
+        <circle cx="300" cy="86" r="6.5" fill="#53789B" stroke="#FFFFFF" strokeWidth="2" />
+        <circle cx="480" cy="190" r="8" fill="#C4846C" stroke="#FFFFFF" strokeWidth="2.5" />
+        <circle cx="480" cy="405" r="6.5" fill="#53789B" stroke="#FFFFFF" strokeWidth="2" />
+        <circle cx="300" cy="514" r="6.5" fill="#172132" stroke="#FFFFFF" strokeWidth="2" />
+        <circle cx="120" cy="405" r="6.5" fill="#53789B" stroke="#FFFFFF" strokeWidth="2" />
+        <circle cx="120" cy="190" r="8" fill="#C4846C" stroke="#FFFFFF" strokeWidth="2.5" />
+
+        {/* Concentric Telemetry Orbit Rings */}
+        <circle cx="480" cy="190" r="14" stroke="#C4846C" strokeWidth="1.2" strokeDasharray="3 3" />
+        <circle cx="120" cy="190" r="14" stroke="#C4846C" strokeWidth="1.2" strokeDasharray="3 3" />
+      </svg>
     </div>
   );
 }
@@ -323,7 +333,7 @@ function ScrollReactiveNavbar() {
         className={`
           z-50 transition-all duration-500 ease-out
           ${scrolled
-            ? 'fixed top-4 left-1/2 -translate-x-1/2 rounded-full bg-white/80 backdrop-blur-md border border-slate-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] px-6 py-2.5 max-w-5xl w-[92%]'
+            ? 'fixed top-4 left-1/2 -translate-x-1/2 rounded-full bg-white/85 backdrop-blur-md border border-slate-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.05)] px-6 py-2.5 max-w-5xl w-[92%]'
             : 'fixed top-0 left-0 right-0 bg-transparent border-b border-transparent max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 py-5'
           }
         `}
@@ -487,88 +497,101 @@ function ScrollReactiveNavbar() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   HERO SECTION: CENTERED 3-LINE HEADLINE & 3D SPIDER MATRIX EMBLEM
+   HERO SECTION: 2-COLUMN BALANCED EDITORIAL & 3D SPIDER EMBLEM
    ═══════════════════════════════════════════════════════════════════════════ */
 
 function HeroSection() {
   return (
-    <section className="relative overflow-hidden pt-44 sm:pt-52 pb-16 sm:pb-24">
-      {/* 3D Hexagonal Spider Matrix Emblem Backdrop */}
-      <HexagonalSpiderEmblemBackground />
+    <section className="relative overflow-hidden pt-36 sm:pt-44 pb-16 sm:pb-24">
+      {/* Background Isometric Perspective Grid */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.25]"
+        style={{
+          backgroundImage: `
+            linear-gradient(to right, rgba(83, 120, 155, 0.08) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(83, 120, 155, 0.08) 1px, transparent 1px)
+          `,
+          backgroundSize: '48px 48px',
+          maskImage: 'radial-gradient(ellipse 90% 70% at 50% 35%, #000 30%, transparent 80%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 90% 70% at 50% 35%, #000 30%, transparent 80%)',
+        }}
+      />
 
-      <div className="relative mx-auto max-w-5xl px-6 sm:px-10 lg:px-12 text-center z-10 space-y-8 sm:space-y-10">
+      <div className="relative mx-auto max-w-7xl px-6 sm:px-10 lg:px-12 z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
 
-        {/* ── Pre-headline Badge: • DIGITAL HAVEN • TECHNICAL VALIDATION MATRIX ── */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/80 border border-slate-200/80 shadow-[0_2px_8px_rgba(23,33,50,0.02)] backdrop-blur-sm animate-[fade-in_0.5s_ease]">
-          <span className="w-2 h-2 rounded-full bg-[#C4846C] animate-pulse" />
-          <span className="text-[11px] sm:text-xs font-extrabold text-[#64748B] uppercase tracking-widest">
-            DIGITAL HAVEN • TECHNICAL VALIDATION MATRIX
-          </span>
-        </div>
+          {/* ── Left Column: Editorial Headline & Actions (lg:col-span-7) ── */}
+          <div className="lg:col-span-7 space-y-7 sm:space-y-8 text-left">
 
-        {/* ── Core Headline (Centered, Clean & Impactful) ── */}
-        <div className="space-y-1 sm:space-y-2">
-          <h1 className="leading-[1.12] tracking-tight select-none">
-            {/* Line 1: Deep Charcoal Navy (#172132) */}
-            <span className="block text-[#172132] font-bold text-4xl sm:text-6xl tracking-tight">
-              Your Mentality.
-            </span>
+            {/* Pre-headline Pill Tag */}
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 border border-slate-200/80 shadow-2xs backdrop-blur-sm">
+              <span className="w-2 h-2 rounded-full bg-[#C4846C] animate-pulse" />
+              <span className="text-[11px] sm:text-xs font-extrabold text-[#64748B] uppercase tracking-widest">
+                DIGITAL HAVEN • TECHNICAL VALIDATION MATRIX
+              </span>
+            </div>
 
-            {/* Line 2: Steel Denim Blue (#53789B) */}
-            <span className="block text-[#53789B] font-bold text-4xl sm:text-6xl tracking-tight">
-              Our Matrix.
-            </span>
+            {/* Core Editorial Headline */}
+            <div className="space-y-1">
+              <h1 className="leading-[1.12] tracking-tight select-none">
+                <span className="block text-[#172132] font-bold text-4xl sm:text-5xl lg:text-[3.85rem]">
+                  Your Mentality.
+                </span>
+                <span className="block text-[#53789B] font-bold text-4xl sm:text-5xl lg:text-[3.85rem]">
+                  Our Matrix.
+                </span>
+                <span className="block text-[#C4846C] font-bold text-4xl sm:text-5xl lg:text-[3.85rem]">
+                  Their Peace of Mind.
+                </span>
+              </h1>
+            </div>
 
-            {/* Line 3: Warm Terracotta (#C4846C) */}
-            <span className="block text-[#C4846C] font-bold text-4xl sm:text-6xl tracking-tight">
-              Their Peace of Mind.
-            </span>
-          </h1>
-        </div>
+            {/* Supporting Narrative */}
+            <p className="text-[#64748B] text-base sm:text-lg leading-relaxed max-w-xl font-normal">
+              A unified engineering validation platform designed to certify true technical depth through adaptive AI code probing, 1-to-1 Principal Architect defense, and verifiable evidence dossiers.
+            </p>
 
-        {/* ── Supporting Narrative in Slate Gray (#64748B) ── */}
-        <p className="text-[#64748B] max-w-2xl mx-auto text-base sm:text-lg leading-relaxed mt-4 font-normal">
-          A unified engineering validation platform designed to certify true technical depth through adaptive AI code probing, 1-to-1 Principal Architect defense, and verifiable evidence dossiers.
-        </p>
+            {/* Dual Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-1">
+              <Link
+                to="/signup"
+                id="hero-join-talent-btn"
+                className="inline-flex items-center justify-center gap-2.5 px-8 py-3.5 bg-[#C4846C] hover:bg-[#B37357] text-white font-medium rounded-full shadow-[0_8px_20px_rgba(196,132,108,0.28)] hover:shadow-[0_12px_28px_rgba(196,132,108,0.38)] transition-all active:scale-95 text-[15px]"
+              >
+                <span>Launch Assessment</span>
+                <ArrowRight className="w-4 h-4 text-white" />
+              </Link>
 
-        {/* ── Dual Action Buttons (Centered with Soft Clay UI) ── */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
-          <Link
-            to="/signup"
-            id="hero-join-talent-btn"
-            className="w-full sm:w-auto bg-[#C4846C] hover:bg-[#B37357] text-white font-medium rounded-full px-7 py-3.5 shadow-[0_8px_20px_rgba(196,132,108,0.28)] hover:shadow-[0_12px_28px_rgba(196,132,108,0.35)] transition-all inline-flex items-center justify-center gap-2 active:scale-95"
-          >
-            <span>Launch Assessment</span>
-            <ArrowRight className="w-4 h-4 text-white" />
-          </Link>
+              <Link
+                to="/signin"
+                id="hero-signin-btn"
+                className="inline-flex items-center justify-center px-7 py-3.5 bg-white hover:bg-slate-50 text-[#172132] border border-slate-300 font-medium rounded-full shadow-2xs transition-all active:scale-95 text-[15px]"
+              >
+                <span>Access Candidate Portal</span>
+              </Link>
+            </div>
 
-          <Link
-            to="/signin"
-            id="hero-signin-btn"
-            className="w-full sm:w-auto bg-white hover:bg-slate-50 text-[#172132] border border-slate-300 font-medium rounded-full px-7 py-3.5 shadow-2xs transition-all inline-flex items-center justify-center active:scale-95"
-          >
-            <span>Access Candidate Portal</span>
-          </Link>
-        </div>
+            {/* Trust Badges */}
+            <div className="pt-3 flex flex-wrap items-center gap-5 text-xs sm:text-sm font-medium text-[#64748B]">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-[#53789B]" />
+                <span>Verified by Architects at Microsoft, Amazon & Meta</span>
+              </div>
+              <span className="text-slate-300 hidden sm:inline">•</span>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-[#C4846C]" />
+                <span>Zero Resume Guesswork</span>
+              </div>
+            </div>
 
-        {/* ── Bottom Trust Badges (Horizontal, Centered) ── */}
-        <div className="pt-6 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-[#64748B] text-xs sm:text-sm font-medium">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-[#53789B]" />
-            <span>Verified by Architects at Microsoft, Amazon & Meta</span>
           </div>
-          <span className="text-slate-300 hidden sm:inline">•</span>
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-[#C4846C]" />
-            <span>Zero Resume Guesswork</span>
-          </div>
-          <span className="text-slate-300 hidden md:inline">•</span>
-          <div className="flex items-center gap-2">
-            <Cpu className="w-4 h-4 text-[#53789B]" />
-            <span>Real-Time Concurrency Calibration</span>
-          </div>
-        </div>
 
+          {/* ── Right Column: Crisp, Opaque 3D Hexagonal Spider Emblem (lg:col-span-5) ── */}
+          <div className="lg:col-span-5 flex justify-center items-center relative">
+            <HexagonalSpiderEmblem3D />
+          </div>
+
+        </div>
       </div>
     </section>
   );
