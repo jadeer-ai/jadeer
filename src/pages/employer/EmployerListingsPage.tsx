@@ -207,7 +207,36 @@ export default function EmployerListingsPage() {
   const { companyProfile } = useCompanyProfile();
   const { scheduleInterview } = useInterviewSchedule();
 
-  const [listings, setListings] = useState<JobListing[]>(initialListings);
+  const [listings, setListings] = useState<any[]>(initialListings);
+
+  React.useEffect(() => {
+    fetch('/api/employer/jobs')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.jobs) {
+          const fetchedJobs = data.jobs.map((job: any) => ({
+            id: job.id,
+            title: job.title,
+            track: job.softwareTrack?.replace(/_/g, ' ') || 'Software Engineering',
+            seniority: job.seniorityLevel === 'MID_LEVEL' ? 'Mid-Level' : job.seniorityLevel === 'INTERN' ? 'Intern' : 'Junior',
+            employmentType: job.employmentType === 'FULL_TIME' ? 'Full-time' : 'Contract',
+            locationType: job.locationType?.toLowerCase() || 'on-site',
+            location: job.location || '',
+            status: job.status === 'ACTIVE' ? 'Active' : job.status === 'DRAFT' ? 'Draft' : 'Paused',
+            applicantsCount: 0,
+            avgMatchScore: 0,
+            aiScreenedCount: 0,
+            postedDate: new Date(job.createdAt).toISOString().split('T')[0],
+            daysActive: job.publishedAt ? Math.floor((Date.now() - new Date(job.publishedAt).getTime()) / (1000 * 3600 * 24)) : 0,
+            skills: job.skills || [],
+            description: job.description,
+            applicants: [],
+          }));
+          setListings(fetchedJobs.length > 0 ? fetchedJobs : initialListings);
+        }
+      })
+      .catch(console.error);
+  }, []);
   const [selectedStatusTab, setSelectedStatusTab] = useState<'All' | 'Active' | 'Draft' | 'Paused'>('All');
   const [selectedTrackFilter, setSelectedTrackFilter] = useState('All Tracks');
   const [searchQuery, setSearchQuery] = useState('');

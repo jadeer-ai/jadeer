@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { SignedIn, SignedOut, UserButton } from '@clerk/clerk-react';
+
 import {
   ArrowRight,
   ChevronRight,
@@ -185,7 +185,7 @@ function Navbar() {
               For Companies
             </Link>
 
-            <SignedOut>
+            
               <Link
                 to="/signin"
                 id="nav-signin"
@@ -212,23 +212,23 @@ function Navbar() {
                 <span>Join as Talent</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
-            </SignedOut>
+            
 
-            <SignedIn>
+            
               <Link
-                to="/dashboard"
-                id="nav-dashboard"
+                to="/"
+                id="nav-"
                 className="
                   px-3 py-2 text-[14px] font-semibold text-[#0F172A]
                   transition-colors duration-200 hover:text-[#5E8174]
                 "
               >
-                Dashboard
+                
               </Link>
               <div className="flex items-center pl-1">
-                <UserButton />
+                
               </div>
-            </SignedIn>
+            
           </div>
 
           {/* ── Mobile Menu Toggle ─────────────────────────────────── */}
@@ -274,7 +274,7 @@ function Navbar() {
               For Companies
             </Link>
 
-            <SignedOut>
+            
               <Link
                 to="/signin"
                 onClick={() => setMobileOpen(false)}
@@ -289,20 +289,20 @@ function Navbar() {
               >
                 Join as Talent →
               </Link>
-            </SignedOut>
+            
 
-            <SignedIn>
+            
               <div className="flex items-center justify-between py-2.5 px-3 rounded-2xl bg-slate-100">
                 <Link
-                  to="/dashboard"
+                  to="/"
                   onClick={() => setMobileOpen(false)}
                   className="text-sm font-semibold text-[#0F172A] hover:text-[#5E8174]"
                 >
-                  Dashboard →
+                   →
                 </Link>
-                <UserButton />
+                
               </div>
-            </SignedIn>
+            
           </div>
         </div>
       </div>

@@ -75,12 +75,36 @@ export default function AdminDashboardPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'overview';
 
-  const [metrics, setMetrics] = useState<AdminMetrics>(() => AdminApiService.getMetrics());
-  const [users, setUsers] = useState<AdminUserRecord[]>(() => AdminApiService.getUsers());
-  const [jobs, setJobs] = useState<AdminJobListingRecord[]>(() => AdminApiService.getJobListings());
-  const [applications, setApplications] = useState<AdminApplicationRecord[]>(() => AdminApiService.getApplications());
-  const [assessments, setAssessments] = useState<AdminAssessmentRecord[]>(() => AdminApiService.getAssessments());
-  const [consultations, setConsultations] = useState<AdminConsultationRecord[]>(() => AdminApiService.getConsultations());
+  const [metrics, setMetrics] = useState<AdminMetrics | null>(null);
+  const [users, setUsers] = useState<AdminUserRecord[]>([]);
+  const [jobs, setJobs] = useState<AdminJobListingRecord[]>([]);
+  const [applications, setApplications] = useState<AdminApplicationRecord[]>([]);
+  const [assessments, setAssessments] = useState<AdminAssessmentRecord[]>([]);
+  const [consultations, setConsultations] = useState<AdminConsultationRecord[]>([]);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [m, u, j, a, as, c] = await Promise.all([
+          AdminApiService.getMetrics(),
+          AdminApiService.getUsers(),
+          AdminApiService.getJobListings(),
+          AdminApiService.getApplications(),
+          AdminApiService.getAssessments(),
+          AdminApiService.getConsultations()
+        ]);
+        setMetrics(m);
+        setUsers(u);
+        setJobs(j);
+        setApplications(a);
+        setAssessments(as);
+        setConsultations(c);
+      } catch (err) {
+        console.error("Failed to load admin data", err);
+      }
+    }
+    loadData();
+  }, []);
 
   // Filter states
   const [userRoleFilter, setUserRoleFilter] = useState<UserRole | 'ALL'>('ALL');
@@ -152,12 +176,12 @@ export default function AdminDashboardPage() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const refreshAllData = () => {
-    setMetrics(AdminApiService.getMetrics());
-    setUsers(AdminApiService.getUsers());
-    setJobs(AdminApiService.getJobListings());
-    setApplications(AdminApiService.getApplications());
-    setAssessments(AdminApiService.getAssessments());
+  const refreshAllData = async () => {
+    setMetrics(await AdminApiService.getMetrics());
+    setUsers(await AdminApiService.getUsers());
+    setJobs(await AdminApiService.getJobListings());
+    setApplications(await AdminApiService.getApplications());
+    setAssessments(await AdminApiService.getAssessments());
   };
 
   const handleTabChange = (tabId: string) => {
@@ -165,59 +189,59 @@ export default function AdminDashboardPage() {
   };
 
   // User Actions
-  const handleToggleUserActive = (userId: string, name: string) => {
-    const updated = AdminApiService.toggleUserActive(userId);
+  const handleToggleUserActive = async (userId: string, name: string) => {
+    const updated = await AdminApiService.toggleUserActive(userId);
     setUsers(updated);
-    setMetrics(AdminApiService.getMetrics());
+    setMetrics(await AdminApiService.getMetrics());
     showToast(`Updated active status for ${name}`);
   };
 
-  const handleToggleUserVerified = (userId: string, name: string) => {
-    const updated = AdminApiService.toggleUserVerified(userId);
+  const handleToggleUserVerified = async (userId: string, name: string) => {
+    const updated = await AdminApiService.toggleUserVerified(userId);
     setUsers(updated);
-    setMetrics(AdminApiService.getMetrics());
+    setMetrics(await AdminApiService.getMetrics());
     showToast(`Updated verification status for ${name}`);
   };
 
-  const handleDeleteUser = (userId: string, name: string) => {
+  const handleDeleteUser = async (userId: string, name: string) => {
     if (confirm(`Are you sure you want to delete user "${name}"?`)) {
-      const updated = AdminApiService.deleteUser(userId);
+      const updated = await AdminApiService.deleteUser(userId);
       setUsers(updated);
-      setMetrics(AdminApiService.getMetrics());
+      setMetrics(await AdminApiService.getMetrics());
       showToast(`User ${name} has been removed`);
     }
   };
 
   // Employer CR Actions
-  const handleVerifyEmployerCR = (userId: string, companyName: string, isVerified: boolean) => {
-    const updated = AdminApiService.verifyEmployerCR(userId, isVerified);
+  const handleVerifyEmployerCR = async (userId: string, companyName: string, isVerified: boolean) => {
+    const updated = await AdminApiService.verifyEmployerCR(userId, isVerified);
     setUsers(updated);
-    setMetrics(AdminApiService.getMetrics());
+    setMetrics(await AdminApiService.getMetrics());
     showToast(`${companyName} CR verification set to ${isVerified ? 'VERIFIED' : 'PENDING'}`);
   };
 
   // Job Actions
-  const handleUpdateJobStatus = (jobId: string, title: string, status: JobStatus) => {
-    const updated = AdminApiService.updateJobStatus(jobId, status);
+  const handleUpdateJobStatus = async (jobId: string, title: string, status: JobStatus) => {
+    const updated = await AdminApiService.updateJobStatus(jobId, status);
     setJobs(updated);
-    setMetrics(AdminApiService.getMetrics());
+    setMetrics(await AdminApiService.getMetrics());
     showToast(`Job listing "${title}" status updated to ${status}`);
   };
 
-  const handleDeleteJob = (jobId: string, title: string) => {
+  const handleDeleteJob = async (jobId: string, title: string) => {
     if (confirm(`Are you sure you want to delete job listing "${title}"?`)) {
-      const updated = AdminApiService.deleteJobListing(jobId);
+      const updated = await AdminApiService.deleteJobListing(jobId);
       setJobs(updated);
-      setMetrics(AdminApiService.getMetrics());
+      setMetrics(await AdminApiService.getMetrics());
       showToast(`Job listing "${title}" deleted`);
     }
   };
 
   // Application Actions
-  const handleUpdateAppStatus = (appId: string, candidateName: string, status: ApplicationStatus) => {
-    const updated = AdminApiService.updateApplicationStatus(appId, status);
+  const handleUpdateAppStatus = async (appId: string, candidateName: string, status: ApplicationStatus) => {
+    const updated = await AdminApiService.updateApplicationStatus(appId, status);
     setApplications(updated);
-    setMetrics(AdminApiService.getMetrics());
+    setMetrics(await AdminApiService.getMetrics());
     showToast(`Application for ${candidateName} updated to ${status}`);
   };
 
@@ -292,7 +316,7 @@ export default function AdminDashboardPage() {
     setIsAssessmentModalOpen(true);
   };
 
-  const handleSaveAssessment = (e: React.FormEvent) => {
+  const handleSaveAssessment = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formTitle.trim()) {
@@ -306,7 +330,7 @@ export default function AdminDashboardPage() {
       .filter(Boolean);
 
     if (editingAssessmentId) {
-      const updated = AdminApiService.updateAssessment(editingAssessmentId, {
+      const updated = await AdminApiService.updateAssessment(editingAssessmentId, {
         title: formTitle.trim(),
         description: formDescription.trim(),
         softwareTrack: formTrack,
@@ -324,10 +348,10 @@ export default function AdminDashboardPage() {
         tags: tagsArray,
       });
       setAssessments(updated);
-      setMetrics(AdminApiService.getMetrics());
+      setMetrics(await AdminApiService.getMetrics());
       showToast(`Updated assessment "${formTitle.trim()}"`);
     } else {
-      const created = AdminApiService.createAssessment({
+      const created = await AdminApiService.createAssessment({
         title: formTitle.trim(),
         description: formDescription.trim(),
         softwareTrack: formTrack,
@@ -344,27 +368,27 @@ export default function AdminDashboardPage() {
         rubric: formRubric,
         tags: tagsArray,
       });
-      setAssessments(AdminApiService.getAssessments());
-      setMetrics(AdminApiService.getMetrics());
+      setAssessments(await AdminApiService.getAssessments());
+      setMetrics(await AdminApiService.getMetrics());
       showToast(`Created new assessment "${created.title}"`);
     }
 
     setIsAssessmentModalOpen(false);
   };
 
-  const handleDeleteAssessment = (id: string, title: string) => {
+  const handleDeleteAssessment = async (id: string, title: string) => {
     if (confirm(`Are you sure you want to delete technical assessment "${title}"?`)) {
-      const updated = AdminApiService.deleteAssessment(id);
+      const updated = await AdminApiService.deleteAssessment(id);
       setAssessments(updated);
-      setMetrics(AdminApiService.getMetrics());
+      setMetrics(await AdminApiService.getMetrics());
       showToast(`Deleted assessment "${title}"`);
     }
   };
 
-  const handleToggleAssessmentStatus = (id: string, title: string) => {
-    const updated = AdminApiService.toggleAssessmentStatus(id);
+  const handleToggleAssessmentStatus = async (id: string, title: string) => {
+    const updated = await AdminApiService.toggleAssessmentStatus(id);
     setAssessments(updated);
-    setMetrics(AdminApiService.getMetrics());
+    setMetrics(await AdminApiService.getMetrics());
     showToast(`Toggled status for assessment "${title}"`);
   };
 
@@ -451,7 +475,7 @@ export default function AdminDashboardPage() {
     setIsScheduleModalOpen(true);
   };
 
-  const handleSaveConsultation = (e: React.FormEvent) => {
+  const handleSaveConsultation = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formStudentName.trim() || !formTopicTitle.trim()) {
       alert('Please fill in candidate name and session topic.');
@@ -459,7 +483,7 @@ export default function AdminDashboardPage() {
     }
 
     if (editingConsultationId) {
-      const updated = AdminApiService.getConsultations().map((c) =>
+      const updated = (await AdminApiService.getConsultations()).map((c) =>
         c.id === editingConsultationId
           ? {
               ...c,
@@ -484,10 +508,10 @@ export default function AdminDashboardPage() {
         localStorage.setItem('jadeer-admin-consultations-v1', JSON.stringify(updated));
       } catch {}
       setConsultations(updated);
-      setMetrics(AdminApiService.getMetrics());
+      setMetrics(await AdminApiService.getMetrics());
       showToast(`Updated consultation session with ${formStudentName}`);
     } else {
-      const created = AdminApiService.scheduleConsultation({
+      const created = await AdminApiService.scheduleConsultation({
         studentId: `stu-${Date.now().toString().slice(-4)}`,
         studentName: formStudentName.trim(),
         studentEmail: formStudentEmail.trim(),
@@ -504,25 +528,25 @@ export default function AdminDashboardPage() {
         notes: formConsultationNotes.trim(),
         status: formConsultationStatus,
       });
-      setConsultations(AdminApiService.getConsultations());
-      setMetrics(AdminApiService.getMetrics());
+      setConsultations(await AdminApiService.getConsultations());
+      setMetrics(await AdminApiService.getMetrics());
       showToast(`Scheduled consultation session for ${created.studentName}`);
     }
     setIsScheduleModalOpen(false);
   };
 
-  const handleUpdateConsultationStatus = (id: string, candidateName: string, status: ConsultationStatus) => {
-    const updated = AdminApiService.updateConsultationStatus(id, status);
+  const handleUpdateConsultationStatus = async (id: string, candidateName: string, status: ConsultationStatus) => {
+    const updated = await AdminApiService.updateConsultationStatus(id, status);
     setConsultations(updated);
-    setMetrics(AdminApiService.getMetrics());
+    setMetrics(await AdminApiService.getMetrics());
     showToast(`Consultation for ${candidateName} marked as ${status}`);
   };
 
-  const handleDeleteConsultation = (id: string, topicTitle: string) => {
+  const handleDeleteConsultation = async (id: string, topicTitle: string) => {
     if (confirm(`Are you sure you want to delete consultation "${topicTitle}"?`)) {
-      const updated = AdminApiService.deleteConsultation(id);
+      const updated = await AdminApiService.deleteConsultation(id);
       setConsultations(updated);
-      setMetrics(AdminApiService.getMetrics());
+      setMetrics(await AdminApiService.getMetrics());
       showToast(`Deleted consultation "${topicTitle}"`);
     }
   };
@@ -588,6 +612,17 @@ export default function AdminDashboardPage() {
     }
     return true;
   });
+
+  if (!metrics) {
+    return (
+      <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-student-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-[#0B0F19]/60 font-semibold">Loading Admin Workspace...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <AdminLayout activeTab={activeTab} onTabChange={handleTabChange}>
@@ -2544,7 +2579,7 @@ export default function AdminDashboardPage() {
                       required
                       value={formStudentName}
                       onChange={(e) => setFormStudentName(e.target.value)}
-                      placeholder="e.g. Ahmad Al-Hassan"
+                      placeholder="e.g. Candidate"
                       className="w-full px-3 py-2 rounded-xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-xs focus:bg-white focus:border-[#6E8F75] focus:outline-none transition-all"
                     />
                   </div>

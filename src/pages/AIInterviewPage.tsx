@@ -48,7 +48,7 @@ const initialMessages: Message[] = [
   {
     id: 'msg-1',
     sender: 'ai',
-    text: "Hello Ahmad! Welcome to your adaptive technical evaluation for the Junior Backend & Systems Engineer track. Today, we will explore core C++ Object-Oriented Programming concepts, memory safety, and low-level runtime mechanisms.\n\nLet's start with a fundamental scenario: Why should a base class destructor always be declared `virtual` when implementing polymorphic hierarchies, and what happens at the memory level if you delete a derived object through a base class pointer without it?",
+    text: "Hello Candidate! Welcome to your adaptive technical evaluation for the Junior Backend & Systems Engineer track. Today, we will explore core C++ Object-Oriented Programming concepts, memory safety, and low-level runtime mechanisms.\n\nLet's start with a fundamental scenario: Why should a base class destructor always be declared `virtual` when implementing polymorphic hierarchies, and what happens at the memory level if you delete a derived object through a base class pointer without it?",
     codeSnippet: {
       language: 'cpp',
       code: `class Base {\npublic:\n    ~Base() { /* non-virtual destructor */ }\n};\n\nclass Derived : public Base {\n    int* buffer;\npublic:\n    Derived(size_t size) : buffer(new int[size]) {}\n    ~Derived() { delete[] buffer; }\n};\n\nBase* ptr = new Derived(1024);\ndelete ptr; // What specific problem occurs here?`,
@@ -67,7 +67,7 @@ const initialMessages: Message[] = [
   {
     id: 'msg-3',
     sender: 'ai',
-    text: "Spot on explanation, Ahmad. You accurately highlighted both the static binding issue and the resulting resource leak.\n\nNow let's go one layer deeper under the hood: How does the compiler actually implement this dynamic dispatch mechanism? Specifically, explain what the virtual method table (vtable) and virtual pointer (vptr) are, what memory overhead they introduce to an object instance, and how runtime polymorphism contrasts with compile-time polymorphism like C++ templates or CRTP?",
+    text: "Spot on explanation, Candidate. You accurately highlighted both the static binding issue and the resulting resource leak.\n\nNow let's go one layer deeper under the hood: How does the compiler actually implement this dynamic dispatch mechanism? Specifically, explain what the virtual method table (vtable) and virtual pointer (vptr) are, what memory overhead they introduce to an object instance, and how runtime polymorphism contrasts with compile-time polymorphism like C++ templates or CRTP?",
     codeSnippet: {
       language: 'cpp',
       code: `// Dynamic Polymorphism (vtable/vptr overhead at runtime):\nclass Shape {\npublic:\n    virtual void draw() const = 0;\n};\n\n// Compile-Time Polymorphism (Zero runtime cost via CRTP):\ntemplate <typename Derived>\nclass ShapeCRTP {\npublic:\n    void draw() const {\n        static_cast<const Derived*>(this)->drawImplementation();\n    }\n};`,
@@ -335,7 +335,7 @@ export default function AIInterviewPage() {
                   {/* Header info */}
                   <div className={`flex items-center gap-2 px-1 text-xs ${isAi ? 'text-[#0B0F19]/40' : 'justify-end text-[#0B0F19]/40'}`}>
                     <span className="font-bold text-[#0B0F19]/70">
-                      {isAi ? 'Jadeer AI Technical Interviewer' : `${userProfile.fullName || 'Ahmad Al-Hassan'} (You)`}
+                      {isAi ? 'Jadeer AI Technical Interviewer' : `${userProfile.fullName || 'Candidate'} (You)`}
                     </span>
                     <span>•</span>
                     <span>{msg.timestamp}</span>
@@ -567,7 +567,7 @@ export default function AIInterviewPage() {
                 Verified Badge Earned!
               </h2>
               <p className="text-xs text-[#0B0F19]/60 leading-relaxed max-w-sm mx-auto">
-                Congratulations Ahmad! Your C++ Memory Safety & Systems evaluation results have been verified and persisted to your profile context.
+                Congratulations Candidate! Your C++ Memory Safety & Systems evaluation results have been verified and persisted to your profile context.
               </p>
             </div>
 

@@ -18,8 +18,9 @@ if (!PUBLISHABLE_KEY) {
 export default function App() {
   return (
     <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
-      <UserProfileProvider>
+      
         <UserRoleProvider>
+          <UserProfileProvider>
           <CandidateJourneyProvider>
             <InterviewScheduleProvider>
               <CompanyProfileProvider>
@@ -31,8 +32,9 @@ export default function App() {
               </CompanyProfileProvider>
             </InterviewScheduleProvider>
           </CandidateJourneyProvider>
+                  </UserProfileProvider>
         </UserRoleProvider>
-      </UserProfileProvider>
+      
     </ClerkProvider>
   );
 }

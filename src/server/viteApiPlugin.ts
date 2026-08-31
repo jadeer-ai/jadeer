@@ -13,6 +13,26 @@ import {
   handleToggle2fa,
   handleGet2faStatus,
 } from './routes.ts';
+import {
+  handleGetCandidateProfile,
+  handleUpdateCandidateProfile,
+} from './candidateRoutes.ts';
+import {
+  handleGetCompanyProfile,
+  handleUpdateCompanyProfile,
+  handleGetJobListings,
+  handleCreateJobListing,
+} from './employerRoutes.ts';
+import {
+  handleGetAdminMetrics,
+  handleGetAdminUsers,
+  handleToggleAdminUserStatus,
+  handleGetAdminJobs,
+} from './adminRoutes.ts';
+import {
+  extractTokenFromHeaderOrCookies,
+  verifyJwt,
+} from './jwt.ts';
 import type { SocialProvider } from './socialOAuth.ts';
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -237,7 +257,7 @@ export function jadeerBackendApiPlugin(): Plugin {
           try {
             const authHeader = req.headers['authorization'];
             const cookieHeader = req.headers['cookie'];
-            const result = handleGetMe(
+            const result = await handleGetMe(
               Array.isArray(authHeader) ? authHeader[0] : authHeader,
               Array.isArray(cookieHeader) ? cookieHeader[0] : cookieHeader
             );
@@ -281,7 +301,7 @@ export function jadeerBackendApiPlugin(): Plugin {
         if ((url === '/api/auth/2fa/generate' || url === '/api/auth/otp/send') && method === 'POST') {
           try {
             const body = await parseBody(req);
-            const result = handleGenerate2faOtp(body);
+            const result = await handleGenerate2faOtp(body);
             sendJson(res, result.status, result.data);
           } catch (err: any) {
             sendJson(res, 500, { success: false, error: err.message || 'Internal server error' });
@@ -318,7 +338,7 @@ export function jadeerBackendApiPlugin(): Plugin {
         if ((url === '/api/auth/2fa/resend' || url === '/api/auth/otp/resend') && method === 'POST') {
           try {
             const body = await parseBody(req);
-            const result = handleResend2faOtp(body);
+            const result = await handleResend2faOtp(body);
             sendJson(res, result.status, result.data);
           } catch (err: any) {
             sendJson(res, 500, { success: false, error: err.message || 'Internal server error' });
@@ -343,12 +363,177 @@ export function jadeerBackendApiPlugin(): Plugin {
           try {
             const searchParams = new URLSearchParams(req.url?.split('?')[1] || '');
             const email = searchParams.get('email');
-            const result = handleGet2faStatus(email);
+            const result = await handleGet2faStatus(email);
             sendJson(res, result.status, result.data);
           } catch (err: any) {
             sendJson(res, 500, { success: false, error: err.message || 'Internal server error' });
           }
           return;
+        }
+
+        // 11. GET /api/candidate/profile & PUT /api/candidate/profile
+        if (url === '/api/candidate/profile') {
+          const authHeader = req.headers['authorization'];
+          const cookieHeader = req.headers['cookie'];
+          const token = extractTokenFromHeaderOrCookies(
+            Array.isArray(authHeader) ? authHeader[0] : authHeader,
+            Array.isArray(cookieHeader) ? cookieHeader[0] : cookieHeader
+          );
+
+          if (!token) {
+            sendJson(res, 401, { success: false, error: 'No authorization token provided.' });
+            return;
+          }
+
+          const decoded = verifyJwt(token);
+          if (!decoded) {
+            sendJson(res, 401, { success: false, error: 'Invalid or expired session token.' });
+            return;
+          }
+
+          if (method === 'GET') {
+            const result = await handleGetCandidateProfile(req as any, decoded.userId);
+            const data = await result.json();
+            sendJson(res, result.status, data);
+            return;
+          }
+
+          if (method === 'PUT') {
+            // we need to set body on req, wait actually handleUpdateCandidateProfile expects a Request object with .json() method...
+            // Let me adjust candidateRoutes to take a parsed body object or I can wrap req with a dummy .json()
+            const body = await parseBody(req);
+            const dummyReq = { json: async () => body } as any;
+            const result = await handleUpdateCandidateProfile(dummyReq, decoded.userId);
+            const data = await result.json();
+            sendJson(res, result.status, data);
+            return;
+          }
+        }
+
+        // 12. GET /api/employer/profile & PUT /api/employer/profile
+        if (url === '/api/employer/profile') {
+          const authHeader = req.headers['authorization'];
+          const cookieHeader = req.headers['cookie'];
+          const token = extractTokenFromHeaderOrCookies(
+            Array.isArray(authHeader) ? authHeader[0] : authHeader,
+            Array.isArray(cookieHeader) ? cookieHeader[0] : cookieHeader
+          );
+
+          if (!token) {
+            sendJson(res, 401, { success: false, error: 'No authorization token provided.' });
+            return;
+          }
+
+          const decoded = verifyJwt(token);
+          if (!decoded) {
+            sendJson(res, 401, { success: false, error: 'Invalid or expired session token.' });
+            return;
+          }
+
+          if (method === 'GET') {
+            const result = await handleGetCompanyProfile(req as any, decoded.userId);
+            const data = await result.json();
+            sendJson(res, result.status, data);
+            return;
+          }
+
+          if (method === 'PUT' || method === 'POST') {
+            const body = await parseBody(req);
+            const dummyReq = { json: async () => body } as any;
+            const result = await handleUpdateCompanyProfile(dummyReq, decoded.userId);
+            const data = await result.json();
+            sendJson(res, result.status, data);
+            return;
+          }
+        }
+
+        // 13. GET /api/employer/jobs & POST /api/employer/jobs
+        if (url === '/api/employer/jobs') {
+          const authHeader = req.headers['authorization'];
+          const cookieHeader = req.headers['cookie'];
+          const token = extractTokenFromHeaderOrCookies(
+            Array.isArray(authHeader) ? authHeader[0] : authHeader,
+            Array.isArray(cookieHeader) ? cookieHeader[0] : cookieHeader
+          );
+
+          if (!token) {
+            sendJson(res, 401, { success: false, error: 'No authorization token provided.' });
+            return;
+          }
+
+          const decoded = verifyJwt(token);
+          if (!decoded) {
+            sendJson(res, 401, { success: false, error: 'Invalid or expired session token.' });
+            return;
+          }
+
+          if (method === 'GET') {
+            const result = await handleGetJobListings(req as any, decoded.userId);
+            const data = await result.json();
+            sendJson(res, result.status, data);
+            return;
+          }
+
+          if (method === 'POST') {
+            const body = await parseBody(req);
+            const dummyReq = { json: async () => body } as any;
+            const result = await handleCreateJobListing(dummyReq, decoded.userId);
+            const data = await result.json();
+            sendJson(res, result.status, data);
+            return;
+          }
+        }
+
+        // 14. Admin Routes
+        if (url.startsWith('/api/admin/')) {
+          const authHeader = req.headers['authorization'];
+          const cookieHeader = req.headers['cookie'];
+          const token = extractTokenFromHeaderOrCookies(
+            Array.isArray(authHeader) ? authHeader[0] : authHeader,
+            Array.isArray(cookieHeader) ? cookieHeader[0] : cookieHeader
+          );
+
+          if (!token) {
+            sendJson(res, 401, { success: false, error: 'No authorization token provided.' });
+            return;
+          }
+
+          const decoded = verifyJwt(token);
+          if (!decoded) {
+            sendJson(res, 401, { success: false, error: 'Invalid or expired session token.' });
+            return;
+          }
+
+          if (url === '/api/admin/metrics' && method === 'GET') {
+            const result = await handleGetAdminMetrics(req as any, decoded.userId);
+            const data = await result.json();
+            sendJson(res, result.status, data);
+            return;
+          }
+
+          if (url === '/api/admin/users' && method === 'GET') {
+            const result = await handleGetAdminUsers(req as any, decoded.userId);
+            const data = await result.json();
+            sendJson(res, result.status, data);
+            return;
+          }
+
+          if (url === '/api/admin/jobs' && method === 'GET') {
+            const result = await handleGetAdminJobs(req as any, decoded.userId);
+            const data = await result.json();
+            sendJson(res, result.status, data);
+            return;
+          }
+
+          const toggleMatch = url.match(/^\/api\/admin\/users\/([^/]+)\/(active|verified|cr)$/);
+          if (toggleMatch && method === 'POST') {
+            const targetId = toggleMatch[1];
+            const action = toggleMatch[2] as 'active' | 'verified' | 'cr';
+            const result = await handleToggleAdminUserStatus(req as any, decoded.userId, targetId, action);
+            const data = await result.json();
+            sendJson(res, result.status, data);
+            return;
+          }
         }
 
         next();
