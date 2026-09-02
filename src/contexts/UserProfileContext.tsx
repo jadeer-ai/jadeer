@@ -67,7 +67,12 @@ export interface HumanInterviewRubric {
 }
 
 export interface HumanInterviewState {
-  status: 'not_scheduled' | 'upcoming' | 'completed';
+  status: 'awaiting_assignment' | 'not_scheduled' | 'upcoming' | 'completed';
+  isCompleted?: boolean;
+  overallScore?: number;
+  calibratedDate?: string;
+  assignedExpertId?: string;
+  sessionId?: string;
   scheduledDate?: string;
   scheduledTime?: string;
   timezone?: string;
@@ -183,7 +188,7 @@ const DEFAULT_PROFILE: CustomUserProfile = {
     meetingLink: 'https://meet.jadeer.io/interview/jad-tech-8492',
     interviewerName: 'Eng. Tariq Al-Mansour',
     interviewerTitle: 'Principal Systems Architect & Calibration Lead',
-    interviewerCompany: 'Microsoft',
+    interviewerCompany: 'Jadeer Calibration Panel',
     interviewerInitials: 'TM',
     topic: 'Stage 02B: Human Technical Calibration (Backend Distributed Systems)',
     rubric: {
@@ -206,8 +211,8 @@ const DEFAULT_PROFILE: CustomUserProfile = {
       ],
       calibratedAt: '2026-08-29T15:00:00Z',
       interviewerName: 'Eng. Tariq Al-Mansour',
-      interviewerTitle: 'Principal Systems Architect',
-      interviewerCompany: 'Microsoft',
+      interviewerTitle: 'Principal Systems Architect & Calibration Lead',
+      interviewerCompany: 'Jadeer Calibration Panel',
       verifiedBadge: 'Jadeer Human-Calibrated Senior Engineer Badge',
     },
   },

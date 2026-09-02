@@ -1,22 +1,14 @@
 import { useState } from 'react';
 import { useUserProfile } from '@/contexts/UserProfileContext';
+import { useUserRole } from '@/contexts/UserRoleContext';
 import {
   Briefcase,
-  Building2,
-  MapPin,
   Sparkles,
   CheckCircle2,
   Clock,
   ArrowRight,
-  Send,
   Mail,
-  ExternalLink,
-  ShieldCheck,
   Check,
-  Eye,
-  Filter,
-  DollarSign,
-  AlertCircle,
   FileCheck2,
 } from 'lucide-react';
 
@@ -164,7 +156,7 @@ const initialApplications: ApplicationItem[] = [
     appliedDate: 'Applied 3 days ago',
     status: 'Interview Requested',
     emailNote: 'Details sent to your email',
-    lastUpdateNote: 'Hiring Manager Tariq Al-Mansoor requested a 30-min Final Team Alignment.',
+    lastUpdateNote: 'Hiring Lead Tariq Al-Mansoor requested a 30-min Final Team Alignment.',
   },
   {
     id: 'app-2',
@@ -203,12 +195,14 @@ const initialApplications: ApplicationItem[] = [
 
 export default function JobMatchesPage() {
   const { profile: userProfile, addJobApplication } = useUserProfile();
+  const { isStudent } = useUserRole();
   const [jobMatches, setJobMatches] = useState<JobMatch[]>(initialJobMatches);
   const [localApplications, setLocalApplications] = useState<ApplicationItem[]>(initialApplications);
   const [applyingJobId, setApplyingJobId] = useState<string | null>(null);
   const [appliedToast, setAppliedToast] = useState<string | null>(null);
 
-  const normalizedRole: 'student' | 'grad' = userProfile.role === 'student' ? 'student' : 'grad';
+  const normalizedRole: 'student' | 'grad' = isStudent || userProfile.role === 'student' ? 'student' : 'grad';
+  const isStudentRole = normalizedRole === 'student';
 
   // Filter job matches based on targetAudience ('all' or matching candidate role)
   const displayedJobMatches = jobMatches.filter(
@@ -228,7 +222,7 @@ export default function JobMatchesPage() {
         .slice(0, 2)
         .join('')
         .toUpperCase() || 'JP',
-      companyBg: 'bg-[#6E8F75]',
+      companyBg: 'bg-[#5E8174]',
       location: 'Riyadh, Saudi Arabia (Hybrid)',
       appliedDate: `Applied ${app.appliedDate}`,
       status: (app.status === 'Interview Scheduled' ? 'Interview Requested' : app.status === 'Technical Screening' ? 'Shortlisted' : 'Under Review') as ApplicationItem['status'],
@@ -278,57 +272,56 @@ export default function JobMatchesPage() {
   const getStatusBadge = (status: ApplicationItem['status']) => {
     switch (status) {
       case 'Interview Requested':
-        return 'bg-[#6E8F75] text-white font-bold shadow-[0_2px_8px_rgba(110,143,117,0.25)]';
+        return 'bg-[#5E8174] text-white font-bold shadow-2xs';
       case 'Shortlisted':
-        return 'bg-emerald-100 text-emerald-800 font-bold border border-emerald-200';
+        return 'bg-[#5E8174]/10 text-[#5E8174] font-bold border border-[#5E8174]/20';
       case 'Under Review':
-        return 'bg-amber-100 text-amber-800 font-semibold border border-amber-200';
+        return 'bg-[#F4F0E8] text-[#334155] font-semibold border border-[#E8E2D5]';
       case 'Applied':
       default:
-        return 'bg-[#FAF9F6] text-[#0B0F19]/60 font-semibold border border-[#0B0F19]/[0.08]';
+        return 'bg-[#F8F9FA] text-slate-500 font-semibold border border-slate-200';
     }
   };
 
-  const getAudiencePill = (audience: 'student' | 'grad' | 'all') => {
-    switch (audience) {
+  const getAudiencePill = (targetAudience: JobMatch['targetAudience']) => {
+    switch (targetAudience) {
       case 'student':
-        return { label: 'Student / Co-op', color: 'bg-student-500/10 text-student-700 border-student-500/20' };
+        return { label: '🎓 Student / Co-op', color: 'bg-[#5E8174]/10 text-[#5E8174] border-[#5E8174]/30' };
       case 'grad':
-        return { label: 'Graduate / Full-Time', color: 'bg-purple-50 text-purple-700 border-purple-200' };
-      case 'all':
+        return { label: '⚡ Graduate / Full-time', color: 'bg-[#0F172A]/5 text-[#0F172A] border-slate-300' };
       default:
-        return { label: 'Open to All', color: 'bg-slate-100 text-slate-700 border-slate-200' };
+        return { label: 'Open to All', color: 'bg-[#F8F9FA] text-[#334155] border-slate-200' };
     }
   };
 
   return (
-    <div className="space-y-10 animate-[fade-in_0.4s_ease] pb-14">
+    <div className="space-y-10 animate-[fade-in_0.4s_ease] pb-14 text-[#0F172A]">
 
       {/* ═══════════════════════════════════════════════════════════════
          PAGE HEADER
          ═══════════════════════════════════════════════════════════════ */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#0B0F19]/[0.06] shadow-[0_2px_16px_rgba(0,0,0,0.02)]">
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.03)]">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
 
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2.5">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#6E8F75]/10 text-[#6E8F75] text-xs font-bold border border-[#6E8F75]/20">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#5E8174]/10 text-[#5E8174] text-xs font-semibold border border-[#5E8174]/20">
                 <Sparkles className="w-3.5 h-3.5" />
                 Merit-Based Matching
               </span>
-              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-lg bg-[#0B0F19]/[0.04] text-[#0B0F19]/60">
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-lg bg-[#F8F9FA] text-[#334155] border border-slate-200/60">
                 Verified Candidate ID: JAD-8492
               </span>
-              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-[#0B0F19]/70">
-                Audience: {normalizedRole === 'student' ? '🎓 Students (Internships & Co-ops)' : '⚡ Graduates (Full-Time)'}
+              <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-[#F4F0E8]/80 border border-[#E8E2D5] text-[#334155]">
+                Audience: {isStudentRole ? '🎓 Students (Internships & Co-ops)' : '⚡ Graduates (Full-Time)'}
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B0F19] tracking-tight">
-              Job Matches & Applications
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#0F172A] tracking-tight">
+              {isStudentRole ? 'Internship Matches & Applications' : 'Job Matches & Applications'}
             </h1>
-            <p className="text-[14.5px] text-[#0B0F19]/55 max-w-3xl leading-relaxed">
-              {normalizedRole === 'student'
+            <p className="text-[14.5px] text-[#334155] max-w-3xl leading-relaxed">
+              {isStudentRole
                 ? 'Explore top-tier university internships, research fellowships, and co-op placements tailored to your verified technical benchmarks.'
                 : 'Explore full-time engineering roles matched specifically to your verified backend systems competencies, mentor feedback, and PR deliverables.'}
             </p>
@@ -336,20 +329,20 @@ export default function JobMatchesPage() {
 
           {/* Quick Metrics */}
           <div className="flex items-center gap-3 shrink-0">
-            <div className="p-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.05] text-center min-w-[110px]">
-              <p className="text-2xl font-extrabold text-[#6E8F75]">
+            <div className="p-4 rounded-2xl bg-[#F4F0E8]/80 border border-[#E8E2D5] text-center min-w-[110px] shadow-2xs">
+              <p className="text-2xl font-bold text-[#5E8174]">
                 {displayedJobMatches.filter((j) => !j.isApplied).length}
               </p>
-              <p className="text-[11px] font-semibold text-[#0B0F19]/40 uppercase tracking-wider">
-                Matching Roles
+              <p className="text-[11px] font-semibold text-[#334155]/70 uppercase tracking-wider">
+                {isStudentRole ? 'Matching Internships' : 'Matching Roles'}
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.05] text-center min-w-[110px]">
-              <p className="text-2xl font-extrabold text-[#0B0F19]">
+            <div className="p-4 rounded-2xl bg-[#F8F9FA] border border-slate-200/60 text-center min-w-[110px] shadow-2xs">
+              <p className="text-2xl font-bold text-[#0F172A]">
                 {combinedApplications.length}
               </p>
-              <p className="text-[11px] font-semibold text-[#0B0F19]/40 uppercase tracking-wider">
+              <p className="text-[11px] font-semibold text-[#334155]/70 uppercase tracking-wider">
                 Active Apps
               </p>
             </div>
@@ -358,12 +351,12 @@ export default function JobMatchesPage() {
 
         {/* Instant Applied Notification Toast */}
         {appliedToast && (
-          <div className="mt-4 p-3.5 rounded-2xl bg-[#ecfdf5] border border-emerald-200 text-xs text-[#065f46] font-semibold flex items-center justify-between animate-[slide-up_0.3s_var(--ease-spring)]">
+          <div className="mt-4 p-3.5 rounded-2xl bg-[#5E8174]/10 border border-[#5E8174]/30 text-xs text-[#5E8174] font-semibold flex items-center justify-between animate-[slide-up_0.3s_ease]">
             <span className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[#059669]" />
+              <CheckCircle2 className="w-4 h-4 text-[#5E8174]" />
               {appliedToast}
             </span>
-            <span className="text-[11px] text-[#059669] font-mono">Dossier Attached</span>
+            <span className="text-[11px] text-[#5E8174] font-mono">Dossier Attached</span>
           </div>
         )}
       </div>
@@ -374,25 +367,42 @@ export default function JobMatchesPage() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-2xl bg-[#6E8F75]/10 text-[#6E8F75] flex items-center justify-center font-bold">
+            <div className="w-9 h-9 rounded-2xl bg-[#5E8174]/10 text-[#5E8174] flex items-center justify-center font-bold">
               <Briefcase className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-xl font-extrabold text-[#0B0F19] tracking-tight">
-                Recommended Matches ({displayedJobMatches.length})
+              <h2 className="text-xl font-bold text-[#0F172A] tracking-tight">
+                {isStudentRole ? 'Recommended Internships' : 'Recommended Matches'} ({displayedJobMatches.length})
               </h2>
-              <p className="text-xs text-[#0B0F19]/45">
-                {normalizedRole === 'student'
-                  ? 'Showing student internships and co-op opportunities'
+              <p className="text-xs text-[#334155]">
+                {isStudentRole
+                  ? 'Showing student internships and university co-op opportunities'
                   : 'Showing graduate full-time engineering hiring tracks'}
               </p>
             </div>
           </div>
 
-          <span className="text-xs font-bold text-[#6E8F75] bg-[#6E8F75]/10 px-3 py-1 rounded-full">
+          <span className="text-xs font-semibold text-[#5E8174] bg-[#5E8174]/10 border border-[#5E8174]/20 px-3 py-1 rounded-full">
             Ranked by Skill Match
           </span>
         </div>
+
+        {/* Empty State Guard */}
+        {displayedJobMatches.length === 0 && (
+          <div className="p-8 sm:p-12 rounded-3xl bg-white border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.03)] text-center space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-[#5E8174]/10 text-[#5E8174] flex items-center justify-center mx-auto">
+              <Briefcase className="w-6 h-6" />
+            </div>
+            <h3 className="text-sm font-bold text-[#0F172A]">
+              {isStudentRole ? 'No Active Internships Found' : 'No Active Job Matches Found'}
+            </h3>
+            <p className="text-xs text-slate-500 max-w-md mx-auto">
+              {isStudentRole
+                ? 'We are continuously syncing new cooperative training positions from verified Saudi partner companies. Check back soon or calibrate your profile.'
+                : 'We are expanding full-time technology tracks. Complete remaining evidence stages to unlock more verified hiring manager pipelines.'}
+            </p>
+          </div>
+        )}
 
         {/* Matches Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -402,25 +412,25 @@ export default function JobMatchesPage() {
             return (
               <div
                 key={job.id}
-                className="bg-white rounded-3xl p-6 sm:p-7 border border-[#0B0F19]/[0.06] shadow-[0_4px_24px_rgba(0,0,0,0.02)] flex flex-col justify-between space-y-4 hover:border-[#6E8F75]/30 hover:shadow-md transition-all group"
+                className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.03)] flex flex-col justify-between space-y-4 hover:border-[#5E8174]/40 hover:shadow-md transition-all group"
               >
                 <div className="space-y-3.5">
                   {/* Header: Company Logo & Match Score Pill */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div
-                        className={`w-11 h-11 rounded-2xl ${job.companyBg} text-white flex items-center justify-center font-extrabold text-sm shadow-sm`}
+                        className={`w-11 h-11 rounded-2xl ${job.companyBg} text-white flex items-center justify-center font-bold text-sm shadow-2xs`}
                       >
                         {job.companyInitials}
                       </div>
                       <div>
-                        <h3 className="text-sm font-bold text-[#0B0F19]">{job.company}</h3>
-                        <span className="text-[11px] text-[#0B0F19]/40">{job.location}</span>
+                        <h3 className="text-sm font-bold text-[#0F172A]">{job.company}</h3>
+                        <span className="text-[11px] text-slate-500">{job.location}</span>
                       </div>
                     </div>
 
                     <div className="flex flex-col items-end gap-1">
-                      <span className="text-xs font-extrabold px-2.5 py-1 rounded-full bg-[#6E8F75]/10 text-[#6E8F75] border border-[#6E8F75]/20">
+                      <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#5E8174]/10 text-[#5E8174] border border-[#5E8174]/20">
                         {job.matchScore}% Match
                       </span>
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${audienceInfo.color}`}>
@@ -431,26 +441,26 @@ export default function JobMatchesPage() {
 
                   {/* Role Title & Description */}
                   <div>
-                    <h4 className="text-[16px] font-bold text-[#0B0F19] group-hover:text-[#6E8F75] transition-colors leading-snug">
+                    <h4 className="text-[16px] font-bold text-[#0F172A] group-hover:text-[#5E8174] transition-colors leading-snug">
                       {job.role}
                     </h4>
-                    <p className="text-[12.5px] text-[#0B0F19]/60 leading-relaxed mt-1 line-clamp-2">
+                    <p className="text-[12.5px] text-[#334155] leading-relaxed mt-1 line-clamp-2">
                       {job.description}
                     </p>
                   </div>
 
                   {/* Salary & Type */}
-                  <div className="flex items-center justify-between text-xs text-[#0B0F19]/70 pt-2 border-t border-[#0B0F19]/[0.04]">
-                    <span className="font-semibold">{job.salaryRange}</span>
-                    <span className="text-[#0B0F19]/40 font-medium">{job.type}</span>
+                  <div className="flex items-center justify-between text-xs text-[#334155] font-medium pt-2 border-t border-slate-100">
+                    <span className="font-semibold text-[#0F172A]">{job.salaryRange}</span>
+                    <span className="text-slate-500">{job.type}</span>
                   </div>
 
-                  {/* Skill Tags */}
+                  {/* Skill Tags (Warm Beige Surface) */}
                   <div className="flex flex-wrap gap-1.5 pt-1">
                     {job.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="text-[11px] font-medium text-[#0B0F19]/60 bg-[#FAF9F6] border border-[#0B0F19]/[0.04] px-2 py-0.5 rounded-md"
+                        className="text-[11px] font-medium text-[#334155] bg-[#F4F0E8]/70 border border-[#E8E2D5] px-2.5 py-1 rounded-lg"
                       >
                         {tag}
                       </span>
@@ -459,15 +469,15 @@ export default function JobMatchesPage() {
                 </div>
 
                 {/* Action: Prominent Sage Green Apply Button */}
-                <div className="pt-3 border-t border-[#0B0F19]/[0.04]">
+                <div className="pt-3 border-t border-slate-100">
                   {!job.isApplied ? (
                     <button
                       onClick={() => handleApply(job)}
                       disabled={applyingJobId === job.id}
                       className="
-                        w-full py-3 rounded-2xl bg-[#6E8F75] text-white text-xs font-bold
-                        hover:bg-[#5d7d64] hover:shadow-[0_4px_16px_rgba(110,143,117,0.3)]
-                        transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer active:scale-95 shadow-sm
+                        w-full py-3 rounded-2xl bg-[#5E8174] text-white text-xs font-bold
+                        hover:bg-[#4D6D62]
+                        transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer active:scale-95 shadow-2xs
                       "
                     >
                       {applyingJobId === job.id ? (
@@ -477,15 +487,15 @@ export default function JobMatchesPage() {
                         </span>
                       ) : (
                         <>
-                          <span>Apply with Portfolio</span>
+                          <span>{isStudentRole ? 'Apply for Internship' : 'Apply with Portfolio'}</span>
                           <ArrowRight className="w-3.5 h-3.5" />
                         </>
                       )}
                     </button>
                   ) : (
-                    <div className="w-full py-2.5 rounded-2xl bg-[#ecfdf5] text-emerald-800 text-xs font-bold flex items-center justify-center gap-1.5 border border-emerald-200">
-                      <Check className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>Applied & Dossier Sent</span>
+                    <div className="w-full py-2.5 rounded-2xl bg-[#5E8174]/10 text-[#5E8174] text-xs font-bold flex items-center justify-center gap-1.5 border border-[#5E8174]/20">
+                      <Check className="w-3.5 h-3.5 text-[#5E8174]" />
+                      <span>{isStudentRole ? 'Application Submitted' : 'Applied & Dossier Sent'}</span>
                     </div>
                   )}
                 </div>
@@ -501,23 +511,36 @@ export default function JobMatchesPage() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-2xl bg-[#0B0F19]/[0.05] text-[#0B0F19] flex items-center justify-center font-bold">
-              <Clock className="w-5 h-5 text-[#6E8F75]" />
+            <div className="w-9 h-9 rounded-2xl bg-[#5E8174]/10 text-[#5E8174] flex items-center justify-center font-bold">
+              <Clock className="w-5 h-5 text-[#5E8174]" />
             </div>
             <div>
-              <h2 className="text-xl font-extrabold text-[#0B0F19] tracking-tight">
+              <h2 className="text-xl font-bold text-[#0F172A] tracking-tight">
                 Application Tracker
               </h2>
-              <p className="text-xs text-[#0B0F19]/45">
+              <p className="text-xs text-[#334155]">
                 Real-time tracking of employer reviews, portfolio views, and interview invites
               </p>
             </div>
           </div>
 
-          <span className="text-xs font-bold text-[#0B0F19]/60 bg-white border border-[#0B0F19]/[0.08] px-3 py-1 rounded-full">
+          <span className="text-xs font-semibold text-[#334155] bg-[#F8F9FA] border border-slate-200/80 px-3 py-1 rounded-full">
             {combinedApplications.length} Active Applications
           </span>
         </div>
+
+        {/* Empty Applications Guard */}
+        {combinedApplications.length === 0 && (
+          <div className="p-8 sm:p-12 rounded-3xl bg-white border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.03)] text-center space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+              <FileCheck2 className="w-6 h-6 text-[#5E8174]" />
+            </div>
+            <h3 className="text-sm font-bold text-[#0F172A]">No Applications Submitted Yet</h3>
+            <p className="text-xs text-slate-500 max-w-md mx-auto">
+              When you apply to recommended roles or cooperative internships, your verified Evidence Portfolio and status updates will appear here.
+            </p>
+          </div>
+        )}
 
         {/* Applications List */}
         <div className="space-y-3.5">
@@ -527,37 +550,37 @@ export default function JobMatchesPage() {
             return (
               <div
                 key={app.id}
-                className="bg-white rounded-3xl p-5 sm:p-6 border border-[#0B0F19]/[0.06] shadow-[0_2px_16px_rgba(0,0,0,0.02)] flex flex-col lg:flex-row lg:items-center justify-between gap-5 hover:border-[#6E8F75]/30 transition-all"
+                className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.03)] flex flex-col lg:flex-row lg:items-center justify-between gap-5 hover:border-[#5E8174]/40 transition-all"
               >
                 {/* Left: Role, Company & Last Update */}
                 <div className="flex items-start gap-4 flex-1">
                   <div
-                    className={`w-12 h-12 rounded-2xl ${app.companyBg} text-white flex items-center justify-center font-extrabold text-sm shadow-sm shrink-0`}
+                    className={`w-12 h-12 rounded-2xl ${app.companyBg} text-white flex items-center justify-center font-bold text-sm shadow-2xs shrink-0`}
                   >
                     {app.companyInitials}
                   </div>
 
                   <div className="space-y-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-[15.5px] font-bold text-[#0B0F19]">
+                      <h3 className="text-[15.5px] font-bold text-[#0F172A]">
                         {app.role}
                       </h3>
-                      <span className="text-xs font-semibold text-[#0B0F19]/40">•</span>
-                      <span className="text-xs font-bold text-[#0B0F19]/70">{app.company}</span>
+                      <span className="text-xs font-semibold text-slate-300">•</span>
+                      <span className="text-xs font-semibold text-[#334155]">{app.company}</span>
                     </div>
 
-                    <p className="text-xs text-[#0B0F19]/50">
+                    <p className="text-xs text-slate-500">
                       {app.location} • {app.appliedDate}
                     </p>
 
-                    <p className="text-[13px] text-[#0B0F19]/75 pt-1 leading-snug">
-                      <strong className="text-[#0B0F19]/90 font-semibold">Latest Update:</strong> {app.lastUpdateNote}
+                    <p className="text-[13px] text-[#334155] pt-1 leading-snug">
+                      <strong className="text-[#0F172A] font-semibold">Latest Update:</strong> {app.lastUpdateNote}
                     </p>
                   </div>
                 </div>
 
                 {/* Right: Status Badge & Smart Email Note */}
-                <div className="flex flex-col sm:flex-row lg:flex-col items-start lg:items-end gap-2.5 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-[#0B0F19]/[0.05]">
+                <div className="flex flex-col sm:flex-row lg:flex-col items-start lg:items-end gap-2.5 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-100">
                   {/* Status Badge */}
                   <span
                     className={`
@@ -571,15 +594,15 @@ export default function JobMatchesPage() {
 
                   {/* Smart UI Note: Details Sent to Email (For Interview Requested) */}
                   {isInterviewRequested && app.emailNote && (
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[#6E8F75]/10 border border-[#6E8F75]/20 text-[11.5px] font-bold text-[#6E8F75] animate-[slide-up_0.2s_ease]">
-                      <Mail className="w-3.5 h-3.5 text-[#6E8F75]" />
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[#5E8174]/10 border border-[#5E8174]/20 text-[11.5px] font-semibold text-[#5E8174] animate-[slide-up_0.2s_ease]">
+                      <Mail className="w-3.5 h-3.5 text-[#5E8174]" />
                       <span>{app.emailNote}</span>
                     </div>
                   )}
 
                   {!isInterviewRequested && (
-                    <span className="text-[11px] text-[#0B0F19]/40 flex items-center gap-1">
-                      <FileCheck2 className="w-3 h-3 text-[#6E8F75]" />
+                    <span className="text-[11px] text-slate-400 flex items-center gap-1">
+                      <FileCheck2 className="w-3 h-3 text-[#5E8174]" />
                       Portfolio Attached
                     </span>
                   )}

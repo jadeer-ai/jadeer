@@ -15,6 +15,13 @@ export type {
   JobListing,
   Application,
   TelemetrySnapshot,
+  Expert,
+  ExpertAvailabilitySlot,
+  Session,
+  HumanInterviewDetail,
+  ConsultationDetail,
+  HumanInterviewEvaluation,
+  HumanInterviewInternalNote,
 } from '@prisma/client';
 
 // ── Re-export all enums ──────────────────────────────────────────────────
@@ -28,7 +35,37 @@ export {
   JobStatus,
   ApplicationStatus,
   EvaluatorType,
+  ExpertRole,
+  SlotStatus,
+  SessionType,
+  SessionStatus,
+  EvaluationRecommendation,
 } from '@prisma/client';
+
+// ── Re-export Supabase Scheduling & Session Types ─────────────────────────
+export type {
+  ExpertRole as SupabaseExpertRole,
+  SlotStatus as SupabaseSlotStatus,
+  SessionType as SupabaseSessionType,
+  SessionStatus as SupabaseSessionStatus,
+  EvaluationRecommendation as SupabaseEvaluationRecommendation,
+  ExpertRow,
+  ExpertAvailabilitySlotRow,
+  SessionRow,
+  HumanInterviewDetailRow,
+  ConsultationDetailRow,
+  HumanInterviewEvaluationRow,
+  HumanInterviewInternalNoteRow,
+  SessionWithDetails,
+  ExpertWithSlots,
+  BookSessionAtomicParams,
+  BookSessionAtomicResult,
+  CancelSessionAtomicParams,
+  CancelSessionAtomicResult,
+  SubmitHumanInterviewEvaluationParams,
+  SubmitHumanInterviewEvaluationResult,
+  CandidateHumanInterviewStatusResult,
+} from './supabase-scheduling-types';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // COMPOSITE UTILITY TYPES

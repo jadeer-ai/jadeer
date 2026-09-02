@@ -12,7 +12,6 @@ import {
   Circle,
   ArrowRight,
   ShieldCheck,
-  Sparkles,
   Loader2,
   AlertCircle,
   GraduationCap,
@@ -104,7 +103,7 @@ export default function SignUpPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { isLoaded: isClerkLoaded, signUp } = useSignUp();
+  const { signUp } = useSignUp();
 
   const handleRoleToggle = (type: 'student' | 'grad') => {
     setCandidateType(type);
@@ -233,23 +232,23 @@ export default function SignUpPage() {
     }
   };
 
-  const primaryColorClass = 'text-[#6E8F75]';
-  const primaryBgClass = 'bg-[#6E8F75] hover:bg-[#5d7d64]';
-  const focusRingClass = 'focus:border-[#6E8F75] focus:ring-[#6E8F75]/15';
-  const headerLinkColorClass = 'text-[#6E8F75] hover:text-[#5d7d64]';
-  const badgeBgBorderClass = 'bg-[#6E8F75]/10 border-[#6E8F75]/20';
-  const shadowClass = 'hover:shadow-[0_12px_28px_rgba(110,143,117,0.28)]';
+  const primaryColorClass = 'text-[#5E8174]';
+  const primaryBgClass = 'bg-[#5E8174] hover:bg-[#4D6D62]';
+  const focusRingClass = 'focus:border-[#5E8174] focus:ring-2 focus:ring-[#5E8174]/15';
+  const headerLinkColorClass = 'text-[#5E8174] hover:text-[#4D6D62]';
+  const badgeBgBorderClass = 'bg-[#5E8174]/10 border-[#5E8174]/20';
+  const shadowClass = 'hover:shadow-[0_8px_20px_rgba(94,129,116,0.25)]';
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] flex flex-col justify-between text-[#0B0F19] relative overflow-hidden selection:bg-[#6E8F75]/20 selection:text-[#0B0F19]">
+    <div className="min-h-screen bg-[#F8F9FA] flex flex-col justify-between text-[#0F172A] relative overflow-hidden selection:bg-[#5E8174]/20 selection:text-[#0F172A]">
 
       {/* ── 1. Subtle Engineering Technical Grid ────────────────────── */}
       <div
-        className="absolute inset-0 pointer-events-none opacity-50"
+        className="absolute inset-0 pointer-events-none opacity-[0.02]"
         style={{
           backgroundImage: `
-            linear-gradient(to right, rgba(11, 15, 25, 0.035) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(11, 15, 25, 0.035) 1px, transparent 1px)
+            linear-gradient(to right, rgba(15, 23, 42, 0.04) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(15, 23, 42, 0.04) 1px, transparent 1px)
           `,
           backgroundSize: '36px 36px',
         }}
@@ -257,9 +256,9 @@ export default function SignUpPage() {
 
       {/* ── 2. Diffused Radial Glow behind Central Card ─────────────── */}
       <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full pointer-events-none blur-3xl opacity-30"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full pointer-events-none blur-3xl opacity-20"
         style={{
-          background: 'radial-gradient(circle at center, rgba(110,143,117,0.2) 0%, rgba(11,15,25,0.05) 55%, transparent 75%)',
+          background: 'radial-gradient(circle at center, rgba(94,129,116,0.12) 0%, rgba(15,23,42,0.02) 55%, transparent 75%)',
         }}
       />
 
@@ -270,7 +269,7 @@ export default function SignUpPage() {
 
       {/* ── Central Floating Card Container ─────────────────────────── */}
       <main className="relative z-10 w-full max-w-[540px] mx-auto px-5 py-4 my-auto animate-[fade-in_0.4s_ease]">
-        <div className="bg-white rounded-3xl p-7 sm:p-9 border border-[#0B0F19]/[0.05] shadow-[0_24px_70px_-20px_rgba(0,0,0,0.04)] space-y-6">
+        <div className="bg-white rounded-3xl p-7 sm:p-9 border border-slate-200/80 shadow-[0_20px_50px_rgba(15,23,42,0.04)] space-y-6">
 
           {/* Heading */}
           <div className="text-center space-y-2">
@@ -281,10 +280,10 @@ export default function SignUpPage() {
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B0F19] tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight">
               Create your talent account
             </h1>
-            <p className="text-xs sm:text-[13px] text-[#0B0F19]/55 leading-relaxed max-w-sm mx-auto">
+            <p className="text-xs sm:text-[13px] text-[#334155] leading-relaxed max-w-sm mx-auto">
               Join Jadeer's talent network to validate skills, book mentor calibration sessions, and unlock direct hiring pipelines.
             </p>
           </div>
@@ -301,7 +300,7 @@ export default function SignUpPage() {
 
           {/* ── REQUIRED ROLE SELECTOR STEP: "I am a: [Student...] | [Graduate...]" ── */}
           <div className="space-y-2 pt-1">
-            <label className="block text-xs font-bold uppercase tracking-wider text-[#0B0F19]/70">
+            <label className="block text-xs font-bold uppercase tracking-wider text-[#334155]">
               I am a: <span className="text-rose-500">*</span>
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -312,21 +311,21 @@ export default function SignUpPage() {
                 className={`
                   flex flex-col items-start text-left p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer relative
                   ${candidateType === 'student'
-                    ? 'bg-[#6E8F75]/10 border-[#6E8F75] text-[#0B0F19] shadow-sm ring-1 ring-[#6E8F75]/30'
-                    : 'bg-[#FAF9F6] border-[#0B0F19]/[0.08] text-[#0B0F19]/70 hover:border-[#0B0F19]/20 hover:bg-white'
+                    ? 'bg-[#5E8174]/5 border-[#5E8174] text-[#0F172A] shadow-sm ring-1 ring-[#5E8174]/20'
+                    : 'bg-white border-slate-200/90 text-[#334155] hover:border-slate-300 hover:bg-slate-50/50'
                   }
                 `}
               >
                 <div className="flex items-center gap-2 mb-1 w-full justify-between">
                   <div className="flex items-center gap-1.5 font-bold text-xs">
-                    <GraduationCap className={`w-4 h-4 ${candidateType === 'student' ? 'text-[#6E8F75]' : 'text-[#0B0F19]/50'}`} />
+                    <GraduationCap className={`w-4 h-4 ${candidateType === 'student' ? 'text-[#5E8174]' : 'text-[#334155]'}`} />
                     <span>Student</span>
                   </div>
                   {candidateType === 'student' && (
-                    <span className="w-2 h-2 rounded-full bg-[#6E8F75]" />
+                    <span className="w-2 h-2 rounded-full bg-[#5E8174]" />
                   )}
                 </div>
-                <span className="text-[11px] text-[#0B0F19]/55 font-medium leading-snug">
+                <span className="text-[11px] text-[#334155]/80 font-medium leading-snug">
                   Seeking Internships & Co-ops
                 </span>
               </button>
@@ -338,27 +337,27 @@ export default function SignUpPage() {
                 className={`
                   flex flex-col items-start text-left p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer relative
                   ${candidateType === 'grad'
-                    ? 'bg-[#6E8F75]/10 border-[#6E8F75] text-[#0B0F19] shadow-sm ring-1 ring-[#6E8F75]/30'
-                    : 'bg-[#FAF9F6] border-[#0B0F19]/[0.08] text-[#0B0F19]/70 hover:border-[#0B0F19]/20 hover:bg-white'
+                    ? 'bg-[#5E8174]/5 border-[#5E8174] text-[#0F172A] shadow-sm ring-1 ring-[#5E8174]/20'
+                    : 'bg-white border-slate-200/90 text-[#334155] hover:border-slate-300 hover:bg-slate-50/50'
                   }
                 `}
               >
                 <div className="flex items-center gap-2 mb-1 w-full justify-between">
                   <div className="flex items-center gap-1.5 font-bold text-xs">
-                    <Briefcase className={`w-4 h-4 ${candidateType === 'grad' ? 'text-[#6E8F75]' : 'text-[#0B0F19]/50'}`} />
+                    <Briefcase className={`w-4 h-4 ${candidateType === 'grad' ? 'text-[#5E8174]' : 'text-[#334155]'}`} />
                     <span>Graduate</span>
                   </div>
                   {candidateType === 'grad' && (
-                    <span className="w-2 h-2 rounded-full bg-[#6E8F75]" />
+                    <span className="w-2 h-2 rounded-full bg-[#5E8174]" />
                   )}
                 </div>
-                <span className="text-[11px] text-[#0B0F19]/55 font-medium leading-snug">
+                <span className="text-[11px] text-[#334155]/80 font-medium leading-snug">
                   Seeking Full-Time Roles
                 </span>
               </button>
             </div>
 
-            <p className="text-[11px] text-[#0B0F19]/45 italic pt-0.5">
+            <p className="text-[11px] text-[#334155]/70 italic pt-0.5">
               {candidateType === 'student'
                 ? '• Tailors AI assessments and matching feeds for university internship and co-op benchmarks.'
                 : '• Calibrates AI assessments and matching feeds for junior & full-time engineering hiring gates.'
@@ -372,7 +371,7 @@ export default function SignUpPage() {
             <div className="space-y-1.5">
               <label
                 htmlFor="full-name"
-                className="block text-xs font-bold uppercase tracking-wider text-[#0B0F19]/60"
+                className="block text-xs font-bold uppercase tracking-wider text-[#334155]"
               >
                 Full Name <span className="text-rose-500">*</span>
               </label>
@@ -383,7 +382,7 @@ export default function SignUpPage() {
                 onChange={(e) => setFullName(e.target.value)}
                 required
                 placeholder="Ahmad Al-Hassan"
-                className={`w-full h-11 px-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-sm text-[#0B0F19] font-medium focus:bg-white focus:outline-none transition-all placeholder:text-[#0B0F19]/30 ${focusRingClass}`}
+                className={`w-full h-11 px-4 rounded-2xl bg-white border border-slate-200 text-sm text-[#0F172A] font-medium focus:bg-white focus:outline-none transition-all placeholder:text-slate-400 ${focusRingClass}`}
               />
             </div>
 
@@ -392,11 +391,11 @@ export default function SignUpPage() {
               <div className="flex items-center justify-between">
                 <label
                   htmlFor="tech-track"
-                  className="block text-xs font-bold uppercase tracking-wider text-[#0B0F19]/60"
+                  className="block text-xs font-bold uppercase tracking-wider text-[#334155]"
                 >
                   Technical Track <span className="text-rose-500">*</span>
                 </label>
-                <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200/50">
+                <span className="text-[10px] font-semibold text-[#5E8174] bg-[#5E8174]/10 px-2.5 py-0.5 rounded-full border border-[#5E8174]/20">
                   Locked upon signup
                 </span>
               </div>
@@ -404,7 +403,7 @@ export default function SignUpPage() {
                 id="tech-track"
                 value={selectedTrack}
                 onChange={(e) => setSelectedTrack(e.target.value)}
-                className={`w-full h-11 px-3.5 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-sm text-[#0B0F19] font-medium focus:bg-white focus:outline-none transition-all ${focusRingClass}`}
+                className={`w-full h-11 px-3.5 rounded-2xl bg-white border border-slate-200 text-sm text-[#0F172A] font-medium focus:bg-white focus:outline-none transition-all ${focusRingClass}`}
               >
                 {softwareTracks.map((t) => (
                   <option key={t} value={t}>
@@ -423,12 +422,12 @@ export default function SignUpPage() {
                     onChange={(e) => setCustomTrack(e.target.value)}
                     required
                     placeholder="Enter your custom engineering track (e.g. Distributed Systems)"
-                    className={`w-full h-11 px-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-sm text-[#0B0F19] font-medium focus:bg-white focus:outline-none transition-all placeholder:text-[#0B0F19]/30 ${focusRingClass}`}
+                    className={`w-full h-11 px-4 rounded-2xl bg-white border border-slate-200 text-sm text-[#0F172A] font-medium focus:bg-white focus:outline-none transition-all placeholder:text-slate-400 ${focusRingClass}`}
                   />
                 </div>
               )}
 
-              <p className="text-[10.5px] text-[#0B0F19]/45 leading-tight">
+              <p className="text-[10.5px] text-[#334155]/70 leading-tight">
                 Your technical track anchors your AI assessment algorithms and live evidence dossier.
               </p>
             </div>
@@ -437,7 +436,7 @@ export default function SignUpPage() {
             <div className="space-y-1.5">
               <label
                 htmlFor="email"
-                className="block text-xs font-bold uppercase tracking-wider text-[#0B0F19]/60"
+                className="block text-xs font-bold uppercase tracking-wider text-[#334155]"
               >
                 Email Address <span className="text-rose-500">*</span>
               </label>
@@ -448,7 +447,7 @@ export default function SignUpPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="yourname@gmail.com"
-                className={`w-full h-11 px-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-sm text-[#0B0F19] font-medium focus:bg-white focus:outline-none transition-all placeholder:text-[#0B0F19]/30 ${focusRingClass}`}
+                className={`w-full h-11 px-4 rounded-2xl bg-white border border-slate-200 text-sm text-[#0F172A] font-medium focus:bg-white focus:outline-none transition-all placeholder:text-slate-400 ${focusRingClass}`}
               />
             </div>
 
@@ -456,7 +455,7 @@ export default function SignUpPage() {
             <div className="space-y-1.5">
               <label
                 htmlFor="password"
-                className="block text-xs font-bold uppercase tracking-wider text-[#0B0F19]/60"
+                className="block text-xs font-bold uppercase tracking-wider text-[#334155]"
               >
                 Password <span className="text-rose-500">*</span>
               </label>
@@ -468,13 +467,13 @@ export default function SignUpPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="Create a secure password"
-                  className={`w-full h-11 px-4 pr-11 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-sm text-[#0B0F19] font-medium focus:bg-white focus:outline-none transition-all placeholder:text-[#0B0F19]/30 ${focusRingClass}`}
+                  className={`w-full h-11 px-4 pr-11 rounded-2xl bg-white border border-slate-200 text-sm text-[#0F172A] font-medium focus:bg-white focus:outline-none transition-all placeholder:text-slate-400 ${focusRingClass}`}
                 />
                 <button
                   type="button"
                   id="toggle-password"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#0B0F19]/40 hover:text-[#0B0F19] transition-colors cursor-pointer"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#0F172A] transition-colors cursor-pointer"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -492,18 +491,18 @@ export default function SignUpPage() {
                       className={`
                         flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all duration-200
                         ${rule.passed
-                          ? 'bg-[#6E8F75] border-[#6E8F75]'
-                          : 'bg-transparent border-[#0B0F19]/20'
+                          ? 'bg-[#5E8174] border-[#5E8174]'
+                          : 'bg-transparent border-slate-300'
                         }
                       `}
                     >
                       {rule.passed ? (
                         <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
                       ) : (
-                        <Circle className="w-1.5 h-1.5 text-[#0B0F19]/20" fill="currentColor" />
+                        <Circle className="w-1.5 h-1.5 text-slate-300" fill="currentColor" />
                       )}
                     </div>
-                    <span className={rule.passed ? `${primaryColorClass} font-semibold` : 'text-[#0B0F19]/45'}>
+                    <span className={rule.passed ? `${primaryColorClass} font-semibold` : 'text-[#334155]'}>
                       {rule.label}
                     </span>
                   </div>
@@ -518,10 +517,10 @@ export default function SignUpPage() {
               disabled={!isFormValid || isLoading}
               className={`
                 w-full py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center gap-2
-                transition-all duration-300 shadow-md mt-4
+                transition-all duration-200 shadow-sm mt-4
                 ${isFormValid && !isLoading
                   ? `${primaryBgClass} ${shadowClass} text-white hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] cursor-pointer`
-                  : 'bg-[#6E8F75]/30 text-white/70 cursor-not-allowed'
+                  : 'bg-[#5E8174]/40 text-white/70 cursor-not-allowed'
                 }
               `}
             >
@@ -541,8 +540,8 @@ export default function SignUpPage() {
 
           {/* Divider */}
           <div className="relative flex items-center justify-center pt-1">
-            <div className="w-full border-t border-[#0B0F19]/[0.06]" />
-            <span className="absolute bg-white px-3 text-[11px] font-semibold text-[#0B0F19]/40 uppercase tracking-wider">
+            <div className="w-full border-t border-slate-200/80" />
+            <span className="absolute bg-white px-3 text-[11px] font-semibold text-[#334155] uppercase tracking-wider">
               Or sign up with
             </span>
           </div>
@@ -554,7 +553,7 @@ export default function SignUpPage() {
               id="signup-google-btn"
               disabled={socialLoading !== null}
               onClick={() => handleSocialSignUp('google')}
-              className="flex items-center justify-center py-2.5 rounded-xl border border-[#0B0F19]/[0.08] hover:bg-[#FAF9F6] hover:border-[#0B0F19]/20 transition-all text-xs font-semibold cursor-pointer disabled:opacity-50"
+              className="flex items-center justify-center py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-all text-xs font-semibold cursor-pointer disabled:opacity-50 shadow-2xs"
               title="Sign up with Google"
               aria-label="Sign up with Google"
             >
@@ -570,7 +569,7 @@ export default function SignUpPage() {
               id="signup-linkedin-btn"
               disabled={socialLoading !== null}
               onClick={() => handleSocialSignUp('linkedin')}
-              className="flex items-center justify-center py-2.5 rounded-xl border border-[#0B0F19]/[0.08] hover:bg-[#FAF9F6] hover:border-[#0B0F19]/20 transition-all text-xs font-semibold cursor-pointer disabled:opacity-50"
+              className="flex items-center justify-center py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-all text-xs font-semibold cursor-pointer disabled:opacity-50 shadow-2xs"
               title="Sign up with LinkedIn"
               aria-label="Sign up with LinkedIn"
             >
@@ -586,14 +585,14 @@ export default function SignUpPage() {
               id="signup-github-btn"
               disabled={socialLoading !== null}
               onClick={() => handleSocialSignUp('github')}
-              className="flex items-center justify-center py-2.5 rounded-xl border border-[#0B0F19]/[0.08] hover:bg-[#FAF9F6] hover:border-[#0B0F19]/20 transition-all text-xs font-semibold cursor-pointer disabled:opacity-50"
+              className="flex items-center justify-center py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-all text-xs font-semibold cursor-pointer disabled:opacity-50 shadow-2xs"
               title="Sign up with GitHub"
               aria-label="Sign up with GitHub"
             >
               {socialLoading === 'github' ? (
-                <Loader2 className="w-4 h-4 text-[#0B0F19] animate-spin" />
+                <Loader2 className="w-4 h-4 text-[#0F172A] animate-spin" />
               ) : (
-                <GitHubIcon className="w-4 h-4 text-[#0B0F19]" />
+                <GitHubIcon className="w-4 h-4 text-[#0F172A]" />
               )}
             </button>
 
@@ -602,20 +601,20 @@ export default function SignUpPage() {
               id="signup-apple-btn"
               disabled={socialLoading !== null}
               onClick={() => handleSocialSignUp('apple')}
-              className="flex items-center justify-center py-2.5 rounded-xl border border-[#0B0F19]/[0.08] hover:bg-[#FAF9F6] hover:border-[#0B0F19]/20 transition-all text-xs font-semibold cursor-pointer disabled:opacity-50"
+              className="flex items-center justify-center py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-all text-xs font-semibold cursor-pointer disabled:opacity-50 shadow-2xs"
               title="Sign up with Apple"
               aria-label="Sign up with Apple"
             >
               {socialLoading === 'apple' ? (
-                <Loader2 className="w-4 h-4 text-[#0B0F19] animate-spin" />
+                <Loader2 className="w-4 h-4 text-[#0F172A] animate-spin" />
               ) : (
-                <AppleIcon className="w-4 h-4 text-[#0B0F19]" />
+                <AppleIcon className="w-4 h-4 text-[#0F172A]" />
               )}
             </button>
           </div>
 
           {/* Footer Link inside card */}
-          <div className="pt-2 text-center text-xs text-[#0B0F19]/50">
+          <div className="pt-2 text-center text-xs text-[#334155]">
             Already have an account?{' '}
             <Link
               to="/signin"
@@ -629,7 +628,7 @@ export default function SignUpPage() {
       </main>
 
       {/* ── Page Footer ────────────────────────────────────────────── */}
-      <footer className="relative z-10 w-full max-w-7xl mx-auto px-6 py-6 text-center text-xs text-[#0B0F19]/40">
+      <footer className="relative z-10 w-full max-w-7xl mx-auto px-6 py-6 text-center text-xs text-[#334155]/70">
         © {new Date().getFullYear()} Jadeer Talent Validation Platform. Cairo, EG.
       </footer>
     </div>

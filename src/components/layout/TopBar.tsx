@@ -82,8 +82,8 @@ export default function TopBar() {
       className={`
         fixed top-0 right-0 z-30
         h-[var(--spacing-topbar)] 
-        bg-white/85 backdrop-blur-xl border-b border-[#0B0F19]/[0.06]
-        shadow-[0_1px_8px_rgba(0,0,0,0.02)]
+        bg-white/95 backdrop-blur-md border-b border-slate-200/80
+        shadow-[0_1px_8px_rgba(15,23,42,0.02)]
         flex items-center justify-between px-4 lg:px-7
         transition-all duration-300
         ${isCollapsed
@@ -98,7 +98,7 @@ export default function TopBar() {
         <button
           id="mobile-menu-toggle"
           onClick={toggleMobile}
-          className="p-2 rounded-xl text-[#0B0F19]/60 hover:text-[#0B0F19] hover:bg-[#0B0F19]/[0.04] lg:hidden transition-colors"
+          className="p-2 rounded-xl text-[#334155] hover:text-[#0F172A] hover:bg-slate-100/60 lg:hidden transition-colors"
           aria-label="Toggle navigation"
         >
           <Menu className="w-5 h-5" />
@@ -106,16 +106,16 @@ export default function TopBar() {
 
         {/* Title / Breadcrumbs */}
         <div>
-          <div className="hidden sm:flex items-center gap-1.5 text-xs text-[#0B0F19]/40 mb-0.5 font-medium">
-            <span className="hover:text-[#0B0F19]/70 transition-colors">{rootLabel}</span>
+          <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-400 mb-0.5 font-medium">
+            <span className="hover:text-[#0F172A] transition-colors">{rootLabel}</span>
             {breadcrumbs.map((crumb, i) => (
               <span key={crumb.path} className="flex items-center gap-1.5">
-                <ChevronRight className="w-3 h-3 text-[#0B0F19]/25" />
+                <ChevronRight className="w-3 h-3 text-slate-300" />
                 <span
                   className={`transition-colors capitalize ${
                     i === breadcrumbs.length - 1
-                      ? 'text-[#6E8F75] font-semibold'
-                      : 'hover:text-[#0B0F19]/70'
+                      ? 'text-[#5E8174] font-semibold'
+                      : 'hover:text-[#0F172A]'
                   }`}
                 >
                   {crumb.label}
@@ -123,7 +123,7 @@ export default function TopBar() {
               </span>
             ))}
           </div>
-          <h1 className="text-base font-bold text-[#0B0F19] leading-tight">{pageTitle}</h1>
+          <h1 className="text-base font-bold text-[#0F172A] leading-tight">{pageTitle}</h1>
         </div>
       </div>
 
@@ -132,17 +132,17 @@ export default function TopBar() {
         {/* ── READ-ONLY CANDIDATE ROLE BADGE (LOCKED) ── */}
         <div
           id="candidate-role-badge"
-          className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-xs font-bold text-[#0B0F19]/75 shadow-2xs"
+          className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F8F9FA] border border-slate-200 text-xs font-semibold text-[#334155] shadow-2xs"
           title="Candidate Role: Verified and read-only. Status upgrades are managed by institution administrators."
         >
           {currentRole === 'student' ? (
             <>
-              <GraduationCap className="w-3.5 h-3.5 text-[#6E8F75]" />
+              <GraduationCap className="w-3.5 h-3.5 text-[#5E8174]" />
               <span>University Student</span>
             </>
           ) : (
             <>
-              <Sparkles className="w-3.5 h-3.5 text-[#6E8F75]" />
+              <Sparkles className="w-3.5 h-3.5 text-[#5E8174]" />
               <span>Graduate Engineer</span>
             </>
           )}
@@ -151,7 +151,7 @@ export default function TopBar() {
         {/* Search */}
         <button
           id="global-search"
-          className="p-2.5 rounded-xl text-[#0B0F19]/45 hover:text-[#0B0F19] hover:bg-[#0B0F19]/[0.04] transition-colors"
+          className="p-2.5 rounded-xl text-slate-400 hover:text-[#0F172A] hover:bg-slate-100/60 transition-colors"
           title="Search"
         >
           <Search className="w-[18px] h-[18px]" />
@@ -160,21 +160,21 @@ export default function TopBar() {
         {/* Notifications */}
         <button
           id="notifications"
-          className="relative p-2.5 rounded-xl text-[#0B0F19]/45 hover:text-[#0B0F19] hover:bg-[#0B0F19]/[0.04] transition-colors"
+          className="relative p-2.5 rounded-xl text-slate-400 hover:text-[#0F172A] hover:bg-slate-100/60 transition-colors"
           title="Notifications"
         >
           <Bell className="w-[18px] h-[18px]" />
-          <span className="absolute top-2 right-2 w-2 h-2 rounded-full ring-2 ring-white bg-[#6E8F75]" />
+          <span className="absolute top-2 right-2 w-2 h-2 rounded-full ring-2 ring-white bg-[#5E8174]" />
         </button>
 
         {/* Divider */}
-        <div className="w-px h-7 bg-[#0B0F19]/[0.08] mx-1 hidden sm:block" />
+        <div className="w-px h-7 bg-slate-200 mx-1 hidden sm:block" />
 
         {/* User Profile */}
         <div
           id="candidate-user-menu"
           onClick={() => navigate('/profile')}
-          className="flex items-center gap-3 p-1.5 rounded-xl hover:bg-[#0B0F19]/[0.04] transition-colors cursor-pointer"
+          className="flex items-center gap-3 p-1.5 rounded-xl hover:bg-slate-100/60 transition-colors cursor-pointer"
           title="View & Edit Profile"
         >
           {/* Avatar */}
@@ -183,27 +183,27 @@ export default function TopBar() {
               <img
                 src={displayImage}
                 alt={displayName}
-                className="w-9 h-9 rounded-full object-cover ring-2 ring-[#6E8F75]/20 shadow-sm"
+                className="w-9 h-9 rounded-full object-cover ring-2 ring-[#5E8174]/20 shadow-2xs"
               />
             ) : (
-              <div className="w-9 h-9 rounded-full text-white flex items-center justify-center text-xs font-bold ring-2 bg-[#6E8F75] ring-[#6E8F75]/20 shadow-[0_2px_6px_rgba(110,143,117,0.25)]">
+              <div className="w-9 h-9 rounded-full text-white flex items-center justify-center text-xs font-bold ring-2 bg-[#5E8174] ring-[#5E8174]/20 shadow-2xs">
                 {initials}
               </div>
             )}
-            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#10b981] ring-2 ring-white" />
+            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#5E8174] ring-2 ring-white" />
           </div>
 
           {/* Info */}
           <div className="hidden sm:block text-left">
             <div className="flex items-center gap-1.5">
-              <p className="text-[13px] font-bold text-[#0B0F19] leading-tight">
+              <p className="text-[13px] font-bold text-[#0F172A] leading-tight">
                 {displayName}
               </p>
-              <span className="px-1.5 py-0.2 text-[10px] font-semibold bg-[#6E8F75]/10 text-[#6E8F75] rounded-md uppercase">
+              <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-[#5E8174]/10 border border-[#5E8174]/20 text-[#5E8174] rounded-md uppercase">
                 {currentRole === 'student' ? 'Student' : 'Graduate'}
               </span>
             </div>
-            <p className="text-[11px] text-[#0B0F19]/40 leading-tight mt-0.5">
+            <p className="text-[11px] text-slate-400 leading-tight mt-0.5">
               {displayEmail || displayRoleTitle}
             </p>
           </div>
@@ -222,7 +222,7 @@ export default function TopBar() {
             clearUserRole();
             navigate('/signin');
           }}
-          className="p-2.5 rounded-xl text-[#0B0F19]/40 hover:text-rose-600 hover:bg-rose-50 transition-colors ml-1"
+          className="p-2.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors ml-1"
           title="Sign Out"
         >
           <LogOut className="w-4 h-4" />

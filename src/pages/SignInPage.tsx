@@ -1,9 +1,8 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useUserRole, type UserRole } from '@/contexts/UserRoleContext';
+import { useUserRole } from '@/contexts/UserRoleContext';
 import { useCandidateJourney } from '@/contexts/CandidateJourneyContext';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
-import { useCompanyProfile } from '@/contexts/CompanyProfileContext';
 import { AuthService } from '@/services/authService';
 import {
   Eye,
@@ -13,13 +12,8 @@ import {
   CheckCircle2,
   Lock,
   Mail,
-  Sparkles,
   AlertCircle,
   Clock,
-  KeyRound,
-  Building2,
-  GraduationCap,
-  Briefcase,
   Loader2,
 } from 'lucide-react';
 import { BrandLogo } from '@/components/common';
@@ -74,9 +68,9 @@ export default function SignInPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { isStudent, setUserRole } = useUserRole();
-  const { isOnboarded, completeOnboarding } = useCandidateJourney();
+  const { completeOnboarding } = useCandidateJourney();
   const { login: adminLogin } = useAdminAuth();
-  const { isLoaded: isClerkLoaded, signIn } = useSignIn();
+  const { signIn } = useSignIn();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -202,44 +196,65 @@ export default function SignInPage() {
     }, 400);
   };
 
-  const primaryColorClass = 'text-[#6E8F75]';
-  const primaryBgClass = 'bg-[#6E8F75] hover:bg-[#5d7d64]';
-  const focusRingClass = 'focus:border-[#6E8F75] focus:ring-[#6E8F75]/15';
-  const headerLinkColorClass = 'text-[#6E8F75] hover:text-[#5d7d64]';
-  const badgeBgBorderClass = 'bg-[#6E8F75]/10 border-[#6E8F75]/20';
-  const checkboxAccentClass = 'text-[#6E8F75] focus:ring-[#6E8F75]';
-  const shadowClass = 'hover:shadow-[0_12px_28px_rgba(110,143,117,0.28)]';
+  const primaryColorClass = 'text-[#5E8174]';
+  const primaryBgClass = 'bg-[#5E8174] hover:bg-[#4D6D62]';
+  const focusRingClass = 'focus:border-[#5E8174] focus:ring-2 focus:ring-[#5E8174]/15';
+  const badgeBgBorderClass = 'bg-[#5E8174]/10 border-[#5E8174]/20';
+  const checkboxAccentClass = 'text-[#5E8174] focus:ring-[#5E8174]';
+  const shadowClass = 'hover:shadow-[0_8px_20px_rgba(94,129,116,0.25)]';
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] flex flex-col justify-between text-[#0B0F19] relative overflow-hidden selection:bg-[#6E8F75]/20 selection:text-[#0B0F19]">
+    <div className="min-h-screen bg-[#F8F9FA] flex flex-col justify-between text-[#0F172A] relative overflow-hidden selection:bg-[#5E8174]/20 selection:text-[#0F172A]">
       {/* ── Background Subtle Tech Pattern & Ambient Glows ───────────── */}
       <div
-        className="fixed inset-0 pointer-events-none opacity-[0.035]"
+        className="fixed inset-0 pointer-events-none opacity-[0.02]"
         style={{
-          backgroundImage: `linear-gradient(#0B0F19 1px, transparent 1px), linear-gradient(to right, #0B0F19 1px, transparent 1px)`,
+          backgroundImage: `linear-gradient(#0F172A 1px, transparent 1px), linear-gradient(to right, #0F172A 1px, transparent 1px)`,
           backgroundSize: '40px 40px',
         }}
       />
-      <div className="fixed top-[-15%] right-[-10%] w-[500px] h-[500px] rounded-full bg-[#6E8F75]/10 blur-[130px] pointer-events-none" />
-      <div className="fixed bottom-[-15%] left-[-10%] w-[500px] h-[500px] rounded-full bg-[#0056D6]/8 blur-[130px] pointer-events-none" />
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[680px] h-[680px] rounded-full bg-[#5E8174]/5 blur-[140px] pointer-events-none" />
 
       {/* ── Top Navigation Header ───────────────────────────────────── */}
-      <header className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 py-6 flex items-center justify-between">
+      <header className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 py-5 sm:py-6 flex items-center justify-between">
+        {/* Left: Brand Logo */}
         <BrandLogo size="md" href="/" textColor="dark" />
-        <div className="text-xs font-semibold text-[#0B0F19]/50">
-          New to Jadeer?{' '}
+
+        {/* Center: Subtle Quiet Brand Statement */}
+        <div className="hidden md:flex items-center gap-2 text-[12px] sm:text-[12.5px] font-medium text-[#334155]/85 tracking-tight select-none absolute left-1/2 -translate-x-1/2 pointer-events-none">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#5E8174] shrink-0" />
+          <span>Where Potential Becomes Proof.</span>
+        </div>
+
+        {/* Right: Sign Up Prompt */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-normal text-[#334155]">
+            New to Jadeer?
+          </span>
           <Link
             to="/signup"
-            className={`${headerLinkColorClass} font-bold transition-colors ml-1`}
+            id="signin-header-signup-btn"
+            className="group inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-[#5E8174]/10 border border-[#84A98C]/40 text-[#5E8174] hover:bg-[#5E8174] hover:border-[#5E8174] hover:text-white transition-all duration-200 cursor-pointer"
           >
-            Get Verified →
+            <span>Start Your Proof</span>
+            <span className="inline-block transition-transform duration-200 group-hover:translate-x-[2.5px]">
+              →
+            </span>
           </Link>
         </div>
+
+        {/* Subtle Horizontal Fade Anchor */}
+        <div
+          className="absolute bottom-0 inset-x-6 sm:inset-x-10 h-px pointer-events-none"
+          style={{
+            background: 'linear-gradient(to right, transparent, rgba(203, 213, 225, 0.45) 20%, rgba(94, 129, 116, 0.15) 50%, rgba(203, 213, 225, 0.45) 80%, transparent)',
+          }}
+        />
       </header>
 
       {/* ── Main Centered Card Container ────────────────────────────── */}
       <main className="relative z-10 w-full max-w-md mx-auto px-5 py-8 sm:py-10">
-        <div className="bg-white rounded-3xl p-8 sm:p-10 border border-[#0B0F19]/[0.05] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.03)] space-y-6 animate-[fade-in_0.4s_ease]">
+        <div className="bg-white rounded-3xl p-8 sm:p-10 border border-slate-200/80 shadow-[0_20px_50px_rgba(15,23,42,0.04)] space-y-6 animate-[fade-in_0.4s_ease]">
 
           {/* Heading */}
           <div className="space-y-2 text-center">
@@ -250,10 +265,10 @@ export default function SignInPage() {
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B0F19] tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight">
               Welcome back
             </h1>
-            <p className="text-xs sm:text-[13.5px] text-[#0B0F19]/55 leading-relaxed">
+            <p className="text-xs sm:text-[13.5px] text-[#334155] leading-relaxed">
               Sign in with your registered credentials. Your role will be verified securely to load your designated workspace.
             </p>
           </div>
@@ -285,7 +300,7 @@ export default function SignInPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email Field */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-[#0B0F19]/60">
+              <label className="text-xs font-bold uppercase tracking-wider text-[#334155]">
                 Registered Email
               </label>
               <div className="relative">
@@ -296,16 +311,16 @@ export default function SignInPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="name@domain.com"
-                  className={`w-full h-11 px-3.5 pl-10 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-sm text-[#0B0F19] font-medium focus:bg-white focus:outline-none transition-all ${focusRingClass}`}
+                  className={`w-full h-11 px-3.5 pl-10 rounded-2xl bg-white border border-slate-200 text-sm text-[#0F172A] placeholder:text-slate-400 font-medium focus:bg-white focus:outline-none transition-all ${focusRingClass}`}
                 />
-                <Mail className="w-4 h-4 text-[#0B0F19]/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               </div>
             </div>
 
             {/* Password Field */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label htmlFor="signin-password-input" className="text-xs font-bold uppercase tracking-wider text-[#0B0F19]/60">
+                <label htmlFor="signin-password-input" className="text-xs font-bold uppercase tracking-wider text-[#334155]">
                   Password
                 </label>
                 <button
@@ -330,13 +345,13 @@ export default function SignInPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="••••••••••••"
-                  className={`w-full h-11 px-3.5 pl-10 pr-10 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-sm text-[#0B0F19] font-medium focus:bg-white focus:outline-none transition-all ${focusRingClass}`}
+                  className={`w-full h-11 px-3.5 pl-10 pr-10 rounded-2xl bg-white border border-slate-200 text-sm text-[#0F172A] placeholder:text-slate-400 font-medium focus:bg-white focus:outline-none transition-all ${focusRingClass}`}
                 />
-                <Lock className="w-4 h-4 text-[#0B0F19]/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#0B0F19]/40 hover:text-[#0B0F19] transition-colors cursor-pointer"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#0F172A] transition-colors cursor-pointer"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -345,13 +360,13 @@ export default function SignInPage() {
 
             {/* Remember Me */}
             <div className="flex items-center justify-between pt-1">
-              <label htmlFor="signin-remember-me" className="flex items-center gap-2 text-xs text-[#0B0F19]/65 cursor-pointer">
+              <label htmlFor="signin-remember-me" className="flex items-center gap-2 text-xs text-[#334155] cursor-pointer">
                 <input
                   id="signin-remember-me"
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className={`w-4 h-4 rounded border-[#0B0F19]/20 ${checkboxAccentClass}`}
+                  className={`w-4 h-4 rounded border-slate-300 ${checkboxAccentClass}`}
                 />
                 <span>Remember this device</span>
               </label>
@@ -365,7 +380,7 @@ export default function SignInPage() {
               className={`
                 w-full py-3.5 rounded-2xl text-white text-sm font-bold
                 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]
-                transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-md mt-2
+                transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-sm mt-2
                 ${primaryBgClass} ${shadowClass} disabled:opacity-50
               `}
             >
@@ -385,8 +400,8 @@ export default function SignInPage() {
 
           {/* Divider */}
           <div className="relative flex items-center justify-center pt-2">
-            <div className="w-full border-t border-[#0B0F19]/[0.06]" />
-            <span className="absolute bg-white px-3 text-[11px] font-semibold text-[#0B0F19]/40 uppercase tracking-wider">
+            <div className="w-full border-t border-slate-200/80" />
+            <span className="absolute bg-white px-3 text-[11px] font-semibold text-[#334155] uppercase tracking-wider">
               Or sign in with
             </span>
           </div>
@@ -398,7 +413,7 @@ export default function SignInPage() {
               id="signin-google-btn"
               disabled={socialLoading !== null || isLoading}
               onClick={() => handleSocialSignIn('google')}
-              className="flex items-center justify-center py-2.5 rounded-xl border border-[#0B0F19]/[0.08] hover:bg-[#FAF9F6] hover:border-[#0B0F19]/20 transition-all text-xs font-semibold cursor-pointer disabled:opacity-50"
+              className="flex items-center justify-center py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-all text-xs font-semibold cursor-pointer disabled:opacity-50 shadow-2xs"
               title="Sign in with Google"
               aria-label="Sign in with Google"
             >
@@ -414,7 +429,7 @@ export default function SignInPage() {
               id="signin-linkedin-btn"
               disabled={socialLoading !== null || isLoading}
               onClick={() => handleSocialSignIn('linkedin')}
-              className="flex items-center justify-center py-2.5 rounded-xl border border-[#0B0F19]/[0.08] hover:bg-[#FAF9F6] hover:border-[#0B0F19]/20 transition-all text-xs font-semibold cursor-pointer disabled:opacity-50"
+              className="flex items-center justify-center py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-all text-xs font-semibold cursor-pointer disabled:opacity-50 shadow-2xs"
               title="Sign in with LinkedIn"
               aria-label="Sign in with LinkedIn"
             >
@@ -430,14 +445,14 @@ export default function SignInPage() {
               id="signin-github-btn"
               disabled={socialLoading !== null || isLoading}
               onClick={() => handleSocialSignIn('github')}
-              className="flex items-center justify-center py-2.5 rounded-xl border border-[#0B0F19]/[0.08] hover:bg-[#FAF9F6] hover:border-[#0B0F19]/20 transition-all text-xs font-semibold cursor-pointer disabled:opacity-50"
+              className="flex items-center justify-center py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-all text-xs font-semibold cursor-pointer disabled:opacity-50 shadow-2xs"
               title="Sign in with GitHub"
               aria-label="Sign in with GitHub"
             >
               {socialLoading === 'github' ? (
-                <Loader2 className="w-4 h-4 text-[#0B0F19] animate-spin" />
+                <Loader2 className="w-4 h-4 text-[#0F172A] animate-spin" />
               ) : (
-                <GitHubIcon className="w-4 h-4 text-[#0B0F19]" />
+                <GitHubIcon className="w-4 h-4 text-[#0F172A]" />
               )}
             </button>
 
@@ -446,14 +461,14 @@ export default function SignInPage() {
               id="signin-apple-btn"
               disabled={socialLoading !== null || isLoading}
               onClick={() => handleSocialSignIn('apple')}
-              className="flex items-center justify-center py-2.5 rounded-xl border border-[#0B0F19]/[0.08] hover:bg-[#FAF9F6] hover:border-[#0B0F19]/20 transition-all text-xs font-semibold cursor-pointer disabled:opacity-50"
+              className="flex items-center justify-center py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-all text-xs font-semibold cursor-pointer disabled:opacity-50 shadow-2xs"
               title="Sign in with Apple"
               aria-label="Sign in with Apple"
             >
               {socialLoading === 'apple' ? (
-                <Loader2 className="w-4 h-4 text-[#0B0F19] animate-spin" />
+                <Loader2 className="w-4 h-4 text-[#0F172A] animate-spin" />
               ) : (
-                <AppleIcon className="w-4 h-4 text-[#0B0F19]" />
+                <AppleIcon className="w-4 h-4 text-[#0F172A]" />
               )}
             </button>
           </div>
@@ -461,7 +476,7 @@ export default function SignInPage() {
       </main>
 
       {/* ── Footer ─────────────────────────────────────────────────── */}
-      <footer className="w-full max-w-7xl mx-auto px-6 py-6 text-center text-xs text-[#0B0F19]/40">
+      <footer className="w-full max-w-7xl mx-auto px-6 py-6 text-center text-xs text-[#334155]/70">
         © {new Date().getFullYear()} Jadeer Talent Validation Platform. Cryptographically Secured & RBAC Protected.
       </footer>
     </div>

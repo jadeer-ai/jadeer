@@ -13,6 +13,28 @@ import {
   handleToggle2fa,
   handleGet2faStatus,
 } from './routes.ts';
+import {
+  handleGetAssignedInterviewer,
+  handleAssignInterviewer,
+  handleResetAssignment,
+  handleGetExpertSlots,
+  handleBookSession,
+  handleRescheduleSession,
+  handleCancelSession,
+  handleGetSessionStatus,
+  handleGetHumanInterviewState,
+  handleSubmitEvaluation,
+  handleGetCandidateVisibleResult,
+  handleGetConsultationTopics,
+  handleGetEligibleConsultants,
+  handleGetConsultantAvailability,
+  handleBookConsultation,
+  handleGetCandidateConsultations,
+  handleRescheduleConsultation,
+  handleCancelConsultation,
+  handleSubmitConsultationOutcome,
+  handleGetConsultationOutcome,
+} from './schedulingRoutes.ts';
 import type { SocialProvider } from './socialOAuth.ts';
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -351,9 +373,275 @@ export function jadeerBackendApiPlugin(): Plugin {
           return;
         }
 
+        // ═══════════════════════════════════════════════════════════════
+        // SCHEDULING API ROUTES (/api/scheduling/*)
+        // ═══════════════════════════════════════════════════════════════
+
+        // 11. GET /api/scheduling/assigned-interviewer
+        if (url === '/api/scheduling/assigned-interviewer' && method === 'GET') {
+          try {
+            const searchParams = new URLSearchParams(req.url?.split('?')[1] || '');
+            const result = await handleGetAssignedInterviewer({
+              candidateUserId: searchParams.get('candidateUserId') || '',
+              track: searchParams.get('track') || undefined,
+            });
+            sendJson(res, result.statusCode, result.data);
+          } catch (err: any) {
+            sendJson(res, 500, { error: err.message || 'Internal server error' });
+          }
+          return;
+        }
+
+        // 12. GET /api/scheduling/expert-slots (and alias /slots)
+        if ((url === '/api/scheduling/expert-slots' || url === '/api/scheduling/slots') && method === 'GET') {
+          try {
+            const searchParams = new URLSearchParams(req.url?.split('?')[1] || '');
+            const result = await handleGetExpertSlots({
+              expertId: searchParams.get('expertId') || '',
+            });
+            sendJson(res, result.statusCode, result.data);
+          } catch (err: any) {
+            sendJson(res, 500, { error: err.message || 'Internal server error' });
+          }
+          return;
+        }
+
+        // 13. POST /api/scheduling/book-session (and alias /book-slot)
+        if ((url === '/api/scheduling/book-session' || url === '/api/scheduling/book-slot') && method === 'POST') {
+          try {
+            const body = await parseBody(req);
+            const result = await handleBookSession(body);
+            sendJson(res, result.statusCode, result.data);
+          } catch (err: any) {
+            sendJson(res, 500, { error: err.message || 'Internal server error' });
+          }
+          return;
+        }
+
+        // 14. POST /api/scheduling/cancel-session (and alias /cancel)
+        if ((url === '/api/scheduling/cancel-session' || url === '/api/scheduling/cancel') && method === 'POST') {
+          try {
+            const body = await parseBody(req);
+            const result = await handleCancelSession(body);
+            sendJson(res, result.statusCode, result.data);
+          } catch (err: any) {
+            sendJson(res, 500, { error: err.message || 'Internal server error' });
+          }
+          return;
+        }
+
+        // 15. GET /api/scheduling/session-status
+        if (url === '/api/scheduling/session-status' && method === 'GET') {
+          try {
+            const searchParams = new URLSearchParams(req.url?.split('?')[1] || '');
+            const result = await handleGetSessionStatus({
+              candidateUserId: searchParams.get('candidateUserId') || '',
+            });
+            sendJson(res, result.statusCode, result.data);
+          } catch (err: any) {
+            sendJson(res, 500, { error: err.message || 'Internal server error' });
+          }
+          return;
+        }
+
+        // 16. POST /api/scheduling/assign-interviewer (Admin / Simulation trigger)
+        if (url === '/api/scheduling/assign-interviewer' && method === 'POST') {
+          try {
+            const body = await parseBody(req);
+            const result = await handleAssignInterviewer(body);
+            sendJson(res, result.statusCode, result.data);
+          } catch (err: any) {
+            sendJson(res, 500, { error: err.message || 'Internal server error' });
+          }
+          return;
+        }
+
+        // 17. POST /api/scheduling/reset-assignment (and alias /reset)
+        if ((url === '/api/scheduling/reset-assignment' || url === '/api/scheduling/reset') && method === 'POST') {
+          try {
+            const body = await parseBody(req);
+            const result = await handleResetAssignment(body);
+            sendJson(res, result.statusCode, result.data);
+          } catch (err: any) {
+            sendJson(res, 500, { error: err.message || 'Internal server error' });
+          }
+          return;
+        }
+
+        // 18. GET /api/scheduling/state (Comprehensive lifecycle state)
+        if (url === '/api/scheduling/state' && method === 'GET') {
+          try {
+            const searchParams = new URLSearchParams(req.url?.split('?')[1] || '');
+            const result = await handleGetHumanInterviewState({
+              candidateUserId: searchParams.get('candidateUserId') || '',
+            });
+            sendJson(res, result.statusCode, result.data);
+          } catch (err: any) {
+            sendJson(res, 500, { error: err.message || 'Internal server error' });
+          }
+          return;
+        }
+
+        // 19. POST /api/scheduling/reschedule-session (and alias /reschedule)
+        if ((url === '/api/scheduling/reschedule-session' || url === '/api/scheduling/reschedule') && method === 'POST') {
+          try {
+            const body = await parseBody(req);
+            const result = await handleRescheduleSession(body);
+            sendJson(res, result.statusCode, result.data);
+          } catch (err: any) {
+            sendJson(res, 500, { error: err.message || 'Internal server error' });
+          }
+          return;
+        }
+
+        // 20. POST /api/scheduling/submit-evaluation (Authoritative completion by evaluator)
+        if (url === '/api/scheduling/submit-evaluation' && method === 'POST') {
+          try {
+            const body = await parseBody(req);
+            const result = await handleSubmitEvaluation(body);
+            sendJson(res, result.statusCode, result.data);
+          } catch (err: any) {
+            sendJson(res, 500, { error: err.message || 'Internal server error' });
+          }
+          return;
+        }
+
+        // 21. GET /api/scheduling/evaluation-result (Candidate-visible scorecard & feedback)
+        if (url === '/api/scheduling/evaluation-result' && method === 'GET') {
+          try {
+            const searchParams = new URLSearchParams(req.url?.split('?')[1] || '');
+            const result = await handleGetCandidateVisibleResult({
+              candidateUserId: searchParams.get('candidateUserId') || '',
+            });
+            sendJson(res, result.statusCode, result.data);
+          } catch (err: any) {
+            sendJson(res, 500, { error: err.message || 'Internal server error' });
+          }
+          return;
+        }
+
+        // ═════════════════════════════════════════════════════════════════
+        // 1-TO-1 CONSULTATION ENDPOINTS (Shared Scheduling Infrastructure)
+        // ═════════════════════════════════════════════════════════════════
+
+        // 22. GET /api/consultations/topics
+        if (url === '/api/consultations/topics' && method === 'GET') {
+          try {
+            const result = await handleGetConsultationTopics();
+            sendJson(res, result.statusCode, result.data);
+          } catch (err: any) {
+            sendJson(res, 500, { error: err.message || 'Internal server error' });
+          }
+          return;
+        }
+
+        // 23. GET /api/consultations/eligible-consultants
+        if (url === '/api/consultations/eligible-consultants' && method === 'GET') {
+          try {
+            const searchParams = new URLSearchParams(req.url?.split('?')[1] || '');
+            const result = await handleGetEligibleConsultants({
+              track: searchParams.get('track') || undefined,
+            });
+            sendJson(res, result.statusCode, result.data);
+          } catch (err: any) {
+            sendJson(res, 500, { error: err.message || 'Internal server error' });
+          }
+          return;
+        }
+
+        // 24. GET /api/consultations/availability
+        if (url === '/api/consultations/availability' && method === 'GET') {
+          try {
+            const searchParams = new URLSearchParams(req.url?.split('?')[1] || '');
+            const result = await handleGetConsultantAvailability({
+              consultantId: searchParams.get('consultantId') || '',
+            });
+            sendJson(res, result.statusCode, result.data);
+          } catch (err: any) {
+            sendJson(res, 500, { error: err.message || 'Internal server error' });
+          }
+          return;
+        }
+
+        // 25. POST /api/consultations/book
+        if (url === '/api/consultations/book' && method === 'POST') {
+          try {
+            const body = await parseBody(req);
+            const result = await handleBookConsultation(body);
+            sendJson(res, result.statusCode, result.data);
+          } catch (err: any) {
+            sendJson(res, 500, { error: err.message || 'Internal server error' });
+          }
+          return;
+        }
+
+        // 26. GET /api/consultations/my-consultations
+        if (url === '/api/consultations/my-consultations' && method === 'GET') {
+          try {
+            const searchParams = new URLSearchParams(req.url?.split('?')[1] || '');
+            const result = await handleGetCandidateConsultations({
+              candidateUserId: searchParams.get('candidateUserId') || '',
+            });
+            sendJson(res, result.statusCode, result.data);
+          } catch (err: any) {
+            sendJson(res, 500, { error: err.message || 'Internal server error' });
+          }
+          return;
+        }
+
+        // 27. POST /api/consultations/reschedule
+        if (url === '/api/consultations/reschedule' && method === 'POST') {
+          try {
+            const body = await parseBody(req);
+            const result = await handleRescheduleConsultation(body);
+            sendJson(res, result.statusCode, result.data);
+          } catch (err: any) {
+            sendJson(res, 500, { error: err.message || 'Internal server error' });
+          }
+          return;
+        }
+
+        // 28. POST /api/consultations/cancel
+        if (url === '/api/consultations/cancel' && method === 'POST') {
+          try {
+            const body = await parseBody(req);
+            const result = await handleCancelConsultation(body);
+            sendJson(res, result.statusCode, result.data);
+          } catch (err: any) {
+            sendJson(res, 500, { error: err.message || 'Internal server error' });
+          }
+          return;
+        }
+
+        // 29. POST /api/consultations/submit-outcome
+        if (url === '/api/consultations/submit-outcome' && method === 'POST') {
+          try {
+            const body = await parseBody(req);
+            const result = await handleSubmitConsultationOutcome(body);
+            sendJson(res, result.statusCode, result.data);
+          } catch (err: any) {
+            sendJson(res, 500, { error: err.message || 'Internal server error' });
+          }
+          return;
+        }
+
+        // 30. GET /api/consultations/outcome
+        if (url === '/api/consultations/outcome' && method === 'GET') {
+          try {
+            const searchParams = new URLSearchParams(req.url?.split('?')[1] || '');
+            const result = await handleGetConsultationOutcome({
+              sessionId: searchParams.get('sessionId') || '',
+              candidateUserId: searchParams.get('candidateUserId') || '',
+            });
+            sendJson(res, result.statusCode, result.data);
+          } catch (err: any) {
+            sendJson(res, 500, { error: err.message || 'Internal server error' });
+          }
+          return;
+        }
+
         next();
       });
     },
   };
 }
-
