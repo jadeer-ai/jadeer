@@ -152,20 +152,34 @@ export default function SignUpPage() {
         });
         return;
       }
+    } catch (err: any) {
+      console.warn('Clerk OAuth configuration not found. Falling back to local mock authentication...');
+    }
 
-      // Direct fallback if Clerk is still mounting
+    // Direct fallback if Clerk is missing or failed (local dev mock)
+    try {
       const res = await AuthService.initiateSocialAuth(provider, {
         role: candidateType,
         track: effectiveTrack || 'General Engineering',
         mode: 'direct',
       });
       setSocialLoading(null);
-      if (!res.success) {
+      if (res.success) {
+        setUserRole(candidateType);
+        updateProfile({ role: candidateType, track: effectiveTrack || 'General Engineering' });
+        try {
+          // ensure track is available globally
+          localStorage.setItem('jadeer_track', effectiveTrack || 'General Engineering');
+        } catch {
+          // ignore
+        }
+        navigate(res.redirectUrl || '/candidates/wizard');
+      } else {
         setError(res.error || `Failed to sign up with ${provider}.`);
       }
-    } catch (err: any) {
+    } catch (fallbackErr: any) {
       setSocialLoading(null);
-      setError(err?.errors?.[0]?.longMessage || err?.message || `Failed to sign up with ${provider}.`);
+      setError(fallbackErr?.message || `Failed to sign up with ${provider}.`);
     }
   };
 
@@ -387,53 +401,7 @@ export default function SignUpPage() {
               />
             </div>
 
-            {/* Technical Domain / Track (With Custom Input Option) */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label
-                  htmlFor="tech-track"
-                  className="block text-xs font-bold uppercase tracking-wider text-[#0B0F19]/60"
-                >
-                  Technical Track <span className="text-rose-500">*</span>
-                </label>
-                <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200/50">
-                  Locked upon signup
-                </span>
-              </div>
-              <select
-                id="tech-track"
-                value={selectedTrack}
-                onChange={(e) => setSelectedTrack(e.target.value)}
-                className={`w-full h-11 px-3.5 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-sm text-[#0B0F19] font-medium focus:bg-white focus:outline-none transition-all ${focusRingClass}`}
-              >
-                {softwareTracks.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
 
-              {/* Custom Track Input Field */}
-              {isCustomTrack && (
-                <div className="pt-1 animate-[fade-in_0.3s_ease]">
-                  <input
-                    id="custom-tech-track"
-                    type="text"
-                    value={customTrack}
-                    onChange={(e) => setCustomTrack(e.target.value)}
-                    required
-                    placeholder="Enter your custom engineering track (e.g. Distributed Systems)"
-                    className={`w-full h-11 px-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-sm text-[#0B0F19] font-medium focus:bg-white focus:outline-none transition-all placeholder:text-[#0B0F19]/30 ${focusRingClass}`}
-                  />
-                </div>
-              )}
-
-              <p className="text-[10.5px] text-[#0B0F19]/45 leading-tight">
-                Your technical track anchors your AI assessment algorithms and live evidence dossier.
-              </p>
-            </div>
-
-            {/* Email */}
             <div className="space-y-1.5">
               <label
                 htmlFor="email"

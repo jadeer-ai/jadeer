@@ -153,6 +153,17 @@ model StudentProfile {
   avatarUrl       String?
   city            String?
   country         String?       @default("Saudi Arabia")
+  
+  // ── New Fields for Wizard ──────────────────────────────────────────
+  title           String?
+  degree          String?
+  faculty         String?
+  specialization  String?
+  gpa             String?
+  startDate       String?
+  endDate         String?
+  skills          String[]
+
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 

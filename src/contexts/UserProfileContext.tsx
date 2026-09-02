@@ -87,6 +87,8 @@ export interface CustomUserProfile {
   title: string;
   university: string;
   degree?: string;
+  faculty?: string;
+  specialization?: string;
   gpa?: string;
   startDate?: string;
   endDate?: string;
@@ -94,6 +96,8 @@ export interface CustomUserProfile {
   graduationYear: string;
   role: CandidateRole;
   track: string;
+  city: string;
+  country: string;
   location: string;
   bio: string;
   skills: string[];
@@ -131,6 +135,8 @@ const DEFAULT_PROFILE: CustomUserProfile = {
   graduationYear: '',
   role: 'grad',
   track: '',
+  city: '',
+  country: '',
   location: '',
   bio: '',
   skills: [],
@@ -183,15 +189,19 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
               email: data.profile.email || prev.email,
               university: data.profile.university || prev.university,
               degree: data.profile.degree || prev.degree,
+              faculty: data.profile.faculty || prev.faculty,
+              specialization: data.profile.specialization || prev.specialization,
               gpa: data.profile.gpa || prev.gpa,
               startDate: data.profile.startDate || prev.startDate,
               endDate: data.profile.endDate || prev.endDate,
               graduationYear: data.profile.graduationYear ? String(data.profile.graduationYear) : prev.graduationYear,
-              bio: data.profile.bio || prev.bio,
+              bio: data.profile.bio !== undefined && data.profile.bio !== null ? data.profile.bio : prev.bio,
               githubUrl: data.profile.githubUrl || prev.githubUrl,
               linkedinUrl: data.profile.linkedinUrl || prev.linkedinUrl,
               portfolioUrl: data.profile.portfolioUrl || prev.portfolioUrl,
-              location: data.profile.city || prev.location,
+              city: data.profile.city || prev.city,
+              country: data.profile.country || prev.country,
+              location: data.profile.city ? `${data.profile.city}, ${data.profile.country || 'Saudi Arabia'}` : prev.location,
               title: data.profile.title || prev.title,
               skills: data.profile.skills || prev.skills,
               resumeFileName: data.profile.resumeUrl ? data.profile.resumeUrl.split('/').pop() : prev.resumeFileName,

@@ -155,8 +155,13 @@ export interface CandidateData {
   skills: string[];
   education: {
     degree: string;
+    faculty?: string;
+    specialization?: string;
+    gpa?: string;
     institution: string;
     graduationYear: string;
+    startDate?: string;
+    endDate?: string;
   };
 }
 
@@ -286,7 +291,7 @@ export default function CandidateProfilesPage() {
       email: userProfile.email || clerkEmail || base.email,
       title: userProfile.title || (currentRole === 'student' ? 'University Student (Engineering)' : base.title),
       location: userProfile.location || base.location,
-      bio: userProfile.bio || base.bio,
+      bio: userProfile.bio ?? '',
       role: currentRole,
       track: currentTrack,
       socialLinks: resolvedInitialLinks.length > 0 ? resolvedInitialLinks : base.socialLinks,
@@ -297,7 +302,12 @@ export default function CandidateProfilesPage() {
       skills: userProfile.skills && userProfile.skills.length > 0 ? userProfile.skills : base.skills,
       education: {
         institution: userProfile.university || base.education.institution,
-        degree: userProfile.major || base.education.degree,
+        degree: userProfile.degree || base.education.degree,
+        faculty: userProfile.faculty,
+        specialization: userProfile.specialization,
+        gpa: userProfile.gpa,
+        startDate: userProfile.startDate,
+        endDate: userProfile.endDate,
         graduationYear: userProfile.graduationYear ? userProfile.graduationYear.replace(/[^0-9]/g, '') : '2025',
       },
       initials: name
@@ -334,8 +344,24 @@ export default function CandidateProfilesPage() {
     setIsEditing(false);
   };
 
-  /* ── Save Changes Flow ── */
+  /* 📌 Save Changes Flow 📌 */
   const handleSaveEdit = () => {
+    // Validate Dates
+    if (draft.education.startDate && draft.education.endDate) {
+      const start = new Date(draft.education.startDate);
+      const end = new Date(draft.education.endDate);
+      if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+        const diffInYears = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 365);
+        if (diffInYears < 1) {
+          alert("End date can't be before start date or less than a year.");
+          return;
+        }
+      }
+    } else if (draft.education.startDate || draft.education.endDate) {
+      alert("Please provide both valid start and end dates.");
+      return;
+    }
+
     // Filter out any link with empty URL
     const cleanedLinks = draft.socialLinks.filter((link) => Boolean(link.url && link.url.trim()));
 
@@ -362,7 +388,12 @@ export default function CandidateProfilesPage() {
       bio: draft.bio,
       track: draft.track,
       university: draft.education.institution,
-      major: draft.education.degree,
+      degree: draft.education.degree,
+      faculty: draft.education.faculty,
+      specialization: draft.education.specialization,
+      gpa: draft.education.gpa,
+      startDate: draft.education.startDate,
+      endDate: draft.education.endDate,
       graduationYear: draft.education.graduationYear.replace(/[^0-9]/g, '') || draft.education.graduationYear,
       socialLinks: cleanedLinks,
       githubUrl: githubLink,
@@ -468,10 +499,17 @@ export default function CandidateProfilesPage() {
     }
   };
 
-  /* ── Resume Upload Handler ── */
+  /* 📌 Resume Upload Handler 📌 */
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    const isValidType = validTypes.includes(file.type) || file.name.endsWith('.pdf') || file.name.endsWith('.doc') || file.name.endsWith('.docx');
+    if (!isValidType) {
+      alert('Please upload a valid PDF or Word document');
+      return;
+    }
 
     const fileName = file.name;
     const sizeInMB = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
@@ -671,20 +709,14 @@ export default function CandidateProfilesPage() {
                       className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-xs font-bold text-[#0B0F19]/80 shadow-2xs"
                       title="Role locked at registration. Elevation managed by institution administration."
                     >
-                      <Lock className="w-3 h-3 text-[#6E8F75]" />
-                      <span>{profile.role === 'student' ? 'University Student' : 'Graduate Engineer'}</span>
+                      <Lock className="w-3.5 h-3.5 opacity-60" />
+                      {profile.role === 'student' ? 'Student Candidate' : 'Graduate Candidate'}
                     </span>
 
                     {/* Candidate Track Badge */}
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#6E8F75]/10 text-[#6E8F75] text-xs font-bold border border-[#6E8F75]/20">
                       <Layers className="w-3 h-3" />
                       <span>{profile.track}</span>
-                    </span>
-
-                    {/* Telemetry Match Score */}
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-200/60">
-                      <Sparkles className="w-3 h-3 text-emerald-600" />
-                      <span>{profile.matchScore}% Telemetry Rating</span>
                     </span>
                   </div>
 
@@ -844,15 +876,12 @@ export default function CandidateProfilesPage() {
 
           {/* 1. Professional Bio & Summary */}
           <div className="bg-white rounded-3xl p-6 sm:p-7 border border-[#0B0F19]/[0.06] shadow-[0_2px_16px_rgba(0,0,0,0.02)] space-y-3.5">
-            <div className="flex items-center justify-between border-b border-[#0B0F19]/[0.05] pb-3">
-              <h2 className="text-base font-extrabold text-[#0B0F19] flex items-center gap-2">
-                <Briefcase className="w-4 h-4 text-[#6E8F75]" />
-                <span>Professional Bio & Summary</span>
-              </h2>
-              <span className="text-[11px] font-semibold text-[#6E8F75] bg-[#6E8F75]/10 px-2.5 py-0.5 rounded-md border border-[#6E8F75]/20">
-                Verified Candidate Bio
-              </span>
-            </div>
+            <div className="flex items-center justify-between mb-5">
+                <h2 className="text-[14px] font-extrabold uppercase tracking-wider text-[#0B0F19]/90 flex items-center gap-2">
+                  <User className="w-4 h-4 text-[#0B0F19]/50" />
+                  About Candidate
+                </h2>
+              </div>
 
             {!isEditing ? (
               <p className="text-[14px] text-[#0B0F19]/75 leading-relaxed">
@@ -1033,29 +1062,35 @@ export default function CandidateProfilesPage() {
 
           {/* 4. Education & Academic Background */}
           <div className="bg-white rounded-3xl p-6 sm:p-7 border border-[#0B0F19]/[0.06] shadow-[0_2px_16px_rgba(0,0,0,0.02)] space-y-4">
-            <div className="flex items-center justify-between border-b border-[#0B0F19]/[0.05] pb-3">
-              <h2 className="text-base font-extrabold text-[#0B0F19] flex items-center gap-2">
-                <GraduationCap className="w-4 h-4 text-[#6E8F75]" />
-                <span>Education & Academic Credentials</span>
-              </h2>
-              <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200/60">
-                Degree Verified
-              </span>
-            </div>
+            <div className="flex items-center justify-between mb-6">
+                <h2 className="text-[14px] font-extrabold uppercase tracking-wider text-[#0B0F19]/90 flex items-center gap-2">
+                  <GraduationCap className="w-4 h-4 text-[#0B0F19]/50" />
+                  Academic Foundation
+                </h2>
+              </div>
 
             {!isEditing ? (
-              <div className="flex items-start justify-between p-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.05]">
-                <div className="space-y-1">
-                  <h3 className="text-sm font-bold text-[#0B0F19]">
-                    {profile.education.degree}
-                  </h3>
-                  <p className="text-xs text-[#0B0F19]/60">
-                    {profile.education.institution} • Class of {profile.education.graduationYear}
-                  </p>
+              <div className="flex flex-col gap-2 p-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.05]">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-bold text-[#0B0F19]">
+                      {profile.education.degree || 'Degree Not Specified'} {profile.education.specialization ? `in ${profile.education.specialization}` : ''}
+                    </h3>
+                    <p className="text-xs text-[#0B0F19]/60">
+                      {profile.education.institution || 'Institution Not Specified'} {profile.education.faculty ? `— ${profile.education.faculty}` : ''}
+                    </p>
+                  </div>
                 </div>
-                <span className="text-xs font-mono font-bold text-[#6E8F75] bg-[#6E8F75]/10 px-2.5 py-0.5 rounded-full">
-                  {profile.education.graduationYear}
-                </span>
+                {(profile.education.gpa || (profile.education.startDate && profile.education.endDate)) && (
+                  <div className="flex items-center gap-4 mt-2 text-xs text-[#0B0F19]/50 font-medium">
+                    {profile.education.gpa && (
+                      <span className="bg-white border border-[#0B0F19]/10 px-2 py-0.5 rounded-md">GPA: {profile.education.gpa}</span>
+                    )}
+                    {(profile.education.startDate && profile.education.endDate) && (
+                      <span>{profile.education.startDate} to {profile.education.endDate}</span>
+                    )}
+                  </div>
+                )}
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
@@ -1073,7 +1108,7 @@ export default function CandidateProfilesPage() {
                       })
                     }
                     className="w-full h-10 px-3 rounded-xl bg-[#FAF9F6] border border-[#0B0F19]/[0.1] text-xs font-semibold text-[#0B0F19] focus:bg-white focus:border-[#6E8F75] focus:outline-none"
-                    placeholder="e.g. King Fahd University of Petroleum & Minerals (KFUPM)"
+                    placeholder="e.g. King Fahd University of Petroleum & Minerals"
                   />
                 </div>
 
@@ -1110,6 +1145,40 @@ export default function CandidateProfilesPage() {
                     }
                     className="w-full h-10 px-3 rounded-xl bg-[#FAF9F6] border border-[#0B0F19]/[0.1] text-xs font-semibold text-[#0B0F19] focus:bg-white focus:border-[#6E8F75] focus:outline-none"
                     placeholder="e.g. B.S. in Computer Science & Software Engineering"
+                  />
+                </div>
+
+                <div className="sm:col-span-1">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#0B0F19]/50 mb-1">
+                    Start Date
+                  </label>
+                  <input
+                    type="month"
+                    value={draft.education.startDate || ''}
+                    onChange={(e) =>
+                      setDraft({
+                        ...draft,
+                        education: { ...draft.education, startDate: e.target.value },
+                      })
+                    }
+                    className="w-full h-10 px-3 rounded-xl bg-[#FAF9F6] border border-[#0B0F19]/[0.1] text-xs font-semibold text-[#0B0F19] focus:bg-white focus:border-[#6E8F75] focus:outline-none"
+                  />
+                </div>
+
+                <div className="sm:col-span-1">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#0B0F19]/50 mb-1">
+                    End Date
+                  </label>
+                  <input
+                    type="month"
+                    value={draft.education.endDate || ''}
+                    onChange={(e) =>
+                      setDraft({
+                        ...draft,
+                        education: { ...draft.education, endDate: e.target.value },
+                      })
+                    }
+                    className="w-full h-10 px-3 rounded-xl bg-[#FAF9F6] border border-[#0B0F19]/[0.1] text-xs font-semibold text-[#0B0F19] focus:bg-white focus:border-[#6E8F75] focus:outline-none"
                   />
                 </div>
               </div>
@@ -1318,9 +1387,6 @@ export default function CandidateProfilesPage() {
                 <ShieldCheck className="w-4 h-4 text-[#6E8F75]" />
                 <span>Verified Badges</span>
               </h2>
-              <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
-                {userProfile.assessmentScore || 94}% Telemetry
-              </span>
             </div>
 
             <div className="space-y-2.5">

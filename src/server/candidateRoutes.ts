@@ -41,7 +41,7 @@ export async function handleUpdateCandidateProfile(req: Request, userId: string)
       const mapped = {
         'Frontend Development': 'FRONTEND',
         'Backend Development': 'BACKEND',
-        'Full-Stack Engineering': 'FULLSTACK',
+        'Full-Stack Development': 'FULLSTACK',
         'Mobile Development': 'MOBILE',
         'Data Engineering': 'DATA_ENGINEERING',
         'AI/ML Engineering': 'AI_ML',
@@ -62,8 +62,11 @@ export async function handleUpdateCandidateProfile(req: Request, userId: string)
       githubUrl: body.githubUrl,
       linkedinUrl: body.linkedinUrl,
       portfolioUrl: body.portfolioUrl,
-      city: body.location, // Mapping location to city
+      city: body.city || body.location, // Fallback to location if city is missing
+      country: body.country,
       degree: body.degree,
+      faculty: body.faculty,
+      specialization: body.specialization,
       gpa: body.gpa,
       startDate: body.startDate,
       endDate: body.endDate,
