@@ -116,7 +116,12 @@ interface WizardFormData {
   location: string;
   bio: string;
   university?: string;
+    degree?: string;
+    gpa?: string;
+    startDate?: string;
+    endDate?: string;
   selectedRole?: 'student' | 'graduate';
+  selectedTrack?: string;
   selectedSkills: string[];
   skillSearch: string;
   resumeFile: File | null;
@@ -247,25 +252,7 @@ function BasicProfileStep({
         </p>
       </div>
 
-      {/* Bound Technical Track Notification */}
-      <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <Lock className="w-4 h-4 text-amber-600 shrink-0" />
-          <div>
-            <p className="text-xs font-bold text-amber-900">
-              Bound Technical Track: <span className="underline">{lockedTrack || 'Software Engineering'}</span>
-            </p>
-            <p className="text-[11px] text-amber-800/70">
-              Locked permanently upon registration to anchor your AI telemetry, evaluations, and Evidence Dossier.
-            </p>
-          </div>
-        </div>
-        <span className="text-[10px] font-bold text-amber-800 bg-amber-200/60 px-2 py-0.5 rounded-md uppercase tracking-wider shrink-0 border border-amber-300/40">
-          Locked
-        </span>
-      </div>
-
-      {/* Avatar + Name row */}
+{/* Avatar + Name row */}
       <div className="flex items-start gap-5">
         {/* Avatar placeholder */}
         <div className="shrink-0">
@@ -1053,10 +1040,11 @@ export default function CandidateWizard({ embedded = false }: { embedded?: boole
     return {
       ...initialFormData,
       fullName: session?.user?.name || userProfile.fullName || '',
-      title: session?.user?.name ? (isStudent ? 'Software Engineering Intern' : 'Junior Software Engineer') : userProfile.title,
+      title: userProfile.title || '',
       location: userProfile.location || '',
       bio: userProfile.bio || '',
       university: userProfile.university || 'King Fahd University of Petroleum & Minerals (KFUPM)',
+      selectedTrack: userProfile.track || '',
       githubUrl: session?.user?.githubUsername
         ? `https://github.com/${session.user.githubUsername}`
         : userProfile.githubUrl || '',
@@ -1072,7 +1060,7 @@ export default function CandidateWizard({ embedded = false }: { embedded?: boole
       setFormData((prev) => ({
         ...prev,
         fullName: prev.fullName || clerkName || '',
-        title: prev.title || (isStudent ? 'Software Engineering Intern' : 'Junior Software Engineer'),
+        title: prev.title || '',
       }));
     }
   }, [isClerkLoaded, clerkUser, clerkName, isStudent]);
@@ -1111,7 +1099,7 @@ export default function CandidateWizard({ embedded = false }: { embedded?: boole
         bio: formData.bio,
         university: formData.university || 'King Fahd University of Petroleum & Minerals (KFUPM)',
         role: effectiveRole,
-        track: effectiveTrack,
+        track: formData.selectedTrack || effectiveTrack,
         githubUrl: formData.githubUrl,
         linkedinUrl: formData.linkedinUrl,
         portfolioUrl: formData.portfolioUrl,

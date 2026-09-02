@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { useUser } from '@clerk/clerk-react';
+import { useUserRole } from '@/contexts/UserRoleContext';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    JADEER — USER PROFILE CONTEXT (CLERK + LOCALSTORAGE HYBRID SYNC)
@@ -86,6 +86,10 @@ export interface CustomUserProfile {
   imageUrl: string;
   title: string;
   university: string;
+  degree?: string;
+  gpa?: string;
+  startDate?: string;
+  endDate?: string;
   major: string;
   graduationYear: string;
   role: CandidateRole;
@@ -118,128 +122,28 @@ export interface CustomUserProfile {
 const STORAGE_KEY = 'jadeer-custom-profile';
 
 const DEFAULT_PROFILE: CustomUserProfile = {
-  fullName: 'Ahmad Al-Hassan',
-  email: 'ahmad.hassan@kfupm.edu.sa',
+  fullName: '',
+  email: '',
   imageUrl: '',
-  title: 'Junior Backend & Systems Engineer',
-  university: 'King Fahd University of Petroleum & Minerals (KFUPM)',
-  major: 'Computer Science & Software Engineering',
-  graduationYear: '2025',
+  title: '',
+  university: '',
+  major: '',
+  graduationYear: '',
   role: 'grad',
-  track: 'Backend Development',
-  location: 'Riyadh, Saudi Arabia',
-  bio: 'Passionate software engineer building resilient, high-throughput microservices and cloud infrastructure. Specialized in distributed systems, low-latency socket multiplexing, and modern C++20 / Go type-safe architectures.',
-  skills: ['C++20', 'Go', 'TypeScript', 'Node.js', 'PostgreSQL', 'Docker', 'Redis', 'Linux epoll', 'gRPC'],
-  githubUrl: 'https://github.com/ahmad-dev-engineer',
-  linkedinUrl: 'https://linkedin.com/in/ahmad-alhassan',
-  portfolioUrl: 'https://ahmadhassan.dev',
-  leetcodeUrl: 'https://leetcode.com/u/ahmad_hassan_dev',
-  codeforcesUrl: 'https://codeforces.com/profile/ahmad_dev',
-  socialLinks: [
-    { id: 'link-gh', platform: 'github', label: 'GitHub', url: 'https://github.com/ahmad-dev-engineer' },
-    { id: 'link-li', platform: 'linkedin', label: 'LinkedIn', url: 'https://linkedin.com/in/ahmad-alhassan' },
-    { id: 'link-port', platform: 'portfolio', label: 'Portfolio Website', url: 'https://ahmadhassan.dev' },
-    { id: 'link-lc', platform: 'leetcode', label: 'LeetCode Profile', url: 'https://leetcode.com/u/ahmad_hassan_dev' },
-    { id: 'link-cf', platform: 'codeforces', label: 'Codeforces Profile', url: 'https://codeforces.com/profile/ahmad_dev' },
-  ],
-  phone: '+966 50 123 4567',
-  resumeFileName: 'Ahmad_AlHassan_Software_Engineer.pdf',
-  resumeUploadDate: '2026-08-28',
-  resumeFileSize: '1.4 MB',
-  assessmentScore: 94,
-  completedAssessmentsCount: 2,
-  verifiedBadges: ['Verified Backend Engineer', 'Jadeer AI Technical Badge', 'System Design Verified'],
-  assessmentsHistory: [
-    {
-      id: 'eval-001',
-      title: 'C++ Systems & Memory Safety Assessment',
-      category: 'Backend & Low-Level Systems',
-      score: 94,
-      maxScore: 100,
-      passed: true,
-      completedAt: '2026-08-28',
-      badgeEarned: 'Verified Backend Engineer',
-      challengesCompleted: 5,
-      totalChallenges: 5,
-    },
-    {
-      id: 'eval-002',
-      title: 'Distributed Microservices & PostgreSQL Assessment',
-      category: 'Database & Architecture',
-      score: 92,
-      maxScore: 100,
-      passed: true,
-      completedAt: '2026-08-29',
-      badgeEarned: 'Jadeer AI Technical Badge',
-      challengesCompleted: 4,
-      totalChallenges: 4,
-    },
-  ],
-  humanInterview: {
-    status: 'completed',
-    scheduledDate: '2026-08-29',
-    scheduledTime: '02:00 PM - 03:00 PM (1 hr)',
-    timezone: 'Asia/Riyadh (GMT+3)',
-    meetingLink: 'https://meet.jadeer.io/interview/jad-tech-8492',
-    interviewerName: 'Eng. Tariq Al-Mansour',
-    interviewerTitle: 'Principal Systems Architect & Calibration Lead',
-    interviewerCompany: 'Microsoft',
-    interviewerInitials: 'TM',
-    topic: 'Stage 02B: Human Technical Calibration (Backend Distributed Systems)',
-    rubric: {
-      overallScore: 94,
-      grade: 'A+ (Exemplary Calibration)',
-      systemThinking: 96,
-      codeQuality: 94,
-      problemSolving: 92,
-      technicalArticulation: 95,
-      summaryNotes:
-        'Ahmad demonstrated stellar depth in asynchronous socket multiplexing, Linux epoll primitives, and modern C++20 memory management. His ability to articulate architectural trade-offs during live systems probing was outstanding.',
-      strengths: [
-        'Command of RAII, thread safety, and zero-cost abstraction principles in C++20 and Go.',
-        'High-level clarity when defending cache-aside vs. write-through invalidation topologies.',
-        'Structured analytical approach when identifying concurrency race conditions.',
-      ],
-      recommendations: [
-        'Explore distributed consensus protocols (e.g. Raft leader election and log replication) for geo-distributed clusters.',
-        'Add automated fuzz testing suites for socket edge-case malformed packet scenarios.',
-      ],
-      calibratedAt: '2026-08-29T15:00:00Z',
-      interviewerName: 'Eng. Tariq Al-Mansour',
-      interviewerTitle: 'Principal Systems Architect',
-      interviewerCompany: 'Microsoft',
-      verifiedBadge: 'Jadeer Human-Calibrated Senior Engineer Badge',
-    },
-  },
-  applications: [
-    {
-      id: 'app-001',
-      jobId: 'job-101',
-      jobTitle: 'Junior Systems Software Engineer',
-      companyName: 'Lucidya Systems',
-      appliedDate: '2026-08-25',
-      status: 'Interview Scheduled',
-      matchScore: 96,
-    },
-    {
-      id: 'app-002',
-      jobId: 'job-102',
-      jobTitle: 'Backend Development Engineer (Go/Node)',
-      companyName: 'Lean Technologies',
-      appliedDate: '2026-08-20',
-      status: 'Technical Screening',
-      matchScore: 92,
-    },
-    {
-      id: 'app-003',
-      jobId: 'job-103',
-      jobTitle: 'Cloud Infrastructure & DevOps Intern',
-      companyName: 'Thiqah',
-      appliedDate: '2026-08-15',
-      status: 'Offer Extended',
-      matchScore: 98,
-    },
-  ],
+  track: '',
+  location: '',
+  bio: '',
+  skills: [],
+  githubUrl: '',
+  linkedinUrl: '',
+  portfolioUrl: '',
+  socialLinks: [],
+  phone: '',
+  assessmentScore: 0,
+  completedAssessmentsCount: 0,
+  verifiedBadges: [],
+  assessmentsHistory: [],
+  applications: [],
 };
 
 export interface UserProfileContextType {
@@ -256,69 +160,49 @@ export interface UserProfileContextType {
 const UserProfileContext = createContext<UserProfileContextType | undefined>(undefined);
 
 export function UserProfileProvider({ children }: { children: React.ReactNode }) {
-  const { user: clerkUser, isLoaded: isClerkLoaded } = useUser();
+  const { userRole } = useUserRole();
 
-  const [profile, setProfile] = useState<CustomUserProfile>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      const storedRole = localStorage.getItem('jadeer-user-role');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        return {
-          ...DEFAULT_PROFILE,
-          ...parsed,
-          role: normalizeCandidateRole(storedRole || parsed.role),
-        };
-      }
-      if (storedRole) {
-        return {
-          ...DEFAULT_PROFILE,
-          role: normalizeCandidateRole(storedRole),
-        };
-      }
-    } catch {
-      // localStorage unavailable
-    }
-    return DEFAULT_PROFILE;
-  });
+  const [profile, setProfile] = useState<CustomUserProfile>(DEFAULT_PROFILE);
 
-  // Sync Clerk identity changes with state and localStorage
+  // Fetch real profile from backend API when auth state changes
   useEffect(() => {
-    if (!isClerkLoaded) return;
-
-    if (clerkUser) {
-      const clerkName = clerkUser.fullName || clerkUser.firstName || clerkUser.username || '';
-      const clerkEmail = clerkUser.primaryEmailAddress?.emailAddress || '';
-      const clerkImage = clerkUser.imageUrl || '';
-      const rawRole = (clerkUser.publicMetadata?.role || clerkUser.unsafeMetadata?.role) as string | undefined;
-
-      setProfile((prev) => {
-        const role = rawRole ? normalizeCandidateRole(rawRole) : prev.role;
-        const merged: CustomUserProfile = {
-          ...prev,
-          fullName: clerkName || prev.fullName,
-          email: clerkEmail || prev.email,
-          imageUrl: clerkImage || prev.imageUrl,
-          // Sync any public metadata if set on Clerk
-          university: (clerkUser.publicMetadata?.university as string) || (clerkUser.unsafeMetadata?.university as string) || prev.university,
-          major: (clerkUser.publicMetadata?.major as string) || (clerkUser.unsafeMetadata?.major as string) || prev.major,
-          role,
-          track: (clerkUser.publicMetadata?.track as string) || (clerkUser.unsafeMetadata?.track as string) || prev.track,
-        };
-
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-          if (merged.role) localStorage.setItem('jadeer-user-role', merged.role);
-          if (merged.track) localStorage.setItem('jadeer-locked-track', merged.track);
-          if (merged.university) localStorage.setItem('jadeer-user-university', merged.university);
-        } catch {
-          // ignore
-        }
-
-        return merged;
-      });
+    if (!userRole) {
+      setProfile(DEFAULT_PROFILE);
+      return;
     }
-  }, [isClerkLoaded, clerkUser]);
+    
+    // Only fetch for candidate roles
+    if (userRole === 'student' || userRole === 'grad' || userRole === 'candidate') {
+      fetch('/api/candidate/profile')
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.profile) {
+            setProfile(prev => ({
+              ...prev,
+              fullName: data.profile.fullName || prev.fullName,
+              email: data.profile.email || prev.email,
+              university: data.profile.university || prev.university,
+              degree: data.profile.degree || prev.degree,
+              gpa: data.profile.gpa || prev.gpa,
+              startDate: data.profile.startDate || prev.startDate,
+              endDate: data.profile.endDate || prev.endDate,
+              graduationYear: data.profile.graduationYear ? String(data.profile.graduationYear) : prev.graduationYear,
+              bio: data.profile.bio || prev.bio,
+              githubUrl: data.profile.githubUrl || prev.githubUrl,
+              linkedinUrl: data.profile.linkedinUrl || prev.linkedinUrl,
+              portfolioUrl: data.profile.portfolioUrl || prev.portfolioUrl,
+              location: data.profile.city || prev.location,
+              title: data.profile.title || prev.title,
+              skills: data.profile.skills || prev.skills,
+              resumeFileName: data.profile.resumeUrl ? data.profile.resumeUrl.split('/').pop() : prev.resumeFileName,
+              track: data.profile.softwareTrack ? data.profile.softwareTrack.replace(/_/g, ' ') : prev.track,
+              role: userRole,
+            }));
+          }
+        })
+        .catch(console.error);
+    }
+  }, [userRole]);
 
   const updateProfile = useCallback((patch: Partial<CustomUserProfile>) => {
     setProfile((prev) => {
@@ -327,15 +211,16 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
         normalizedPatch.role = normalizeCandidateRole(normalizedPatch.role);
       }
       const next = { ...prev, ...normalizedPatch };
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-        if (next.role) localStorage.setItem('jadeer-user-role', next.role);
-        if (next.track) localStorage.setItem('jadeer-locked-track', next.track);
-        if (next.university) localStorage.setItem('jadeer-user-university', next.university);
-        localStorage.setItem('jadeer-graduate-onboarded', 'true');
-      } catch {
-        // localStorage unavailable
-      }
+      
+      // Removed local storage sync
+
+      // Sync to backend asynchronously
+      fetch('/api/candidate/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(next)
+      }).catch(console.error);
+
       return next;
     });
   }, []);
@@ -362,11 +247,7 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
         assessmentsHistory: updatedHistory,
       };
 
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      } catch {
-        // ignore
-      }
+      // Removed local storage sync
       return next;
     });
   }, []);
@@ -377,11 +258,7 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
         app.id === id ? { ...app, status } : app
       );
       const next = { ...prev, applications: updatedApps };
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      } catch {
-        // ignore
-      }
+      // Removed local storage sync
       return next;
     });
   }, []);
@@ -395,22 +272,14 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
       };
       const updatedApps = [newApp, ...(prev.applications || [])];
       const next = { ...prev, applications: updatedApps };
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      } catch {
-        // ignore
-      }
+      // Removed local storage sync
       return next;
     });
   }, []);
 
   const resetProfile = useCallback(() => {
     setProfile(DEFAULT_PROFILE);
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch {
-      // ignore
-    }
+    // Removed local storage sync
   }, []);
 
   const isProfileComplete = useMemo(() => {
@@ -427,7 +296,7 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
     <UserProfileContext.Provider
       value={{
         profile,
-        isLoaded: isClerkLoaded,
+        isLoaded: true,
         isProfileComplete,
         updateProfile,
         resetProfile,

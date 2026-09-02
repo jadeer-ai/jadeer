@@ -474,7 +474,7 @@ const DEFAULT_SESSIONS: ConsultationSession[] = [
         { time: '50:40', title: '14-Day Roadmap & Key Action Items' },
       ],
       summaryNotes:
-        'Ahmad demonstrated exceptional depth in asynchronous I/O and modern C++20 memory management. We refined the cache invalidation strategy for multi-region Redis clusters, addressed cold-cache stampedes with probabilistic early expiration, and walked through production socket multiplexing benchmarks.',
+        'Candidate demonstrated exceptional depth in asynchronous I/O and modern C++20 memory management. We refined the cache invalidation strategy for multi-region Redis clusters, addressed cold-cache stampedes with probabilistic early expiration, and walked through production socket multiplexing benchmarks.',
       keyStrengths: [
         'Solid grasp of RAII and zero-cost abstraction principles in modern C++20.',
         'Clear understanding of network socket non-blocking models under high concurrency.',
@@ -538,7 +538,7 @@ const DEFAULT_SESSIONS: ConsultationSession[] = [
         { time: '49:15', title: 'Direct Mentor Feedback & Interview Scoring Breakdown' },
       ],
       summaryNotes:
-        'Thorough mock interview evaluating low-level concurrency, thread synchronization, and database index optimization. Ahmad excelled in algorithmic problem solving and writing clean, idiomatic code.',
+        'Thorough mock interview evaluating low-level concurrency, thread synchronization, and database index optimization. Candidate excelled in algorithmic problem solving and writing clean, idiomatic code.',
       keyStrengths: [
         'Quick identification of optimal B-Tree index configurations for composite queries.',
         'Clean error propagation and panic recovery patterns.',

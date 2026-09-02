@@ -73,6 +73,18 @@ export function build2faEmailHtml(code: string, purpose: string, expiresMinutes:
 `.trim();
 }
 
+import nodemailer from 'nodemailer';
+
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || 'smtp.ethereal.email',
+  port: parseInt(process.env.SMTP_PORT || '587'),
+  secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
+
 /**
  * Dispatch 2FA verification email
  */
@@ -83,31 +95,41 @@ export async function sendOtpEmail(options: {
   expiresMinutes?: number;
 }): Promise<{ success: boolean; messageId: string }> {
   const { to, code, purpose = 'login', expiresMinutes = 5 } = options;
-  const messageId = `msg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
   const subject = `[Jadeer] Your Security Verification Code: ${code} (${purpose.toUpperCase()})`;
   const htmlContent = build2faEmailHtml(code, purpose, expiresMinutes);
 
-  const record: EmailDispatchRecord = {
-    id: messageId,
-    to,
-    subject,
-    template: '2fa_otp',
-    code,
-    html: htmlContent,
-    sentAt: new Date().toISOString(),
-    status: 'DELIVERED',
-  };
+  try {
+    const info = await transporter.sendMail({
+      from: process.env.SMTP_FROM || '"Jadeer Security" <security@jadeer.io>',
+      to,
+      subject,
+      html: htmlContent,
+    });
 
-  emailDeliveryLogs.push(record);
+    const record: EmailDispatchRecord = {
+      id: info.messageId,
+      to,
+      subject,
+      template: '2fa_otp',
+      code,
+      html: htmlContent,
+      sentAt: new Date().toISOString(),
+      status: 'DELIVERED',
+    };
 
-  // Structured sandbox console output
-  console.log(`\n📧 ═════════════════════════════════════════════════════════════════`);
-  console.log(`   JADEER EMAIL TRANSPORTER [SIMULATED DISPATCH]`);
-  console.log(`   To: ${to}`);
-  console.log(`   Subject: ${subject}`);
-  console.log(`   Code: ${code} (Valid for ${expiresMinutes} min)`);
-  console.log(`   Message ID: ${messageId}`);
-  console.log(`═════════════════════════════════════════════════════════════════\n`);
-
-  return { success: true, messageId };
+    emailDeliveryLogs.push(record);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error(`[JADEER EMAIL ERROR] Failed to deliver 2FA email to ${to}:`, error);
+    
+    // Fallback to console log in development if SMTP fails
+    if (process.env.NODE_ENV !== 'production') {
+      const messageId = `msg-dev-${Date.now()}`;
+      console.log(`\n📧 [DEV FALLBACK] Simulated Email Dispatch to ${to}`);
+      console.log(`Code: ${code} (Valid for ${expiresMinutes} min)\n`);
+      return { success: true, messageId };
+    }
+    
+    throw error;
+  }
 }

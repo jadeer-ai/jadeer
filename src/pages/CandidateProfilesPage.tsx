@@ -164,11 +164,11 @@ export const candidateDatabase: Record<string, CandidateData> = {
   'JAD-8492': {
     id: 'app-1',
     candidateCode: 'JAD-8492',
-    fullName: 'Ahmad Al-Hassan',
+    fullName: 'Candidate',
     initials: 'AH',
     title: 'Junior Backend & Systems Engineer',
     location: 'Riyadh, Saudi Arabia',
-    email: 'ahmad.hassan@example.com',
+    email: 'candidate@example.com',
     role: 'grad',
     track: 'Backend Development',
     bio: 'Junior Software Engineer specialized in low-latency backend systems, asynchronous socket multiplexing with Linux epoll, and modern C++20 object-oriented architecture. Passionate about high-throughput distributed architectures, zero-cost abstractions, and rigorous memory safety with RAII.',
@@ -181,7 +181,7 @@ export const candidateDatabase: Record<string, CandidateData> = {
       { id: 'link-4', platform: 'leetcode', label: 'LeetCode Profile', url: 'https://leetcode.com/u/ahmad_hassan_dev' },
       { id: 'link-5', platform: 'codeforces', label: 'Codeforces Profile', url: 'https://codeforces.com/profile/ahmad_dev' },
     ],
-    resumeFileName: 'Ahmad_Al-Hassan_Resume.pdf',
+    resumeFileName: 'Candidate_Al-Hassan_Resume.pdf',
     resumeUploadDate: '2026-08-28',
     resumeFileSize: '1.4 MB',
     skills: ['C++20', 'Go', 'Linux epoll', 'POSIX Sockets', 'gRPC', 'Redis', 'PostgreSQL', 'Docker', 'CMake', 'Valgrind'],
@@ -508,7 +508,7 @@ export default function CandidateProfilesPage() {
   /* ── Resume Download Handler ── */
   const handleDownloadResume = () => {
     const dataUrl = profile.resumeDataUrl;
-    const fileName = profile.resumeFileName || 'Ahmad_Al-Hassan_Resume.pdf';
+    const fileName = profile.resumeFileName || 'Candidate_Al-Hassan_Resume.pdf';
 
     if (dataUrl) {
       const link = document.createElement('a');
@@ -1270,7 +1270,7 @@ export default function CandidateProfilesPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-bold text-[#0B0F19] truncate" title={profile.resumeFileName}>
-                    {profile.resumeFileName || 'Ahmad_Al-Hassan_Resume.pdf'}
+                    {profile.resumeFileName || 'Candidate_Al-Hassan_Resume.pdf'}
                   </p>
                   <p className="text-[11px] text-[#0B0F19]/45 mt-0.5">
                     {profile.resumeFileSize || '1.4 MB'} • Uploaded {profile.resumeUploadDate || 'Aug 28, 2026'}

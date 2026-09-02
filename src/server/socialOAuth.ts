@@ -254,7 +254,7 @@ export async function exchangeGitHubCode(code: string): Promise<SocialUserProfil
       email: 'yourname@gmail.com',
       name: 'Ahmad Al-Hassan',
       avatarUrl: simulatedDossier.avatarUrl,
-      bio: simulatedDossier.bio,
+      bio: null,
       verified: true,
       dossierTelemetry: simulatedDossier,
     };
@@ -360,7 +360,7 @@ export async function exchangeGitHubCode(code: string): Promise<SocialUserProfil
       githubUsername: profile.login || 'ahmad-dev-engineer',
       githubProfileUrl: profile.html_url || 'https://github.com/ahmad-dev-engineer',
       avatarUrl: profile.avatar_url || simulatedDossier.avatarUrl,
-      bio: profile.bio || simulatedDossier.bio,
+      bio: profile.bio || null,
       totalPublicRepos: profile.public_repos || repos.length,
       topRepositories: repos.length > 0 ? repos : simulatedRepos,
       aggregateCodeQualityScore: 97.8,
@@ -374,7 +374,7 @@ export async function exchangeGitHubCode(code: string): Promise<SocialUserProfil
       email: (email || `${profile.login}@users.noreply.github.com`).toLowerCase(),
       name: profile.name || profile.login || 'Ahmad Al-Hassan',
       avatarUrl: profile.avatar_url || simulatedDossier.avatarUrl,
-      bio: profile.bio || simulatedDossier.bio,
+      bio: profile.bio || null,
       verified: true,
       dossierTelemetry: dossier,
     };
@@ -385,7 +385,7 @@ export async function exchangeGitHubCode(code: string): Promise<SocialUserProfil
       email: 'yourname@gmail.com',
       name: 'Ahmad Al-Hassan',
       avatarUrl: simulatedDossier.avatarUrl,
-      bio: simulatedDossier.bio,
+      bio: null,
       verified: true,
       dossierTelemetry: simulatedDossier,
     };

@@ -97,9 +97,12 @@ interface UploadedFile {
 
 /* ── Sample Project Data ────────────────────────────────────────────────── */
 
-const teamMembers: TeamMember[] = [
-  { name: 'Tariq Al-Mansoor', role: 'Principal Architect @ STC Pay', initials: 'TM', isMentor: true, avatarBg: 'bg-[#0B0F19]' },
-  { name: 'Ahmad Al-Hassan (You)', role: 'Junior Backend & Systems', initials: 'AH', avatarBg: 'bg-[#6E8F75]' },
+  const effectiveName = 'Candidate';
+  const effectiveInitials = 'CA';
+
+  const teamMembers: TeamMember[] = [
+    { name: 'Tariq Al-Mansoor', role: 'Principal Architect @ STC Pay', initials: 'TM', isMentor: true, avatarBg: 'bg-[#0B0F19]' },
+    { name: `${effectiveName} (You)`, role: 'Junior Backend & Systems', initials: effectiveInitials, avatarBg: 'bg-[#6E8F75]' },
   { name: 'Layla Nasser', role: 'Junior Systems & APIs', initials: 'LN', avatarBg: 'bg-[#1e2844]' },
   { name: 'Omar Farooq', role: 'Junior DevOps & CI/CD', initials: 'OF', avatarBg: 'bg-[#0e7490]' },
 ];
@@ -129,7 +132,7 @@ const initialTasks: Record<'todo' | 'inProgress' | 'review' | 'done', KanbanTask
       title: 'Worker heartbeat & Redis distributed lease renewal worker',
       tag: 'Core Systems',
       priority: 'high',
-      assignee: { name: 'Ahmad Al-Hassan', initials: 'AH', bg: 'bg-[#6E8F75]' },
+      assignee: { name: 'Candidate', initials: 'CA', bg: 'bg-[#6E8F75]' },
       branch: 'feat/redis-lease-heartbeat',
       points: 8,
     },
@@ -140,7 +143,7 @@ const initialTasks: Record<'todo' | 'inProgress' | 'review' | 'done', KanbanTask
       title: 'PR #42: Connection pooling & RAII socket wrapper with epoll event loop',
       tag: 'Architecture',
       priority: 'high',
-      assignee: { name: 'Ahmad Al-Hassan', initials: 'AH', bg: 'bg-[#6E8F75]' },
+      assignee: { name: 'Candidate', initials: 'CA', bg: 'bg-[#6E8F75]' },
       prNumber: '#42',
       branch: 'feat/epoll-socket-pool',
       points: 5,
@@ -174,14 +177,14 @@ const initialChatMessages: ChatMessage[] = [
     initials: 'TM',
     avatarBg: 'bg-[#0B0F19]',
     isMentor: true,
-    text: "Great progress on the connection pooling PR @Ahmad! I left a review note regarding RAII cleanup under unexpected socket disconnects. Let's make sure the destructor handles lingering file descriptors cleanly.",
+    text: `Great progress on the connection pooling PR! I left a review note regarding RAII cleanup under unexpected socket disconnects. Let's make sure the destructor handles lingering file descriptors cleanly.`,
     time: '2:15 PM',
   },
   {
     id: 'c-2',
-    sender: 'Ahmad Al-Hassan',
+    sender: effectiveName,
     role: 'Junior Backend',
-    initials: 'AH',
+    initials: effectiveInitials,
     avatarBg: 'bg-[#6E8F75]',
     text: "Thanks Tariq! I've updated the RAII wrapper to call `close()` in `noexcept` destructor and verified via Valgrind. Re-pushed commit `3f8a92c`.",
     time: '2:30 PM',
@@ -204,14 +207,14 @@ const initialChatMessages: ChatMessage[] = [
 ];
 
 const initialCommits: CommitItem[] = [
-  { id: 'cm-1', hash: '3f8a92c', message: 'fix(socket): ensure noexcept RAII socket cleanup in destructor', author: 'Ahmad Al-Hassan', time: '18m ago', branch: 'feat/epoll-socket-pool' },
+  { id: 'cm-1', hash: '3f8a92c', message: 'fix(socket): ensure noexcept RAII socket cleanup in destructor', author: effectiveName, time: '18m ago', branch: 'feat/epoll-socket-pool' },
   { id: 'cm-2', hash: '9b10a4e', message: 'feat(proto): add ingestion latency metrics to proto message', author: 'Layla Nasser', time: '2h ago', branch: 'feat/proto-metrics' },
   { id: 'cm-3', hash: '1d7f88a', message: 'ci(actions): add clang-format and cppcheck linter step', author: 'Omar Farooq', time: '5h ago', branch: 'main' },
 ];
 
 const initialFiles: UploadedFile[] = [
   { name: 'architecture_diagram_v3.png', size: '2.4 MB', uploader: 'Tariq Al-Mansoor', date: 'Yesterday' },
-  { name: 'valgrind_memory_benchmark.pdf', size: '840 KB', uploader: 'Ahmad Al-Hassan', date: 'Today' },
+  { name: 'valgrind_memory_benchmark.pdf', size: '840 KB', uploader: effectiveName, date: 'Today' },
 ];
 
 export default function ProjectWorkspacePage() {
@@ -230,9 +233,9 @@ export default function ProjectWorkspacePage() {
     if (!chatInput.trim()) return;
     const newMsg: ChatMessage = {
       id: `c-${Date.now()}`,
-      sender: userProfile.fullName || 'Ahmad Al-Hassan',
+      sender: effectiveName,
       role: isStudent ? 'University Intern' : 'Junior Backend Engineer',
-      initials: 'AH',
+      initials: effectiveInitials,
       avatarBg: 'bg-[#6E8F75]',
       text: chatInput.trim(),
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -259,7 +262,7 @@ export default function ProjectWorkspacePage() {
       const newFile: UploadedFile = {
         name: file.name,
         size: `${(file.size / 1024).toFixed(0)} KB`,
-        uploader: userProfile.fullName || 'Ahmad Al-Hassan',
+        uploader: userProfile.fullName || 'Candidate',
         date: 'Just now',
       };
       setUploadedFiles((prev) => [newFile, ...prev]);
@@ -272,7 +275,7 @@ export default function ProjectWorkspacePage() {
       const newFile: UploadedFile = {
         name: file.name,
         size: `${(file.size / 1024).toFixed(0)} KB`,
-        uploader: userProfile.fullName || 'Ahmad Al-Hassan',
+        uploader: userProfile.fullName || 'Candidate',
         date: 'Just now',
       };
       setUploadedFiles((prev) => [newFile, ...prev]);

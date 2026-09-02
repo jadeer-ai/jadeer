@@ -97,7 +97,7 @@ const DEFAULT_COMPLETED_RUBRIC: HumanInterviewRubric = {
   problemSolving: 92,
   technicalArticulation: 95,
   summaryNotes:
-    'Ahmad demonstrated stellar depth in asynchronous socket multiplexing with Linux epoll and modern C++20 memory management. His ability to articulate architectural trade-offs during live systems probing was outstanding.',
+    'Candidate demonstrated stellar depth in asynchronous socket multiplexing with Linux epoll and modern C++20 memory management. His ability to articulate architectural trade-offs during live systems probing was outstanding.',
   strengths: [
     'Command of RAII, thread safety, and zero-cost abstraction principles in C++20 and Go.',
     'High-level clarity when defending cache-aside vs. write-through invalidation topologies.',
