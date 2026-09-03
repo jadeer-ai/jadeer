@@ -5,6 +5,9 @@ import { useUserProfile } from '@/contexts/UserProfileContext';
 import { useUserRole } from '@/contexts/UserRoleContext';
 import { useCandidateJourney } from '@/contexts/CandidateJourneyContext';
 import { AdminApiService } from '@/services/adminService';
+import { useDashboardConsultations } from '@/hooks/useDashboardConsultations';
+import { useDashboardHumanCalibration } from '@/hooks/useDashboardHumanCalibration';
+import DashboardCalibrationCard from '@/components/dashboard/DashboardCalibrationCard';
 import {
   Calendar,
   ArrowRight,
@@ -17,6 +20,9 @@ import {
   UserCheck,
   User,
   Briefcase,
+  CalendarCheck2,
+  Building2,
+  ExternalLink,
 } from 'lucide-react';
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -37,44 +43,6 @@ interface JourneyPhase {
   status: 'completed' | 'current' | 'upcoming';
 }
 
-const journeyPhases: JourneyPhase[] = [
-  {
-    id: 'onboarding',
-    step: '01',
-    name: 'Profile Onboarding',
-    desc: 'Identity & Track Binding',
-    status: 'completed',
-  },
-  {
-    id: 'ai-assessment',
-    step: '02',
-    name: 'AI Assessment',
-    desc: 'Adaptive Technical Interview',
-    status: 'current',
-  },
-  {
-    id: 'human-calibration',
-    step: '03',
-    name: 'Human Calibration',
-    desc: 'Mentor Verification Pod',
-    status: 'upcoming',
-  },
-  {
-    id: 'evidence-dossier',
-    step: '04',
-    name: 'Evidence Dossier',
-    desc: 'Verified Skills Portfolio',
-    status: 'upcoming',
-  },
-  {
-    id: 'job-matching',
-    step: '05',
-    name: 'Internship Matching',
-    desc: 'Evidence-Backed Hiring',
-    status: 'upcoming',
-  },
-];
-
 export default function StudentDashboardPage() {
   const { userRole, lockedTrack } = useUserRole();
   const { isOnboarded } = useCandidateJourney();
@@ -87,12 +55,15 @@ export default function StudentDashboardPage() {
   const clerkEmail = clerkUser?.primaryEmailAddress?.emailAddress;
   const clerkImage = clerkUser?.imageUrl;
 
+  const candidateUserId = clerkUser?.id || '';
+  const { consultations, activeCount, totalCount } = useDashboardConsultations(candidateUserId);
+  const calibration = useDashboardHumanCalibration(candidateUserId);
+
   // Load unified candidate profile from AdminApiService (bound to single User_ID)
   const unifiedData = useMemo(() => {
-    return AdminApiService.getUnifiedCandidateProfile('usr-cnd-001');
-  }, []);
+    return AdminApiService.getUnifiedCandidateProfile(candidateUserId);
+  }, [candidateUserId]);
 
-  const consultations = unifiedData.consultations;
   const user = unifiedData.user;
   const profile = user.studentProfile;
   const activeTrack = userProfile.track || lockedTrack || (clerkUser?.publicMetadata?.track as string) || profile?.softwareTrack || 'Backend Development';
@@ -100,6 +71,45 @@ export default function StudentDashboardPage() {
   const effectiveEmail = userProfile.email || clerkEmail || user?.email || 'ahmad.student@example.com';
   const effectiveImage = userProfile.imageUrl || clerkImage;
   const effectiveUniversity = userProfile.university || (clerkUser?.publicMetadata?.university as string) || profile?.university || 'KFUPM';
+
+  // Derived dynamic journey phases based on real Supabase calibration state
+  const journeyPhases: JourneyPhase[] = useMemo(() => [
+    {
+      id: 'onboarding',
+      step: '01',
+      name: 'Profile Onboarding',
+      desc: 'Identity & Track Binding',
+      status: 'completed',
+    },
+    {
+      id: 'ai-assessment',
+      step: '02',
+      name: 'AI Assessment',
+      desc: 'Adaptive Technical Interview',
+      status: calibration.state === 'completed' || calibration.state === 'confirmed' || calibration.state === 'choose_time' ? 'completed' : 'current',
+    },
+    {
+      id: 'human-calibration',
+      step: '03',
+      name: 'Human Calibration',
+      desc: 'Mentor Verification Pod',
+      status: calibration.state === 'completed' ? 'completed' : calibration.state === 'confirmed' || calibration.state === 'choose_time' ? 'current' : 'upcoming',
+    },
+    {
+      id: 'evidence-dossier',
+      step: '04',
+      name: 'Evidence Dossier',
+      desc: 'Verified Skills Portfolio',
+      status: calibration.state === 'completed' ? 'current' : 'upcoming',
+    },
+    {
+      id: 'job-matching',
+      step: '05',
+      name: 'Internship Matching',
+      desc: 'Evidence-Backed Hiring',
+      status: 'upcoming',
+    },
+  ], [calibration.state]);
 
   // Auto-redirect if user signed up via social login and lacks custom profile fields
   useEffect(() => {
@@ -132,7 +142,7 @@ export default function StudentDashboardPage() {
               <span className="text-slate-300">•</span>
               <span className="font-mono text-slate-400 text-[11px]">User_ID: {clerkUser?.id || user.id}</span>
               <span className="text-slate-300">•</span>
-              <span className="font-mono text-slate-400 text-[11px]">Student_ID: {profile?.id || 'stu-001'}</span>
+              <span className="font-mono text-slate-400 text-[11px]">Student_ID: {profile?.id || (candidateUserId ? `stu-${candidateUserId.slice(-6)}` : 'stu-live')}</span>
               <span className="text-slate-300">•</span>
               <span className="inline-flex items-center gap-1.5 text-[#5E8174] bg-[#5E8174]/10 border border-[#5E8174]/20 px-2 py-0.5 rounded-full font-medium text-[11px]">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#5E8174]" />
@@ -183,11 +193,11 @@ export default function StudentDashboardPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-slate-100">
           <div className="p-3.5 rounded-2xl bg-[#F4F0E8]/80 border border-[#E8E2D5]">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Validation Stage</p>
-            <p className="text-base font-bold text-[#0F172A] mt-0.5">Phase 2: AI Interview</p>
+            <p className="text-base font-bold text-[#0F172A] mt-0.5">{calibration.validationStageLabel}</p>
           </div>
           <div className="p-3.5 rounded-2xl bg-[#F8F9FA] border border-slate-200/60">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Consultations</p>
-            <p className="text-base font-bold text-[#5E8174] mt-0.5">{consultations.length} Active Bookings</p>
+            <p className="text-base font-bold text-[#5E8174] mt-0.5">{activeCount} Active Bookings</p>
           </div>
           <div className="p-3.5 rounded-2xl bg-[#F8F9FA] border border-slate-200/60">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Telemetry Score</p>
@@ -217,7 +227,7 @@ export default function StudentDashboardPage() {
           </div>
           <span className="text-xs font-semibold text-[#5E8174] bg-[#5E8174]/10 border border-[#5E8174]/20 px-3 py-1 rounded-full flex items-center gap-1.5 w-fit">
             <span className="w-1.5 h-1.5 rounded-full bg-[#5E8174] animate-pulse" />
-            <span>Phase 2 of 5 • En Route to Internship Matching</span>
+            <span>Phase {calibration.stepperPhaseNumber} of 5 • En Route to Internship Matching</span>
           </span>
         </div>
 
@@ -417,7 +427,7 @@ export default function StudentDashboardPage() {
                   to="/consultations"
                   className="text-xs font-semibold text-[#5E8174] hover:text-[#4D6D62] transition-colors"
                 >
-                  View All ({consultations.length}) →
+                  View All ({totalCount}) →
                 </Link>
               </div>
 
@@ -478,7 +488,14 @@ export default function StudentDashboardPage() {
                                 month: 'short',
                                 day: 'numeric',
                               })}
+                              {session.timeLabel ? ` • ${session.timeLabel}` : ''}
                             </span>
+                            {session.timezone && (
+                              <>
+                                <span className="text-slate-300">•</span>
+                                <span className="text-slate-400 font-mono text-[10px]">{session.timezone}</span>
+                              </>
+                            )}
                             <span className="text-slate-300">•</span>
                             <span className="text-slate-400">{session.durationMinutes} mins</span>
                             {session.meetingLink && (
@@ -552,45 +569,12 @@ export default function StudentDashboardPage() {
                 </Link>
               </div>
 
-              {/* Assessment Readiness Card */}
-              <div className="p-4 rounded-2xl bg-[#F8F9FA] border border-slate-200/60 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                    Target Technical Assessment
-                  </span>
-                  <span className="text-[11px] font-semibold text-[#5E8174] bg-[#5E8174]/10 border border-[#5E8174]/20 px-2.5 py-0.5 rounded-full">
-                    Adaptive C++ & Systems
-                  </span>
-                </div>
-
-                <div className="space-y-1">
-                  <h4 className="text-[14px] font-bold text-[#0F172A]">
-                    C++20 Object-Oriented Design & Memory Layout
-                  </h4>
-                  <p className="text-[12px] text-[#334155] leading-relaxed">
-                    Evaluates polymorphic dispatch, RAII, exception safety, and cache-friendly data structures to unlock verified internship badges.
-                  </p>
-                </div>
-
-                {/* Capability Dimensions Bar */}
-                <div className="space-y-2 pt-2 border-t border-slate-200/60">
-                  <div className="flex items-center justify-between text-[11px] font-medium">
-                    <span className="text-[#334155]">System Design & Memory Guarantees</span>
-                    <span className="font-bold text-[#0F172A]">92%</span>
-                  </div>
-                  <div className="w-full h-2 rounded-full bg-slate-200/80 overflow-hidden">
-                    <div className="h-full rounded-full bg-[#5E8174]" style={{ width: '92%' }} />
-                  </div>
-
-                  <div className="flex items-center justify-between text-[11px] font-medium pt-1">
-                    <span className="text-[#334155]">Algorithmic Efficiency & Concurrency</span>
-                    <span className="font-bold text-[#0F172A]">85%</span>
-                  </div>
-                  <div className="w-full h-2 rounded-full bg-slate-200/80 overflow-hidden">
-                    <div className="h-full rounded-full bg-[#84A98C]" style={{ width: '85%' }} />
-                  </div>
-                </div>
-              </div>
+              {/* Human Calibration Status Card (Authoritative Supabase State) */}
+              <DashboardCalibrationCard
+                calibration={calibration}
+                track={activeTrack}
+                isStudent={true}
+              />
 
               {/* Verified Badges & Proof Chips */}
               <div className="space-y-2">
@@ -642,6 +626,91 @@ export default function StudentDashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* ═══════════════════════════════════════════════════════════════
+         5. UPCOMING INTERVIEWS & CALIBRATION (SYNCED FROM JADEER)
+         ═══════════════════════════════════════════════════════════════ */}
+      {calibration.state === 'confirmed' && calibration.confirmedDetails && (
+        <div className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.03)] overflow-hidden">
+          <div className="flex items-center justify-between px-6 sm:px-8 py-5 border-b border-slate-100">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-[#5E8174]/10 text-[#5E8174] flex items-center justify-center">
+                <CalendarCheck2 className="w-4 h-4" />
+              </div>
+              <div>
+                <h2 className="text-[14px] font-bold text-[#0F172A]">Upcoming Calibration Session</h2>
+                <p className="text-[11px] text-slate-400 font-medium">Synchronized directly through Jadeer</p>
+              </div>
+            </div>
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-[#5E8174] bg-[#5E8174]/10 border border-[#5E8174]/20 px-2.5 py-0.5 rounded-full">
+              1 confirmed
+            </span>
+          </div>
+
+          <div className="divide-y divide-slate-100">
+            <div className="px-6 sm:px-8 py-5 hover:bg-slate-50/60 transition-colors">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-4 min-w-0">
+                  <div className="w-11 h-11 rounded-xl bg-slate-100 text-[#0F172A] flex items-center justify-center text-[13px] font-bold shrink-0 shadow-2xs">
+                    <Building2 className="w-5 h-5 text-[#334155]" />
+                  </div>
+                  <div className="min-w-0 space-y-1">
+                    <h3 className="text-[14px] font-bold text-[#0F172A]">
+                      {calibration.confirmedDetails.interviewerCompany}
+                    </h3>
+                    <p className="text-[13px] text-[#334155] font-medium">
+                      Human Calibration • {calibration.confirmedDetails.interviewerName}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                      <span className="flex items-center gap-1 text-[12px] font-semibold text-[#334155]">
+                        <CalendarCheck2 className="w-3.5 h-3.5 text-[#5E8174]" />
+                        {calibration.confirmedDetails.scheduledDate}
+                      </span>
+                      <span className="flex items-center gap-1 text-[12px] font-semibold text-[#334155]">
+                        <Clock className="w-3.5 h-3.5 text-[#5E8174]" />
+                        {calibration.confirmedDetails.scheduledTime}
+                      </span>
+                      <span className="text-[11px] text-slate-400 font-medium">
+                        {calibration.confirmedDetails.timezone}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-end gap-2 shrink-0">
+                  <span className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border bg-slate-100 text-[#334155] border-slate-200">
+                    <UserCheck className="w-3 h-3 text-[#5E8174]" />
+                    Human Calibration
+                  </span>
+                  {calibration.confirmedDetails.meetingUrl && (
+                    <a
+                      href={calibration.confirmedDetails.meetingUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-[11px] font-semibold text-[#5E8174] hover:text-[#4D6D62] transition-colors"
+                    >
+                      <Video className="w-3.5 h-3.5" />
+                      Join Meeting
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
+                  {calibration.confirmedDetails.googleCalendarSyncStatus === 'synced' && (
+                    <a
+                      href={calibration.confirmedDetails.googleCalendarHtmlLink || 'https://calendar.google.com'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-[11px] font-semibold text-[#5E8174] hover:underline"
+                    >
+                      <CalendarCheck2 className="w-3 h-3 text-[#5E8174]" />
+                      <span>Google Calendar</span>
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

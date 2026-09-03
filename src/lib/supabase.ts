@@ -9,8 +9,14 @@
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim() || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim() || '';
+const supabaseUrl =
+  (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_SUPABASE_URL?.trim()) ||
+  (typeof process !== 'undefined' && process.env.VITE_SUPABASE_URL?.trim()) ||
+  '';
+const supabaseAnonKey =
+  (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_SUPABASE_ANON_KEY?.trim()) ||
+  (typeof process !== 'undefined' && process.env.VITE_SUPABASE_ANON_KEY?.trim()) ||
+  '';
 
 /**
  * Checks whether legitimate hosted Supabase credentials are configured.

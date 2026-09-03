@@ -1,17 +1,33 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    JADEER — 1-TO-1 TECHNICAL CONSULTATION CLIENT SERVICE (SUPABASE PRODUCTION)
    ─────────────────────────────────────────────────────────────────────────
-   Official Supabase client service for Candidate 1-to-1 Consultations:
-   - Queries PostgREST tables under Row Level Security (RLS)
-   - Invokes PostgreSQL transactional RPCs:
-     * book_session_atomic (with session_type = 'consultation')
-     * reschedule_session_atomic (same consultant invariant)
-     * cancel_session_atomic (releases slot back to available)
-     * submit_consultation_outcome_atomic (consultant deliverable entry)
-   - Zero dependence on local Vite development server middleware in production.
+   Production Supabase client service for Candidate 1-to-1 Consultations.
+   Uses SECURITY DEFINER RPCs that accept Clerk user IDs directly (no Supabase
+   Auth session required). All candidate reads go through RPC — never raw SELECT.
+
+   Supabase operations:
+     • ensure_candidate_profile       — upsert user + student_profile rows
+     • get_my_sessions                — consultation history (SDRF)
+     • get_consultation_outcome       — outcome + action items (SDRF)
+     • book_session_atomic            — atomic slot lock + session create
+     • reschedule_session_atomic      — atomic slot swap, same consultant
+     • cancel_session_atomic          — cancel + slot release
+     • experts                        — consultant list (PostgREST, RLS-public)
+     • expert_availability_slots      — available slots (PostgREST, RLS-public)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import {
+  syncSessionToCalendar,
+  deleteCalendarEvent,
+} from './googleCalendarClient';
+
+/* ── isDev: explicit development-only demo flag ─────────────────────────── */
+const isDev = import.meta.env.DEV === true && import.meta.env.VITE_ENABLE_MOCK_DATA === 'true';
+
+/* ════════════════════════════════════════════════════════
+   INTERFACES
+   ════════════════════════════════════════════════════════ */
 
 export interface ConsultationTopic {
   id: string;
@@ -89,6 +105,9 @@ export interface BookConsultationResult {
     company: string;
     factualCredential: string;
   };
+  googleCalendarEventId?: string | null;
+  googleCalendarSyncStatus?: 'not_connected' | 'pending' | 'synced' | 'failed';
+  googleCalendarHtmlLink?: string | null;
 }
 
 export interface CandidateConsultationItem {
@@ -122,6 +141,11 @@ export interface CandidateConsultationItem {
     createdAt: string;
     updatedAt: string;
   };
+  googleCalendarEventId?: string | null;
+  googleCalendarSyncStatus?: 'not_connected' | 'pending' | 'synced' | 'failed';
+  googleCalendarSyncedAt?: string | null;
+  googleCalendarLastError?: string | null;
+  googleCalendarHtmlLink?: string | null;
 }
 
 export interface RescheduleConsultationParams {
@@ -153,11 +177,7 @@ export interface ConsultationOutcomeResult {
   hasOutcome: boolean;
   sessionId?: string;
   status?: string;
-  consultant?: {
-    fullName: string;
-    title: string;
-    company: string;
-  };
+  consultant?: { fullName: string; title: string; company: string };
   topic?: string;
   topicTitle?: string;
   goal?: string;
@@ -180,23 +200,9 @@ export interface SubmitOutcomeParams {
   deliverables?: any;
 }
 
-function toDateKey(iso: string): string {
-  try {
-    return new Date(iso).toISOString().split('T')[0];
-  } catch {
-    return iso.substring(0, 10);
-  }
-}
-
-function toTimeLabel(startIso: string, endIso: string): string {
-  try {
-    const s = new Date(startIso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-    const e = new Date(endIso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-    return `${s} – ${e}`;
-  } catch {
-    return `${startIso} - ${endIso}`;
-  }
-}
+/* ════════════════════════════════════════════════════════
+   STATIC DATA
+   ════════════════════════════════════════════════════════ */
 
 const STANDARDIZED_TOPICS: ConsultationTopic[] = [
   {
@@ -279,614 +285,449 @@ const STANDARDIZED_TOPICS: ConsultationTopic[] = [
   },
 ];
 
-export const FALLBACK_CONSULTANTS: FactualConsultant[] = [
-  {
-    id: 'exp-khaled-hamdy',
-    fullName: 'Eng. Khaled Hamdy',
-    initials: 'KH',
-    title: 'Principal Backend Architect',
-    company: 'Jadeer Senior Mentor',
-    bio: 'Specialized in microservices architecture, asynchronous event buses with Kafka, and database sharding at scale.',
-    track: 'Backend Development',
-    specialties: ['Microservices', 'Kafka & Event Streaming', 'PostgreSQL & Sharding', 'System Design'],
-    rating: 4.9,
-    reviewCount: 29,
-    sessionsCompleted: 78,
-    factualCredential: 'Jadeer Senior Mentor',
-    nextAvailable: 'Thursday, Sep 10',
-  },
-  {
-    id: 'exp-yasmin-farouk',
-    fullName: 'Eng. Yasmin Farouk',
-    initials: 'YF',
-    title: 'Staff Frontend Architect',
-    company: 'Jadeer UI/UX Panel',
-    bio: 'Designing high-performance web applications, design systems with React 19, and accessible micro-frontends with ultra-fast Core Web Vitals.',
-    track: 'Frontend Development',
-    specialties: ['React 19 & Next.js', 'TypeScript', 'Design Systems', 'Web Performance'],
-    rating: 4.9,
-    reviewCount: 24,
-    sessionsCompleted: 92,
-    factualCredential: 'Jadeer Senior Mentor',
-    nextAvailable: 'Friday, Sep 11',
-  },
-  {
-    id: 'exp-nour-eldin',
-    fullName: 'Dr. Nour El-Din',
-    initials: 'ND',
-    title: 'Staff AI Research Engineer',
-    company: 'Jadeer AI Lead',
-    bio: 'PhD in Deep Learning and LLM architecture. Experienced in PyTorch distributed training, RAG vector pipelines, and inference optimization.',
-    track: 'AI & Data Engineering',
-    specialties: ['PyTorch & LLMs', 'Vector Databases', 'Data Pipelines', 'Model Quantization'],
-    rating: 4.98,
-    reviewCount: 31,
-    sessionsCompleted: 74,
-    factualCredential: 'Jadeer AI Research Fellow',
-    nextAvailable: 'Saturday, Sep 12',
-  },
-  {
-    id: 'exp-sarah-tamimi',
-    fullName: 'Eng. Sarah Al-Tamimi',
-    initials: 'ST',
-    title: 'Principal Cloud & DevOps Architect',
-    company: 'Jadeer Infrastructure Lead',
-    bio: 'Cloud-native Kubernetes orchestration, zero-downtime CI/CD deployments, and infrastructure resilience on AWS & GCP.',
-    track: 'DevOps & Cloud Engineering',
-    specialties: ['Kubernetes', 'Terraform & CI/CD', 'AWS & GCP Infrastructure', 'Site Reliability'],
-    rating: 4.92,
-    reviewCount: 42,
-    sessionsCompleted: 115,
-    factualCredential: 'Verified Cloud Mentor',
-    nextAvailable: 'Friday, Sep 11',
-  },
-];
+/* Mock data — only shown when isDev=true */
+export const FALLBACK_CONSULTANTS: FactualConsultant[] = [];
+export const FALLBACK_CONSULTATION_SLOTS: Record<string, ConsultationSlot[]> = {};
 
-export const FALLBACK_CONSULTATION_SLOTS: Record<string, ConsultationSlot[]> = {
-  'exp-khaled-hamdy': [
-    {
-      id: 'c-slot-kh-1',
-      expertId: 'exp-khaled-hamdy',
-      dateKey: 'Thursday, Sep 10',
-      timeLabel: '11:00 AM – 12:00 PM',
-      startTime: '2026-09-10T11:00:00+03:00',
-      endTime: '2026-09-10T12:00:00+03:00',
-      timezone: 'Asia/Riyadh (GMT+3)',
-      status: 'available',
-    },
-    {
-      id: 'c-slot-kh-2',
-      expertId: 'exp-khaled-hamdy',
-      dateKey: 'Thursday, Sep 10',
-      timeLabel: '3:00 PM – 4:00 PM',
-      startTime: '2026-09-10T15:00:00+03:00',
-      endTime: '2026-09-10T16:00:00+03:00',
-      timezone: 'Asia/Riyadh (GMT+3)',
-      status: 'available',
-    },
-  ],
-  'exp-sarah-tamimi': [
-    {
-      id: 'c-slot-st-1',
-      expertId: 'exp-sarah-tamimi',
-      dateKey: 'Friday, Sep 11',
-      timeLabel: '2:00 PM – 3:00 PM',
-      startTime: '2026-09-11T14:00:00+03:00',
-      endTime: '2026-09-11T15:00:00+03:00',
-      timezone: 'Asia/Riyadh (GMT+3)',
-      status: 'available',
-    },
-  ],
-};
+/* ════════════════════════════════════════════════════════
+   UTILITY HELPERS
+   ════════════════════════════════════════════════════════ */
 
-/* ── 1. Fetch Standardized Consultation Topics ──────────────────────────── */
+function toDateKey(iso: string): string {
+  try { return new Date(iso).toISOString().split('T')[0]; } catch { return iso.substring(0, 10); }
+}
+
+function toTimeLabel(startIso: string, endIso: string): string {
+  try {
+    const s = new Date(startIso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    const e = new Date(endIso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    return `${s} – ${e}`;
+  } catch { return `${startIso} - ${endIso}`; }
+}
+
+function mapConsultant(exp: any): FactualConsultant {
+  return {
+    id: exp.id,
+    fullName: exp.full_name,
+    initials: exp.initials || (exp.full_name?.split(' ').map((w: string) => w[0]).join('') || '?'),
+    title: exp.title,
+    company: exp.company,
+    bio: exp.bio || '',
+    track: exp.track,
+    specialties: exp.specialties || [],
+    rating: Number(exp.rating) || 5.0,
+    reviewCount: Number(exp.review_count) || 0,
+    sessionsCompleted: Number(exp.sessions_completed) || 0,
+    factualCredential: `${exp.title} • ${exp.company}`,
+  };
+}
+
+/* ════════════════════════════════════════════════════════
+   1. CONSULTATION TOPICS (static)
+   ════════════════════════════════════════════════════════ */
 export async function getConsultationTopics(): Promise<ConsultationTopic[]> {
   return STANDARDIZED_TOPICS;
 }
 
-/* ── 2. Query Eligible Consultants (Eligible by Candidate Track) ────────── */
+/* ════════════════════════════════════════════════════════
+   2. ELIGIBLE CONSULTANTS
+   All active consultants visible to any candidate.
+   Topic is context only — does NOT filter eligibility.
+   Track filter is advisory (shows best matches first) but
+   falls back to all active consultants if no track match.
+   ════════════════════════════════════════════════════════ */
 export async function getEligibleConsultants(
-  candidateTrack?: string
+  _candidateTrack?: string
 ): Promise<FactualConsultant[]> {
-  if (isSupabaseConfigured) {
-    let query = supabase
-      .from('experts')
-      .select('id, role, full_name, initials, title, company, bio, track, specialties, rating, review_count, sessions_completed')
-      .in('role', ['CONSULTANT', 'BOTH']);
-
-    if (candidateTrack) {
-      const norm = candidateTrack.toUpperCase().includes('BACKEND') ? 'BACKEND' : candidateTrack.toUpperCase();
-      query = query.eq('track', norm);
-    }
-
-    const { data, error } = await query;
-    if (!error && data && data.length > 0) {
-      return data.map((exp: any) => ({
-        id: exp.id,
-        fullName: exp.full_name,
-        initials: exp.initials,
-        title: exp.title,
-        company: exp.company,
-        bio: exp.bio || '',
-        track: exp.track,
-        specialties: exp.specialties || [],
-        rating: Number(exp.rating) || 5.0,
-        reviewCount: Number(exp.review_count) || 0,
-        sessionsCompleted: Number(exp.sessions_completed) || 0,
-        factualCredential: `${exp.title} • ${exp.company}`,
-      }));
-    }
+  if (!isSupabaseConfigured) {
+    if (isDev) return FALLBACK_CONSULTANTS;
+    throw new Error('Supabase is not configured. Cannot load consultants.');
   }
 
-  try {
-    const params = new URLSearchParams();
-    if (candidateTrack) params.set('track', candidateTrack);
+  // All active consultants — show all regardless of track (topic/track are context only)
+  const { data, error } = await supabase
+    .from('experts')
+    .select('id, role, full_name, initials, title, company, bio, track, specialties, rating, review_count, sessions_completed')
+    .in('role', ['CONSULTANT', 'BOTH'])
+    .eq('is_active', true)
+    .order('rating', { ascending: false });
 
-    const res = await fetch(`/api/consultations/eligible-consultants?${params.toString()}`);
-    if (!res.ok) throw new Error('Failed to fetch eligible consultants');
-    const data = await res.json();
-    return data.consultants || FALLBACK_CONSULTANTS;
-  } catch {
-    if (candidateTrack) {
-      const norm = candidateTrack.toLowerCase();
-      const filtered = FALLBACK_CONSULTANTS.filter((c) =>
-        c.track.toLowerCase().includes(norm) || norm.includes(c.track.toLowerCase())
-      );
-      return filtered.length > 0 ? filtered : FALLBACK_CONSULTANTS;
-    }
-    return FALLBACK_CONSULTANTS;
-  }
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) return [];
+
+  return data.map(mapConsultant);
 }
 
-/** Domain-level alias requested by architecture */
+/** Domain-level alias */
 export const getConsultantsForTrack = getEligibleConsultants;
 
-/* ── 3. Get Scoped Availability for Selected Consultant ─────────────────── */
+/* ════════════════════════════════════════════════════════
+   3. CONSULTANT AVAILABILITY SLOTS
+   ════════════════════════════════════════════════════════ */
 export async function getConsultantAvailability(
   consultantId: string
-): Promise<{
-  consultant: any;
-  slots: Record<string, ConsultationSlot[]>;
-  totalAvailable: number;
-}> {
-  if (isSupabaseConfigured) {
-    const { data: expert } = await supabase
+): Promise<{ consultant: any; slots: Record<string, ConsultationSlot[]>; totalAvailable: number }> {
+  if (!isSupabaseConfigured) {
+    if (isDev) {
+      return { consultant: null, slots: {}, totalAvailable: 0 };
+    }
+    throw new Error('Supabase is not configured.');
+  }
+
+  const [expertResult, slotsResult] = await Promise.all([
+    supabase
       .from('experts')
       .select('id, full_name, initials, title, company')
       .eq('id', consultantId)
-      .maybeSingle();
-
-    const { data: slotsData, error } = await supabase
+      .maybeSingle(),
+    supabase
       .from('expert_availability_slots')
       .select('id, expert_id, start_time, end_time, timezone, status')
       .eq('expert_id', consultantId)
       .eq('status', 'available')
-      .order('start_time', { ascending: true });
+      .order('start_time', { ascending: true }),
+  ]);
 
-    if (!error && slotsData) {
-      const grouped: Record<string, ConsultationSlot[]> = {};
-      for (const s of slotsData) {
-        const dateKey = toDateKey(s.start_time);
-        const item: ConsultationSlot = {
-          id: s.id,
-          expertId: s.expert_id,
-          dateKey,
-          timeLabel: toTimeLabel(s.start_time, s.end_time),
-          startTime: s.start_time,
-          endTime: s.end_time,
-          timezone: s.timezone || 'Asia/Riyadh (GMT+3)',
-          status: 'available',
-        };
-        if (!grouped[dateKey]) grouped[dateKey] = [];
-        grouped[dateKey].push(item);
-      }
-      return {
-        consultant: expert
-          ? {
-              id: expert.id,
-              fullName: expert.full_name,
-              initials: expert.initials,
-              title: expert.title,
-              company: expert.company,
-              factualCredential: `${expert.title} • ${expert.company}`,
-            }
-          : null,
-        slots: grouped,
-        totalAvailable: slotsData.length,
-      };
-    }
+  if (slotsResult.error) throw new Error(slotsResult.error.message);
+
+  const expert = expertResult.data;
+  const slotsData = slotsResult.data || [];
+
+  const grouped: Record<string, ConsultationSlot[]> = {};
+  for (const s of slotsData) {
+    const dateKey = toDateKey(s.start_time);
+    const item: ConsultationSlot = {
+      id: s.id,
+      expertId: s.expert_id,
+      dateKey,
+      timeLabel: toTimeLabel(s.start_time, s.end_time),
+      startTime: s.start_time,
+      endTime: s.end_time,
+      timezone: s.timezone || 'Asia/Riyadh',
+      status: 'available',
+    };
+    if (!grouped[dateKey]) grouped[dateKey] = [];
+    grouped[dateKey].push(item);
   }
 
-  try {
-    const res = await fetch(
-      `/api/consultations/availability?consultantId=${encodeURIComponent(consultantId)}`
-    );
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || 'Failed to fetch consultant availability');
-    }
-    const data = await res.json();
-    return {
-      consultant: data.consultant,
-      slots: data.slots || {},
-      totalAvailable: data.totalAvailable || 0,
-    };
-  } catch {
-    const consultant = FALLBACK_CONSULTANTS.find((c) => c.id === consultantId) || null;
-    const slotsList = FALLBACK_CONSULTATION_SLOTS[consultantId] || [
-      {
-        id: `c-slot-${consultantId}-1`,
-        expertId: consultantId,
-        dateKey: 'Thursday, Sep 10',
-        timeLabel: '10:00 AM – 11:00 AM',
-        startTime: '2026-09-10T10:00:00+03:00',
-        endTime: '2026-09-10T11:00:00+03:00',
-        timezone: 'Asia/Riyadh (GMT+3)',
-        status: 'available',
-      },
-      {
-        id: `c-slot-${consultantId}-2`,
-        expertId: consultantId,
-        dateKey: 'Friday, Sep 11',
-        timeLabel: '3:00 PM – 4:00 PM',
-        startTime: '2026-09-11T15:00:00+03:00',
-        endTime: '2026-09-11T16:00:00+03:00',
-        timezone: 'Asia/Riyadh (GMT+3)',
-        status: 'available',
-      },
-    ];
-    const grouped: Record<string, ConsultationSlot[]> = {};
-    for (const s of slotsList) {
-      if (!grouped[s.dateKey]) grouped[s.dateKey] = [];
-      grouped[s.dateKey].push(s);
-    }
-    return {
-      consultant,
-      slots: grouped,
-      totalAvailable: slotsList.length,
-    };
-  }
+  return {
+    consultant: expert
+      ? {
+          id: expert.id,
+          fullName: expert.full_name,
+          initials: expert.initials,
+          title: expert.title,
+          company: expert.company,
+          factualCredential: `${expert.title} • ${expert.company}`,
+        }
+      : null,
+    slots: grouped,
+    totalAvailable: slotsData.length,
+  };
 }
 
-/* ── 4. Book Consultation Session (Atomic Slot Lock) ────────────────────── */
+/* ════════════════════════════════════════════════════════
+   4. BOOK CONSULTATION SESSION (Atomic)
+   ════════════════════════════════════════════════════════ */
 export async function bookConsultation(
   params: BookConsultationParams
 ): Promise<BookConsultationResult> {
-  if (isSupabaseConfigured) {
-    const { data, error } = await supabase.rpc('book_session_atomic', {
-      p_candidate_user_id: params.candidateUserId,
-      p_slot_id: params.slotId,
-      p_session_type: 'consultation',
-      p_consultation_topic: params.topic,
-      p_consultation_topic_title: params.topicTitle,
-      p_consultation_goal: params.goal || null,
-      p_consultation_message: params.candidateMessage || null,
-    });
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    const res = typeof data === 'string' ? JSON.parse(data) : data;
-    const expData = res.expert || {};
-    return {
-      success: true,
-      sessionId: res.session_id || res.id,
-      consultantId: params.consultantId,
-      topic: params.topic,
-      topicTitle: params.topicTitle,
-      goal: params.goal,
-      candidateMessage: params.candidateMessage,
-      slotId: res.slot_id,
-      dateKey: toDateKey(res.scheduled_start_time),
-      timeLabel: toTimeLabel(res.scheduled_start_time, res.scheduled_end_time),
-      scheduledStartTime: res.scheduled_start_time,
-      scheduledEndTime: res.scheduled_end_time,
-      timezone: res.timezone || params.timezone || 'Asia/Riyadh (GMT+3)',
-      meetingUrl: res.meeting_url,
-      status: res.status || 'scheduled',
-      message: 'Consultation confirmed successfully',
-      consultant: {
-        id: expData.id || params.consultantId,
-        fullName: expData.full_name || expData.fullName || 'Consultant',
-        initials: expData.initials || 'C',
-        title: expData.title || 'Technical Mentor',
-        company: expData.company || 'Jadeer',
-        factualCredential: `${expData.title || 'Mentor'} • ${expData.company || 'Jadeer'}`,
-      },
-    };
+  if (!isSupabaseConfigured) {
+    throw new Error('Supabase is not configured. Cannot book consultation.');
   }
 
-  const res = await fetch('/api/consultations/book', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      ...params,
-      timezone: params.timezone || 'Asia/Riyadh (GMT+3)',
-    }),
+  const { data, error } = await supabase.rpc('book_session_atomic', {
+    p_candidate_user_id: params.candidateUserId,
+    p_slot_id: params.slotId,
+    p_session_type: 'consultation',
+    p_consultation_topic: params.topic,
+    p_consultation_topic_title: params.topicTitle,
+    p_consultation_goal: params.goal || null,
+    p_consultation_message: params.candidateMessage || null,
+    p_timezone: params.timezone || 'Asia/Riyadh',
   });
 
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.error || 'Failed to book consultation session');
+  if (error) throw new Error(error.message);
+
+  const res = typeof data === 'string' ? JSON.parse(data) : (data as any);
+  const expData = res.expert || {};
+
+  const result: BookConsultationResult = {
+    success: true,
+    sessionId: res.session_id || res.id,
+    consultantId: params.consultantId,
+    topic: params.topic,
+    topicTitle: params.topicTitle,
+    goal: params.goal,
+    candidateMessage: params.candidateMessage,
+    slotId: res.slot_id,
+    dateKey: toDateKey(res.scheduled_start_time),
+    timeLabel: toTimeLabel(res.scheduled_start_time, res.scheduled_end_time),
+    scheduledStartTime: res.scheduled_start_time,
+    scheduledEndTime: res.scheduled_end_time,
+    timezone: res.timezone || params.timezone || 'Asia/Riyadh',
+    meetingUrl: res.meeting_url,
+    status: res.status || 'scheduled',
+    message: 'Consultation confirmed successfully',
+    consultant: {
+      id: expData.id || params.consultantId,
+      fullName: expData.full_name || expData.fullName || 'Consultant',
+      initials: expData.initials || 'C',
+      title: expData.title || 'Technical Mentor',
+      company: expData.company || 'Jadeer',
+      factualCredential: `${expData.title || 'Mentor'} • ${expData.company || 'Jadeer'}`,
+    },
+  };
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('jadeer:consultations-changed'));
   }
 
-  return res.json();
+  // External Google Calendar sync (background task, non-blocking)
+  syncSessionToCalendar({
+    sessionId: result.sessionId,
+    candidateUserId: params.candidateUserId,
+    sessionType: 'consultation',
+    scheduledStartTime: result.scheduledStartTime,
+    scheduledEndTime: result.scheduledEndTime,
+    timezone: result.timezone || 'Asia/Riyadh',
+    meetingUrl: result.meetingUrl,
+    expertName: result.consultant.fullName,
+    expertTitle: result.consultant.title,
+    topicTitle: result.topicTitle,
+  }).catch(() => {
+    // Non-blocking
+  });
+
+  return result;
 }
 
-/* ── 5. Get All Candidate Consultations (Active & Completed History) ────── */
+/* ════════════════════════════════════════════════════════
+   5. MY CONSULTATIONS (Active & Completed History)
+   ════════════════════════════════════════════════════════ */
 export async function getMyConsultations(
-  candidateUserId = 'usr-cand-001'
+  candidateUserId: string
 ): Promise<CandidateConsultationItem[]> {
-  if (isSupabaseConfigured) {
-    const { data, error } = await supabase
-      .from('sessions')
-      .select(`
-        id,
-        status,
-        slot_id,
-        scheduled_start_time,
-        scheduled_end_time,
-        timezone,
-        meeting_url,
-        created_at,
-        experts (
-          id,
-          full_name,
-          initials,
-          title,
-          company
-        ),
-        consultation_details (
-          id,
-          topic,
-          topic_title,
-          goal,
-          candidate_message,
-          outcome_summary,
-          action_items,
-          deliverables,
-          created_at,
-          updated_at
-        )
-      `)
-      .eq('candidate_user_id', candidateUserId)
-      .eq('session_type', 'consultation')
-      .neq('status', 'cancelled')
-      .order('scheduled_start_time', { ascending: false });
-
-    if (!error && data) {
-      return data.map((s: any) => {
-        const exp = Array.isArray(s.experts) ? s.experts[0] : s.experts;
-        const cd = Array.isArray(s.consultation_details) ? s.consultation_details[0] : s.consultation_details;
-        return {
-          sessionId: s.id,
-          status: s.status,
-          slotId: s.slot_id,
-          dateKey: toDateKey(s.scheduled_start_time),
-          timeLabel: toTimeLabel(s.scheduled_start_time, s.scheduled_end_time),
-          scheduledStartTime: s.scheduled_start_time,
-          scheduledEndTime: s.scheduled_end_time,
-          timezone: s.timezone || 'Asia/Riyadh (GMT+3)',
-          meetingUrl: s.meeting_url,
-          consultant: {
-            id: exp?.id || '',
-            fullName: exp?.full_name || 'Consultant',
-            initials: exp?.initials || 'C',
-            title: exp?.title || 'Technical Mentor',
-            company: exp?.company || 'Jadeer',
-            factualCredential: `${exp?.title || 'Mentor'} • ${exp?.company || 'Jadeer'}`,
-          },
-          consultationDetails: cd
-            ? {
-                id: cd.id,
-                sessionId: s.id,
-                topic: cd.topic,
-                topicTitle: cd.topic_title,
-                goal: cd.goal,
-                candidateMessage: cd.candidate_message,
-                outcomeSummary: cd.outcome_summary,
-                actionItems: cd.action_items,
-                deliverables: cd.deliverables,
-                createdAt: cd.created_at,
-                updatedAt: cd.updated_at,
-              }
-            : undefined,
-        };
-      });
-    }
+  if (!isSupabaseConfigured) {
+    if (isDev) return [];
+    throw new Error('Supabase is not configured. Cannot load consultations.');
   }
 
-  try {
-    const res = await fetch(
-      `/api/consultations/my-consultations?candidateUserId=${encodeURIComponent(candidateUserId)}`
-    );
-    if (!res.ok) throw new Error('Failed to fetch consultations');
-    const data = await res.json();
-    return data.consultations || [];
-  } catch (err) {
-    console.error('Error in getMyConsultations:', err);
-    return [];
-  }
+  const { data, error } = await supabase.rpc('get_my_sessions', {
+    p_candidate_user_id: candidateUserId,
+    p_session_type: 'consultation',
+  });
+
+  if (error) throw new Error(error.message);
+
+  const sessions: any[] = Array.isArray(data) ? data : [];
+
+  return sessions.map((s) => {
+    const exp = s.expert || {};
+    const cd = s.consultation_details;
+    return {
+      sessionId: s.session_id,
+      status: s.status,
+      slotId: s.slot_id,
+      dateKey: toDateKey(s.scheduled_start_time),
+      timeLabel: toTimeLabel(s.scheduled_start_time, s.scheduled_end_time),
+      scheduledStartTime: s.scheduled_start_time,
+      scheduledEndTime: s.scheduled_end_time,
+      timezone: s.timezone || 'Asia/Riyadh',
+      meetingUrl: s.meeting_url,
+      googleCalendarEventId: s.google_calendar_event_id || null,
+      googleCalendarSyncStatus: s.google_calendar_sync_status || 'not_connected',
+      googleCalendarSyncedAt: s.google_calendar_synced_at || null,
+      googleCalendarLastError: s.google_calendar_last_error || null,
+      googleCalendarHtmlLink: s.google_calendar_event_id
+        ? `https://calendar.google.com/calendar/event?eid=${s.google_calendar_event_id}`
+        : null,
+      consultant: {
+        id: exp.id || '',
+        fullName: exp.full_name || 'Consultant',
+        initials: exp.initials || 'C',
+        title: exp.title || 'Technical Mentor',
+        company: exp.company || 'Jadeer',
+        factualCredential: `${exp.title || 'Mentor'} • ${exp.company || 'Jadeer'}`,
+      },
+      consultationDetails: cd
+        ? {
+            id: cd.id || s.session_id,
+            sessionId: s.session_id,
+            topic: cd.topic,
+            topicTitle: cd.topic_title,
+            goal: cd.goal,
+            candidateMessage: cd.candidate_message,
+            outcomeSummary: cd.outcome_summary,
+            actionItems: cd.action_items,
+            deliverables: cd.deliverables,
+            createdAt: cd.created_at,
+            updatedAt: cd.updated_at,
+          }
+        : undefined,
+    };
+  });
 }
 
-/* ── 6. Reschedule Consultation (Atomic Slot Swap - Same Consultant) ─────── */
+/* ════════════════════════════════════════════════════════
+   6. RESCHEDULE CONSULTATION (Same Consultant)
+   ════════════════════════════════════════════════════════ */
 export async function rescheduleConsultation(
   params: RescheduleConsultationParams
 ): Promise<RescheduleConsultationResult> {
-  if (isSupabaseConfigured) {
-    const { data, error } = await supabase.rpc('reschedule_session_atomic', {
-      p_session_id: params.sessionId,
-      p_candidate_user_id: params.candidateUserId,
-      p_new_slot_id: params.newSlotId,
-    });
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    const res = typeof data === 'string' ? JSON.parse(data) : data;
-    return {
-      success: true,
-      sessionId: res.session_id,
-      slotId: res.slot_id,
-      dateKey: toDateKey(res.scheduled_start_time),
-      timeLabel: toTimeLabel(res.scheduled_start_time, res.scheduled_end_time),
-      scheduledStartTime: res.scheduled_start_time,
-      scheduledEndTime: res.scheduled_end_time,
-      timezone: res.timezone || 'Asia/Riyadh (GMT+3)',
-      status: 'scheduled',
-      message: 'Consultation rescheduled successfully with same consultant',
-    };
+  if (!isSupabaseConfigured) {
+    throw new Error('Supabase is not configured. Cannot reschedule consultation.');
   }
 
-  const res = await fetch('/api/consultations/reschedule', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(params),
+  const { data, error } = await supabase.rpc('reschedule_session_atomic', {
+    p_session_id: params.sessionId,
+    p_candidate_user_id: params.candidateUserId,
+    p_new_slot_id: params.newSlotId,
   });
 
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.error || 'Failed to reschedule consultation');
+  if (error) throw new Error(error.message);
+
+  const res = typeof data === 'string' ? JSON.parse(data) : (data as any);
+  const result: RescheduleConsultationResult = {
+    success: true,
+    sessionId: res.session_id,
+    slotId: res.slot_id,
+    dateKey: toDateKey(res.scheduled_start_time),
+    timeLabel: toTimeLabel(res.scheduled_start_time, res.scheduled_end_time),
+    scheduledStartTime: res.scheduled_start_time,
+    scheduledEndTime: res.scheduled_end_time,
+    timezone: res.timezone || 'Asia/Riyadh',
+    status: 'scheduled',
+    message: 'Consultation rescheduled successfully with same consultant',
+  };
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('jadeer:consultations-changed'));
   }
 
-  return res.json();
+  // Reschedule existing Google Calendar event (non-blocking)
+  syncSessionToCalendar({
+    sessionId: params.sessionId,
+    candidateUserId: params.candidateUserId,
+    sessionType: 'consultation',
+    scheduledStartTime: result.scheduledStartTime,
+    scheduledEndTime: result.scheduledEndTime,
+    timezone: result.timezone || 'Asia/Riyadh',
+    meetingUrl: null,
+    expertName: 'Technical Mentor',
+  }).catch(() => {
+    // Non-blocking
+  });
+
+  return result;
 }
 
-/* ── 7. Cancel Consultation (Slot Reopened) ──────────────────────────────── */
+/* ════════════════════════════════════════════════════════
+   7. CANCEL CONSULTATION
+   ════════════════════════════════════════════════════════ */
 export async function cancelConsultation(
   params: CancelConsultationParams
 ): Promise<{ success: boolean; message: string }> {
-  if (isSupabaseConfigured) {
-    const { data, error } = await supabase.rpc('cancel_session_atomic', {
-      p_session_id: params.sessionId,
-      p_cancelled_by: params.cancelledBy || 'candidate',
-      p_cancellation_reason: params.reason || 'Candidate requested cancellation via portal',
-    });
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    return {
-      success: true,
-      message: 'Consultation cancelled and slot released successfully',
-    };
+  if (!isSupabaseConfigured) {
+    throw new Error('Supabase is not configured. Cannot cancel consultation.');
   }
 
-  const res = await fetch('/api/consultations/cancel', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(params),
+  const { data, error } = await supabase.rpc('cancel_session_atomic', {
+    p_session_id: params.sessionId,
+    p_cancelled_by: params.cancelledBy || 'candidate',
+    p_cancellation_reason: params.reason || 'Candidate requested cancellation via portal',
   });
 
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.error || 'Failed to cancel consultation');
+  if (error) throw new Error(error.message);
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('jadeer:consultations-changed'));
   }
 
-  return res.json();
+  // Delete Google Calendar event (non-blocking)
+  (async () => {
+    try {
+      const { data: sess } = await supabase
+        .from('sessions')
+        .select('candidate_user_id, google_calendar_event_id')
+        .eq('id', params.sessionId)
+        .maybeSingle();
+
+      if (sess?.google_calendar_event_id) {
+        await deleteCalendarEvent(
+          sess.candidate_user_id,
+          sess.google_calendar_event_id,
+          params.sessionId
+        );
+      }
+    } catch {
+      // Non-blocking: failure never undoes Jadeer cancellation
+    }
+  })();
+
+  return {
+    success: true,
+    message: 'Consultation cancelled and slot released successfully',
+  };
 }
 
-/* ── 8. Get Candidate-Visible Outcome & Action Items ─────────────────────── */
+/* ════════════════════════════════════════════════════════
+   8. CONSULTATION OUTCOME & ACTION ITEMS
+   ════════════════════════════════════════════════════════ */
 export async function getConsultationOutcome(
   sessionId: string,
-  candidateUserId = 'usr-cand-001'
+  candidateUserId: string
 ): Promise<ConsultationOutcomeResult> {
-  if (isSupabaseConfigured) {
-    const { data, error } = await supabase
-      .from('sessions')
-      .select(`
-        id,
-        status,
-        experts (
-          full_name,
-          title,
-          company
-        ),
-        consultation_details (
-          topic,
-          topic_title,
-          goal,
-          outcome_summary,
-          action_items,
-          deliverables,
-          updated_at
-        )
-      `)
-      .eq('id', sessionId)
-      .eq('candidate_user_id', candidateUserId)
-      .maybeSingle();
-
-    if (!error && data && data.consultation_details) {
-      const exp = Array.isArray(data.experts) ? data.experts[0] : data.experts;
-      const cd = Array.isArray(data.consultation_details) ? data.consultation_details[0] : data.consultation_details;
-      return {
-        hasOutcome: Boolean(cd?.outcome_summary),
-        sessionId: data.id,
-        status: data.status,
-        consultant: exp ? {
-          fullName: exp.full_name,
-          title: exp.title,
-          company: exp.company,
-        } : undefined,
-        topic: cd?.topic,
-        topicTitle: cd?.topic_title,
-        goal: cd?.goal,
-        outcomeSummary: cd?.outcome_summary,
-        actionItems: cd?.action_items || [],
-        deliverables: cd?.deliverables || {},
-        completedAt: cd?.updated_at,
-      };
-    }
+  if (!isSupabaseConfigured) {
+    if (isDev) return { hasOutcome: false };
+    throw new Error('Supabase is not configured.');
   }
 
-  try {
-    const res = await fetch(
-      `/api/consultations/outcome?sessionId=${encodeURIComponent(sessionId)}&candidateUserId=${encodeURIComponent(candidateUserId)}`
-    );
-    if (!res.ok) throw new Error('Failed to fetch outcome deliverables');
-    return res.json();
-  } catch (err) {
-    console.error('Error in getConsultationOutcome:', err);
-    return { hasOutcome: false };
-  }
+  const { data, error } = await supabase.rpc('get_consultation_outcome', {
+    p_session_id: sessionId,
+    p_candidate_user_id: candidateUserId,
+  });
+
+  if (error) throw new Error(error.message);
+  const parsed = typeof data === 'string' ? JSON.parse(data) : (data as any);
+
+  return {
+    hasOutcome: Boolean(parsed.has_outcome),
+    sessionId: parsed.session_id,
+    status: parsed.status,
+    consultant: parsed.consultant,
+    topic: parsed.topic,
+    topicTitle: parsed.topic_title,
+    goal: parsed.goal,
+    outcomeSummary: parsed.outcome_summary,
+    actionItems: parsed.action_items || [],
+    deliverables: parsed.deliverables || {},
+    completedAt: parsed.completed_at,
+  };
 }
 
-/* ── 9. Submit Outcome Summary & Action Items (Consultant Action) ──────── */
+/* ════════════════════════════════════════════════════════
+   9. SUBMIT CONSULTATION OUTCOME (Consultant Action)
+   ════════════════════════════════════════════════════════ */
 export async function submitConsultationOutcome(
   params: SubmitOutcomeParams
 ): Promise<{ success: boolean; message?: string }> {
-  if (isSupabaseConfigured) {
-    const { data, error } = await supabase.rpc('submit_consultation_outcome_atomic', {
-      p_session_id: params.sessionId,
-      p_expert_id: params.expertId,
-      p_outcome_summary: params.outcomeSummary,
-      p_action_items: params.actionItems || [],
-      p_deliverables: params.deliverables || {},
-    });
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    return {
-      success: true,
-      message: 'Consultation deliverables submitted successfully',
-    };
+  if (!isSupabaseConfigured) {
+    throw new Error('Supabase is not configured. Cannot submit outcome.');
   }
 
-  const res = await fetch('/api/consultations/submit-outcome', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(params),
+  const { data, error } = await supabase.rpc('submit_consultation_outcome_atomic', {
+    p_session_id: params.sessionId,
+    p_expert_id: params.expertId,
+    p_outcome_summary: params.outcomeSummary,
+    p_action_items: params.actionItems || [],
+    p_deliverables: params.deliverables || {},
   });
 
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.error || 'Failed to submit consultation deliverables');
-  }
+  if (error) throw new Error(error.message);
 
-  return res.json();
+  return {
+    success: true,
+    message: 'Consultation deliverables submitted successfully',
+  };
 }

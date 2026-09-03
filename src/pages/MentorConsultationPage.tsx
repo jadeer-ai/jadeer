@@ -1,6 +1,12 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useUser } from '@clerk/clerk-react';
 import { useUserProfile } from '@/contexts/UserProfileContext';
 import * as ConsultationService from '@/services/consultationService';
+import { ensureCandidateProfile } from '@/services/humanInterviewService';
+import {
+  getGoogleCalendarConnectUrl,
+  retryCalendarSync,
+} from '@/services/googleCalendarClient';
 import {
   Calendar,
   Clock,
@@ -138,7 +144,8 @@ function sanitizeCandidateError(error: any, fallback: string): string {
 
 export default function MentorConsultationPage() {
   const { profile } = useUserProfile();
-  const candidateUserId = 'usr-cand-001';
+  const { user: clerkUser, isLoaded: isClerkLoaded } = useUser();
+  const candidateUserId = clerkUser?.id || '';
   const candidateTrack = profile.track || 'Backend Development';
 
   /* ── Page Level Tabs ── */
@@ -150,8 +157,10 @@ export default function MentorConsultationPage() {
   const [myConsultations, setMyConsultations] = useState<ConsultationService.CandidateConsultationItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isConsultantsLoading, setIsConsultantsLoading] = useState(false);
+  const [isSlotsLoading, setIsSlotsLoading] = useState(false);
   const [isBookingLoading, setIsBookingLoading] = useState(false);
   const [isReschedulingLoading, setIsReschedulingLoading] = useState(false);
+  const [isCalendarSyncing, setIsCalendarSyncing] = useState(false);
 
   /* ── Booking Wizard State ── */
   const [selectedTopicId, setSelectedTopicId] = useState<string>('career-direction');
@@ -204,8 +213,27 @@ export default function MentorConsultationPage() {
   }, [candidateUserId]);
 
   useEffect(() => {
+    if (!isClerkLoaded || !clerkUser) return;
+    const user = clerkUser; // narrow to non-null for async closure
+    // Provision Supabase profile rows for this Clerk user before any booking
+    ensureCandidateProfile({
+      userId: user.id,
+      email: user.primaryEmailAddress?.emailAddress || '',
+      fullName: user.fullName || user.firstName || 'Jadeer Candidate',
+      track: profile.track,
+    }).catch(() => {/* non-fatal */});
     loadInitialData();
-  }, [loadInitialData]);
+
+    // Check for calendar connection redirect param
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get('calendar_status') === 'connected') {
+      triggerToast('Google Calendar connected! Your sessions will now sync automatically.');
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (searchParams.get('calendar_status') === 'failed') {
+      triggerToast('Google Calendar connection failed. Please retry.');
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [isClerkLoaded, clerkUser?.id, loadInitialData]);
 
   /* ── 2. Derive Most Recent Upcoming Scheduled Session from Supabase ── */
   const activeUpcomingSession = useMemo(() => {
@@ -244,12 +272,60 @@ export default function MentorConsultationPage() {
   const handleSelectConsultant = async (consultant: ConsultationService.FactualConsultant) => {
     setSelectedConsultant(consultant);
     setSelectedSlotId(null);
+    setIsSlotsLoading(true);
 
     try {
       const availability = await ConsultationService.getConsultantAvailability(consultant.id);
       setConsultantSlots(availability.slots);
     } catch (err: any) {
       triggerToast(sanitizeCandidateError(err, 'Unable to fetch consultant schedule.'));
+    } finally {
+      setIsSlotsLoading(false);
+    }
+  };
+
+  /* ── Handler: Connect Google Calendar ── */
+  const handleConnectGoogleCalendar = async () => {
+    try {
+      const authUrl = await getGoogleCalendarConnectUrl(candidateUserId, window.location.pathname);
+      if (authUrl) {
+        window.location.href = authUrl;
+      } else {
+        triggerToast('Calendar service unavailable.');
+      }
+    } catch {
+      triggerToast('Unable to initiate Google Calendar connection.');
+    }
+  };
+
+  /* ── Handler: Retry Google Calendar Sync ── */
+  const handleRetryCalendarSync = async () => {
+    if (!currentDisplaySession) return;
+    setIsCalendarSyncing(true);
+    try {
+      const result = await retryCalendarSync({
+        sessionId: currentDisplaySession.sessionId,
+        candidateUserId,
+        sessionType: 'consultation',
+        scheduledStartTime: currentDisplaySession.scheduledStartTime,
+        scheduledEndTime: currentDisplaySession.scheduledEndTime,
+        timezone: currentDisplaySession.timezone || 'Asia/Riyadh',
+        meetingUrl: currentDisplaySession.meetingUrl,
+        expertName: currentDisplaySession.consultant.fullName,
+        expertTitle: currentDisplaySession.consultant.title,
+        topicTitle: currentDisplaySession.topicTitle,
+      });
+
+      if (result.success) {
+        triggerToast('Google Calendar synchronized successfully!');
+        await loadInitialData();
+      } else {
+        triggerToast(result.error || 'Calendar sync retry failed.');
+      }
+    } catch {
+      triggerToast('Retry failed.');
+    } finally {
+      setIsCalendarSyncing(false);
     }
   };
 
@@ -433,6 +509,9 @@ export default function MentorConsultationPage() {
         timezone: activeUpcomingSession.timezone || 'Asia/Riyadh (GMT+3)',
         meetingUrl: activeUpcomingSession.meetingUrl,
         status: activeUpcomingSession.status,
+        googleCalendarEventId: activeUpcomingSession.googleCalendarEventId,
+        googleCalendarSyncStatus: activeUpcomingSession.googleCalendarSyncStatus,
+        googleCalendarHtmlLink: activeUpcomingSession.googleCalendarHtmlLink,
       };
     }
     return null;
@@ -644,21 +723,42 @@ export default function MentorConsultationPage() {
               {/* Secondary Actions: Calendar, Reschedule, Cancel, and Book Another */}
               <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100">
                 <div className="flex flex-wrap items-center gap-3">
-                  <a
-                    href={generateGoogleCalendarUrl({
-                      title: `1-to-1 Consultation: ${currentDisplaySession.topicTitle} — ${currentDisplaySession.consultant.fullName}`,
-                      startTime: currentDisplaySession.scheduledStartTime,
-                      endTime: currentDisplaySession.scheduledEndTime,
-                      description: `1-to-1 Jadeer Consultation with ${currentDisplaySession.consultant.fullName}.\n\nMeeting URL: ${currentDisplaySession.meetingUrl}`,
-                      location: currentDisplaySession.meetingUrl,
-                    })}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#F8F9FA] hover:bg-white text-slate-700 border border-slate-200 text-xs font-semibold transition-all cursor-pointer"
-                  >
-                    <CalendarPlus className="w-3.5 h-3.5 text-[#5E8174]" />
-                    <span>Add to Google Calendar</span>
-                  </a>
+                  {/* Google Calendar Integration Action */}
+                  {currentDisplaySession.googleCalendarSyncStatus === 'synced' ? (
+                    <a
+                      href={currentDisplaySession.googleCalendarHtmlLink || 'https://calendar.google.com'}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#5E8174]/10 hover:bg-[#5E8174]/15 text-[#5E8174] border border-[#5E8174]/30 text-xs font-semibold transition-all cursor-pointer shadow-2xs"
+                      title="View this consultation session in Google Calendar"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#5E8174]" />
+                      <span>Google Calendar: Synced (View)</span>
+                    </a>
+                  ) : currentDisplaySession.googleCalendarSyncStatus === 'failed' ? (
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800">
+                      <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                      <span>Calendar sync failed</span>
+                      <button
+                        type="button"
+                        onClick={handleRetryCalendarSync}
+                        disabled={isCalendarSyncing}
+                        className="font-bold underline hover:text-amber-900 cursor-pointer ml-1"
+                      >
+                        {isCalendarSyncing ? 'Syncing…' : 'Retry'}
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleConnectGoogleCalendar}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#F8F9FA] hover:bg-white text-slate-700 hover:text-[#0F172A] border border-slate-200 text-xs font-semibold transition-all cursor-pointer shadow-2xs"
+                      title="Connect Google Calendar to automatically sync Jadeer sessions"
+                    >
+                      <CalendarPlus className="w-3.5 h-3.5 text-[#5E8174]" />
+                      <span>Connect Google Calendar</span>
+                    </button>
+                  )}
 
                   {/* Reschedule Button */}
                   <button

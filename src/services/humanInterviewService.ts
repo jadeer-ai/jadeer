@@ -1,18 +1,31 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    JADEER — HUMAN TECHNICAL CALIBRATION CLIENT SERVICE (SUPABASE PRODUCTION)
    ─────────────────────────────────────────────────────────────────────────
-   Official Supabase client service for Candidate Human Technical Calibration:
-   - Queries PostgREST tables under Row Level Security (RLS)
-   - Invokes PostgreSQL transactional RPCs:
-     * book_session_atomic
-     * reschedule_session_atomic
-     * cancel_session_atomic
-     * submit_calibration_evaluation_atomic
-     * get_candidate_interview_state
-   - Zero dependence on local Vite development server middleware in production.
+   Production Supabase client service for Candidate Human Technical Calibration.
+   Uses SECURITY DEFINER RPCs that accept Clerk user IDs directly (no Supabase
+   Auth session required). All reads go through RPC — never raw SELECT under RLS.
+
+   Supabase operations:
+     • ensure_candidate_profile       — upsert user + student_profile rows
+     • get_candidate_interview_state  — authoritative lifecycle state (SDRF)
+     • get_candidate_assignment       — assigned interviewer (SDRF)
+     • get_candidate_evaluation       — candidate-visible scorecard (SDRF)
+     • get_my_sessions                — session history (SDRF)
+     • book_session_atomic            — atomic slot lock + session create
+     • reschedule_session_atomic      — atomic slot swap, same expert
+     • cancel_session_atomic          — cancel + slot release
+     • expert_availability_slots      — available slots (PostgREST via RLS)
+     • experts                        — consultant/expert read (PostgREST via RLS)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import {
+  syncSessionToCalendar,
+  deleteCalendarEvent,
+} from './googleCalendarClient';
+
+/* ── isDev: explicit development-only demo flag ─────────────────────────── */
+const isDev = import.meta.env.DEV === true && import.meta.env.VITE_ENABLE_MOCK_DATA === 'true';
 
 export interface AssignedExpertProfile {
   id: string;
@@ -52,6 +65,11 @@ export interface ConfirmedSessionSummary {
   timeLabel?: string;
   status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled' | 'no_show';
   expert?: AssignedExpertProfile;
+  googleCalendarEventId?: string | null;
+  googleCalendarSyncStatus?: 'not_connected' | 'pending' | 'synced' | 'failed';
+  googleCalendarSyncedAt?: string | null;
+  googleCalendarLastError?: string | null;
+  googleCalendarHtmlLink?: string | null;
 }
 
 export interface CandidateEvaluationResult {
@@ -83,9 +101,7 @@ export interface HumanInterviewLifecycleState {
   evaluation?: CandidateEvaluationResult | null;
 }
 
-const DEFAULT_CANDIDATE_ID = 'usr-cand-001';
-
-/* ── Realistic Local Fallback Mock State (Offline & Test Environments) ──── */
+/* ── Mock data — only returned when isDev=true (VITE_ENABLE_MOCK_DATA=true) */
 export const FALLBACK_INTERVIEWER: AssignedExpertProfile = {
   id: 'exp-tariq-001',
   fullName: 'Eng. Tariq Al-Mansour',
@@ -100,69 +116,11 @@ export const FALLBACK_INTERVIEWER: AssignedExpertProfile = {
   factualCredential: 'Jadeer Principal Calibration Lead',
 };
 
-export const FALLBACK_SLOTS: Record<string, AvailabilitySlotItem[]> = {
-  'Thursday, Sep 10': [
-    {
-      id: 'slot-sep10-1000',
-      expertId: 'exp-tariq-001',
-      dateKey: 'Thursday, Sep 10',
-      timeLabel: '10:00 AM – 11:00 AM',
-      startTime: '2026-09-10T10:00:00+03:00',
-      endTime: '2026-09-10T11:00:00+03:00',
-      timezone: 'Asia/Riyadh (GMT+3)',
-      status: 'available',
-    },
-    {
-      id: 'slot-sep10-1330',
-      expertId: 'exp-tariq-001',
-      dateKey: 'Thursday, Sep 10',
-      timeLabel: '1:30 PM – 2:30 PM',
-      startTime: '2026-09-10T13:30:00+03:00',
-      endTime: '2026-09-10T14:30:00+03:00',
-      timezone: 'Asia/Riyadh (GMT+3)',
-      status: 'available',
-    },
-    {
-      id: 'slot-sep10-1600',
-      expertId: 'exp-tariq-001',
-      dateKey: 'Thursday, Sep 10',
-      timeLabel: '4:00 PM – 5:00 PM',
-      startTime: '2026-09-10T16:00:00+03:00',
-      endTime: '2026-09-10T17:00:00+03:00',
-      timezone: 'Asia/Riyadh (GMT+3)',
-      status: 'available',
-    },
-  ],
-  'Friday, Sep 11': [
-    {
-      id: 'slot-sep11-1400',
-      expertId: 'exp-tariq-001',
-      dateKey: 'Friday, Sep 11',
-      timeLabel: '2:00 PM – 3:00 PM',
-      startTime: '2026-09-11T14:00:00+03:00',
-      endTime: '2026-09-11T15:00:00+03:00',
-      timezone: 'Asia/Riyadh (GMT+3)',
-      status: 'available',
-    },
-    {
-      id: 'slot-sep11-1630',
-      expertId: 'exp-tariq-001',
-      dateKey: 'Friday, Sep 11',
-      timeLabel: '4:30 PM – 5:30 PM',
-      startTime: '2026-09-11T16:30:00+03:00',
-      endTime: '2026-09-11T17:30:00+03:00',
-      timezone: 'Asia/Riyadh (GMT+3)',
-      status: 'available',
-    },
-  ],
-};
+export const FALLBACK_SLOTS: Record<string, AvailabilitySlotItem[]> = {};
 
+/* ── Utility helpers ──────────────────────────────────────────────────────── */
 function toDateKey(iso: string): string {
-  try {
-    return new Date(iso).toISOString().split('T')[0];
-  } catch {
-    return iso.substring(0, 10);
-  }
+  try { return new Date(iso).toISOString().split('T')[0]; } catch { return iso.substring(0, 10); }
 }
 
 function toTimeLabel(startIso: string, endIso: string): string {
@@ -170,224 +128,211 @@ function toTimeLabel(startIso: string, endIso: string): string {
     const s = new Date(startIso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
     const e = new Date(endIso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
     return `${s} – ${e}`;
-  } catch {
-    return `${startIso} - ${endIso}`;
-  }
+  } catch { return `${startIso} - ${endIso}`; }
 }
 
-/**
- * Retrieves the comprehensive backend-derived lifecycle state for the candidate.
- * Returns one authoritative state: 'awaiting_assignment' | 'choose_time' | 'confirmed' | 'completed'
- */
+function mapExpert(e: any): AssignedExpertProfile {
+  return {
+    id: e.id,
+    fullName: e.full_name,
+    initials: e.initials,
+    title: e.title,
+    company: e.company,
+    bio: e.bio,
+    track: e.track,
+    specialties: e.specialties || [],
+    rating: Number(e.rating) || 5.0,
+    sessionsCompleted: Number(e.sessions_completed) || 0,
+    factualCredential: `${e.title} • ${e.company}`,
+  };
+}
+
+/* ── Candidate Profile Provisioning ────────────────────────────────────────
+   Called on first load to ensure the Clerk user exists in public.users
+   and public.student_profiles. Idempotent. */
+export async function ensureCandidateProfile(params: {
+  userId: string;
+  email: string;
+  fullName?: string;
+  track?: string;
+}): Promise<{ success: boolean }> {
+  if (!isSupabaseConfigured) {
+    if (isDev) return { success: true };
+    throw new Error('Supabase is not configured.');
+  }
+
+  const { data, error } = await supabase.rpc('ensure_candidate_profile', {
+    p_user_id: params.userId,
+    p_email: params.email,
+    p_full_name: params.fullName || 'Jadeer Candidate',
+    p_track: normalizeTrack(params.track),
+  });
+
+  if (error) throw new Error(error.message);
+  return { success: Boolean((data as any)?.success) };
+}
+
+function normalizeTrack(track?: string): string {
+  if (!track) return 'BACKEND';
+  const t = track.toUpperCase();
+  if (t.includes('FRONTEND') || t.includes('FRONT')) return 'FRONTEND';
+  if (t.includes('AI') || t.includes('ML') || t.includes('DATA')) return 'AI_ML';
+  if (t.includes('DEVOPS') || t.includes('CLOUD') || t.includes('INFRA')) return 'DEVOPS';
+  if (t.includes('FULL')) return 'FULLSTACK';
+  return 'BACKEND';
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   1. Authoritative Lifecycle State
+   ═══════════════════════════════════════════════════════════════════════════ */
 export async function getHumanInterviewState(
-  candidateUserId: string = DEFAULT_CANDIDATE_ID
+  candidateUserId: string
 ): Promise<HumanInterviewLifecycleState> {
-  if (isSupabaseConfigured) {
-    // Call authoritative PostgreSQL RPC get_candidate_interview_state
-    const { data, error } = await supabase.rpc('get_candidate_interview_state', {
-      p_candidate_user_id: candidateUserId,
-    });
-
-    if (!error && data) {
-      const parsed = typeof data === 'string' ? JSON.parse(data) : data;
-      const state = (parsed.state === 'assigned' ? 'choose_time' : parsed.state) || 'awaiting_assignment';
+  if (!isSupabaseConfigured) {
+    if (isDev) {
       return {
-        state,
-        isCompleted: Boolean(parsed.is_completed),
-        status: parsed.status || state,
-        message: parsed.message,
-        assignedBy: parsed.assigned_by,
-        assignedAt: parsed.assigned_at,
-        expert: parsed.expert
-          ? {
-              id: parsed.expert.id,
-              fullName: parsed.expert.full_name,
-              initials: parsed.expert.initials,
-              title: parsed.expert.title,
-              company: parsed.expert.company,
-              bio: parsed.expert.bio,
-              track: parsed.expert.track,
-              specialties: parsed.expert.specialties || [],
-              rating: parsed.expert.rating || 5.0,
-              sessionsCompleted: parsed.expert.sessions_completed || 0,
-            }
-          : null,
-        session: parsed.session
-          ? {
-              sessionId: parsed.session.session_id || parsed.session.id,
-              slotId: parsed.session.slot_id,
-              scheduledStartTime: parsed.session.scheduled_start_time,
-              scheduledEndTime: parsed.session.scheduled_end_time,
-              timezone: parsed.session.timezone || 'Asia/Riyadh (GMT+3)',
-              meetingUrl: parsed.session.meeting_url,
-              dateKey: toDateKey(parsed.session.scheduled_start_time),
-              timeLabel: toTimeLabel(parsed.session.scheduled_start_time, parsed.session.scheduled_end_time),
-              status: parsed.session.status,
-            }
-          : null,
-        evaluation: parsed.evaluation
-          ? {
-              hasEvaluation: true,
-              sessionId: parsed.evaluation.session_id,
-              overallScore: parsed.evaluation.overall_score,
-              technicalScore: parsed.evaluation.technical_score,
-              problemSolvingScore: parsed.evaluation.problem_solving_score,
-              communicationScore: parsed.evaluation.communication_score,
-              reasoningScore: parsed.evaluation.reasoning_score,
-              recommendation: parsed.evaluation.recommendation,
-              candidateVisibleFeedback: parsed.evaluation.candidate_visible_feedback,
-              strengths: parsed.evaluation.strengths || [],
-              recommendations: parsed.evaluation.recommendations || [],
-              submittedAt: parsed.evaluation.submitted_at,
-            }
-          : null,
+        state: 'choose_time',
+        isCompleted: false,
+        status: 'choose_time',
+        assignedBy: 'Jadeer Calibration Panel',
+        assignedAt: new Date().toISOString(),
+        expert: FALLBACK_INTERVIEWER,
       };
     }
+    throw new Error('Supabase is not configured. Cannot load calibration state.');
   }
 
-  // Fallback to local dev middleware endpoint with graceful mock fallback
-  try {
-    const res = await fetch(`/api/scheduling/state?candidateUserId=${encodeURIComponent(candidateUserId)}`);
-    if (!res.ok) {
-      throw new Error(`Failed to fetch interview state: ${res.statusText}`);
-    }
-    return await res.json();
-  } catch {
-    return {
-      state: 'choose_time',
-      isCompleted: false,
-      status: 'choose_time',
-      assignedBy: 'Jadeer Calibration Panel',
-      assignedAt: new Date().toISOString(),
-      expert: FALLBACK_INTERVIEWER,
-    };
-  }
+  const { data, error } = await supabase.rpc('get_candidate_interview_state', {
+    p_candidate_user_id: candidateUserId,
+  });
+
+  if (error) throw new Error(error.message);
+
+  const parsed = typeof data === 'string' ? JSON.parse(data) : (data as any);
+  const state = (parsed.state === 'assigned' ? 'choose_time' : parsed.state) || 'awaiting_assignment';
+
+  return {
+    state,
+    isCompleted: Boolean(parsed.is_completed),
+    status: parsed.status || state,
+    message: parsed.message,
+    assignedBy: parsed.assigned_by,
+    assignedAt: parsed.assigned_at,
+    expert: parsed.expert ? mapExpert(parsed.expert) : null,
+    session: parsed.session
+      ? {
+          sessionId: parsed.session.session_id || parsed.session.id,
+          slotId: parsed.session.slot_id,
+          scheduledStartTime: parsed.session.scheduled_start_time,
+          scheduledEndTime: parsed.session.scheduled_end_time,
+          timezone: parsed.session.timezone || 'Asia/Riyadh',
+          meetingUrl: parsed.session.meeting_url,
+          dateKey: toDateKey(parsed.session.scheduled_start_time),
+          timeLabel: toTimeLabel(parsed.session.scheduled_start_time, parsed.session.scheduled_end_time),
+          status: parsed.session.status,
+          googleCalendarEventId: parsed.session.google_calendar_event_id || null,
+          googleCalendarSyncStatus: parsed.session.google_calendar_sync_status || 'not_connected',
+          googleCalendarSyncedAt: parsed.session.google_calendar_synced_at || null,
+          googleCalendarLastError: parsed.session.google_calendar_last_error || null,
+          googleCalendarHtmlLink: parsed.session.google_calendar_event_id
+            ? `https://calendar.google.com/calendar/event?eid=${parsed.session.google_calendar_event_id}`
+            : null,
+        }
+      : null,
+    evaluation: parsed.evaluation
+      ? {
+          hasEvaluation: true,
+          sessionId: parsed.evaluation.session_id,
+          overallScore: parsed.evaluation.overall_score,
+          technicalScore: parsed.evaluation.technical_score,
+          problemSolvingScore: parsed.evaluation.problem_solving_score,
+          communicationScore: parsed.evaluation.communication_score,
+          reasoningScore: parsed.evaluation.reasoning_score,
+          recommendation: parsed.evaluation.recommendation,
+          candidateVisibleFeedback: parsed.evaluation.candidate_visible_feedback,
+          strengths: parsed.evaluation.strengths || [],
+          recommendations: parsed.evaluation.recommendations || [],
+          submittedAt: parsed.evaluation.submitted_at,
+        }
+      : null,
+  };
 }
 
-/**
- * Checks whether an interviewer has been assigned by Jadeer/Admin.
- * Candidate can never select their interviewer; returns null if unassigned.
- */
+/* ═══════════════════════════════════════════════════════════════════════════
+   2. Assigned Interviewer
+   ═══════════════════════════════════════════════════════════════════════════ */
 export async function getAssignedInterviewer(
-  candidateUserId: string = DEFAULT_CANDIDATE_ID,
-  track?: string
+  candidateUserId: string,
+  _track?: string
 ): Promise<{ assigned: boolean; expert: AssignedExpertProfile | null; assignedBy?: string }> {
-  if (isSupabaseConfigured) {
-    const { data: assignment, error } = await supabase
-      .from('candidate_interview_assignments')
-      .select('expert_id, assigned_by, is_active, experts(id, full_name, initials, title, company, bio, track, specialties, rating, sessions_completed)')
-      .eq('candidate_user_id', candidateUserId)
-      .eq('is_active', true)
-      .order('assigned_at', { ascending: false })
-      .maybeSingle();
-
-    if (!error && assignment && assignment.experts) {
-      const exp: any = assignment.experts;
-      return {
-        assigned: true,
-        assignedBy: assignment.assigned_by,
-        expert: {
-          id: exp.id,
-          fullName: exp.full_name,
-          initials: exp.initials,
-          title: exp.title,
-          company: exp.company,
-          bio: exp.bio,
-          track: exp.track,
-          specialties: exp.specialties || [],
-          rating: exp.rating || 5.0,
-          sessionsCompleted: exp.sessions_completed || 0,
-        },
-      };
-    }
+  if (!isSupabaseConfigured) {
+    if (isDev) return { assigned: true, expert: FALLBACK_INTERVIEWER, assignedBy: 'Jadeer Calibration Panel' };
     return { assigned: false, expert: null };
   }
 
-  try {
-    const url = `/api/scheduling/assigned-interviewer?candidateUserId=${encodeURIComponent(candidateUserId)}${
-      track ? `&track=${encodeURIComponent(track)}` : ''
-    }`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`Failed to get assigned interviewer: ${res.statusText}`);
-    const data = await res.json();
-    return {
-      assigned: Boolean(data.assigned),
-      expert: data.expert || FALLBACK_INTERVIEWER,
-      assignedBy: data.assignedBy || 'Jadeer Calibration Panel',
-    };
-  } catch {
-    return {
-      assigned: true,
-      expert: FALLBACK_INTERVIEWER,
-      assignedBy: 'Jadeer Calibration Panel',
-    };
-  }
+  const { data, error } = await supabase.rpc('get_candidate_assignment', {
+    p_candidate_user_id: candidateUserId,
+  });
+
+  if (error) throw new Error(error.message);
+  const parsed = typeof data === 'string' ? JSON.parse(data) : (data as any);
+
+  if (!parsed.assigned) return { assigned: false, expert: null };
+  return {
+    assigned: true,
+    assignedBy: parsed.assigned_by,
+    expert: mapExpert(parsed.expert),
+  };
 }
 
-/**
- * Fetches available slots strictly for the candidate's assigned interviewer.
- * Enforces database-level scoping: candidate cannot query another expert's slots.
- */
+/* ═══════════════════════════════════════════════════════════════════════════
+   3. Assigned Interviewer's Availability Slots
+   ═══════════════════════════════════════════════════════════════════════════ */
 export async function getAssignedInterviewerAvailability(
   expertId: string,
-  candidateUserId: string = DEFAULT_CANDIDATE_ID
+  _candidateUserId?: string
 ): Promise<Record<string, AvailabilitySlotItem[]>> {
-  if (isSupabaseConfigured) {
-    const { data, error } = await supabase
-      .from('expert_availability_slots')
-      .select('id, expert_id, start_time, end_time, timezone, status')
-      .eq('expert_id', expertId)
-      .eq('status', 'available')
-      .order('start_time', { ascending: true });
-
-    if (!error && data) {
-      const grouped: Record<string, AvailabilitySlotItem[]> = {};
-      for (const slot of data) {
-        const dateKey = toDateKey(slot.start_time);
-        const item: AvailabilitySlotItem = {
-          id: slot.id,
-          expertId: slot.expert_id,
-          dateKey,
-          timeLabel: toTimeLabel(slot.start_time, slot.end_time),
-          startTime: slot.start_time,
-          endTime: slot.end_time,
-          timezone: slot.timezone || 'Asia/Riyadh (GMT+3)',
-          status: 'available',
-        };
-        if (!grouped[dateKey]) grouped[dateKey] = [];
-        grouped[dateKey].push(item);
-      }
-      return grouped;
-    }
+  if (!isSupabaseConfigured) {
+    if (isDev) return FALLBACK_SLOTS;
+    throw new Error('Supabase is not configured.');
   }
 
-  try {
-    const url = `/api/scheduling/expert-slots?expertId=${encodeURIComponent(
-      expertId
-    )}&candidateUserId=${encodeURIComponent(candidateUserId)}`;
-    const res = await fetch(url);
-    if (!res.ok) {
-      if (res.status === 403) {
-        throw new Error('Unauthorized: You can only view slots for your assigned interviewer.');
-      }
-      throw new Error(`Failed to load availability slots: ${res.statusText}`);
-    }
-    const data = await res.json();
-    return data.slots || FALLBACK_SLOTS;
-  } catch {
-    return FALLBACK_SLOTS;
+  const { data, error } = await supabase
+    .from('expert_availability_slots')
+    .select('id, expert_id, start_time, end_time, timezone, status')
+    .eq('expert_id', expertId)
+    .eq('status', 'available')
+    .order('start_time', { ascending: true });
+
+  if (error) throw new Error(error.message);
+
+  const grouped: Record<string, AvailabilitySlotItem[]> = {};
+  for (const slot of (data || [])) {
+    const dateKey = toDateKey(slot.start_time);
+    const item: AvailabilitySlotItem = {
+      id: slot.id,
+      expertId: slot.expert_id,
+      dateKey,
+      timeLabel: toTimeLabel(slot.start_time, slot.end_time),
+      startTime: slot.start_time,
+      endTime: slot.end_time,
+      timezone: slot.timezone || 'Asia/Riyadh',
+      status: 'available',
+    };
+    if (!grouped[dateKey]) grouped[dateKey] = [];
+    grouped[dateKey].push(item);
   }
+  return grouped;
 }
 
-/** Domain-level alias requested by architecture */
+/** Domain-level alias */
 export const getHumanInterviewAvailability = getAssignedInterviewerAvailability;
 
-/**
- * Atomically books the selected slot via Supabase RPC book_session_atomic.
- * Locks the slot with FOR UPDATE in the database and guarantees double-booking prevention.
- */
+/* ═══════════════════════════════════════════════════════════════════════════
+   4. Book Human Interview (Atomic Slot Lock)
+   ═══════════════════════════════════════════════════════════════════════════ */
 export async function bookHumanInterview(params: {
-  candidateUserId?: string;
+  candidateUserId: string;
   slotId: string;
   softwareTrack?: string;
   candidateNotes?: string;
@@ -403,61 +348,66 @@ export async function bookHumanInterview(params: {
   dateKey?: string;
   timeLabel?: string;
 }> {
-  if (isSupabaseConfigured) {
-    const { data, error } = await supabase.rpc('book_session_atomic', {
-      p_candidate_user_id: params.candidateUserId || DEFAULT_CANDIDATE_ID,
-      p_slot_id: params.slotId,
-      p_session_type: 'human_interview',
-      p_candidate_notes: params.candidateNotes || null,
-      p_calibration_stage: 'Stage 02B: Human Technical Calibration',
-    });
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    const res = typeof data === 'string' ? JSON.parse(data) : data;
-    return {
-      success: true,
-      sessionId: res.session_id || res.id,
-      status: res.status || 'scheduled',
-      scheduledStartTime: res.scheduled_start_time,
-      scheduledEndTime: res.scheduled_end_time,
-      timezone: res.timezone || params.timezone || 'Asia/Riyadh (GMT+3)',
-      meetingUrl: res.meeting_url,
-      dateKey: toDateKey(res.scheduled_start_time),
-      timeLabel: toTimeLabel(res.scheduled_start_time, res.scheduled_end_time),
-    };
+  if (!isSupabaseConfigured) {
+    throw new Error('Supabase is not configured. Cannot book calibration session.');
   }
 
-  const res = await fetch('/api/scheduling/book-session', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      candidateUserId: params.candidateUserId || DEFAULT_CANDIDATE_ID,
-      slotId: params.slotId,
-      sessionType: 'human_interview',
-      softwareTrack: params.softwareTrack || 'Backend Development',
-      candidateNotes: params.candidateNotes,
-      timezone: params.timezone || 'Asia/Riyadh (GMT+3)',
-    }),
+  const { data, error } = await supabase.rpc('book_session_atomic', {
+    p_candidate_user_id: params.candidateUserId,
+    p_slot_id: params.slotId,
+    p_session_type: 'human_interview',
+    p_software_track: normalizeTrack(params.softwareTrack) as any,
+    p_candidate_notes: params.candidateNotes || null,
+    p_calibration_stage: 'Stage 02B: Human Technical Calibration',
+    p_timezone: params.timezone || 'Asia/Riyadh',
   });
 
-  const data = await res.json();
-  if (!res.ok || !data.success) {
-    throw new Error(data.error || 'Failed to book calibration session.');
+  if (error) throw new Error(error.message);
+
+  const res = typeof data === 'string' ? JSON.parse(data) : (data as any);
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('jadeer:human-calibration-changed'));
   }
-  return data;
+
+  const sessionId = res.session_id || res.id;
+
+  // External Google Calendar sync (background task, non-blocking)
+  syncSessionToCalendar({
+    sessionId,
+    candidateUserId: params.candidateUserId,
+    sessionType: 'human_interview',
+    scheduledStartTime: res.scheduled_start_time,
+    scheduledEndTime: res.scheduled_end_time,
+    timezone: res.timezone || params.timezone || 'Asia/Riyadh',
+    meetingUrl: res.meeting_url,
+    expertName: res.expert?.full_name || 'Principal Calibration Lead',
+    expertTitle: res.expert?.title || 'Jadeer Calibration Lead',
+    track: params.softwareTrack,
+  }).catch(() => {
+    // Non-blocking: calendar failure never interrupts Jadeer booking
+  });
+
+  return {
+    success: true,
+    sessionId,
+    status: res.status || 'scheduled',
+    scheduledStartTime: res.scheduled_start_time,
+    scheduledEndTime: res.scheduled_end_time,
+    timezone: res.timezone || params.timezone || 'Asia/Riyadh',
+    meetingUrl: res.meeting_url,
+    dateKey: toDateKey(res.scheduled_start_time),
+    timeLabel: toTimeLabel(res.scheduled_start_time, res.scheduled_end_time),
+  };
 }
 
-/**
- * Atomically reschedules a confirmed session to another available slot of the SAME interviewer.
- * Invokes reschedule_session_atomic PostgreSQL RPC.
- */
+/* ═══════════════════════════════════════════════════════════════════════════
+   5. Reschedule Human Interview (Same Interviewer)
+   ═══════════════════════════════════════════════════════════════════════════ */
 export async function rescheduleHumanInterview(params: {
   sessionId: string;
   newSlotId: string;
-  candidateUserId?: string;
+  candidateUserId: string;
 }): Promise<{
   success: boolean;
   sessionId: string;
@@ -468,147 +418,144 @@ export async function rescheduleHumanInterview(params: {
   dateKey?: string;
   timeLabel?: string;
 }> {
-  if (isSupabaseConfigured) {
-    const { data, error } = await supabase.rpc('reschedule_session_atomic', {
-      p_session_id: params.sessionId,
-      p_candidate_user_id: params.candidateUserId || DEFAULT_CANDIDATE_ID,
-      p_new_slot_id: params.newSlotId,
-    });
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    const res = typeof data === 'string' ? JSON.parse(data) : data;
-    return {
-      success: true,
-      sessionId: res.session_id,
-      slotId: res.slot_id,
-      scheduledStartTime: res.scheduled_start_time,
-      scheduledEndTime: res.scheduled_end_time,
-      timezone: res.timezone || 'Asia/Riyadh (GMT+3)',
-      dateKey: toDateKey(res.scheduled_start_time),
-      timeLabel: toTimeLabel(res.scheduled_start_time, res.scheduled_end_time),
-    };
+  if (!isSupabaseConfigured) {
+    throw new Error('Supabase is not configured. Cannot reschedule session.');
   }
 
-  const res = await fetch('/api/scheduling/reschedule-session', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      sessionId: params.sessionId,
-      candidateUserId: params.candidateUserId || DEFAULT_CANDIDATE_ID,
-      newSlotId: params.newSlotId,
-    }),
+  const { data, error } = await supabase.rpc('reschedule_session_atomic', {
+    p_session_id: params.sessionId,
+    p_candidate_user_id: params.candidateUserId,
+    p_new_slot_id: params.newSlotId,
   });
 
-  const data = await res.json();
-  if (!res.ok || !data.success) {
-    throw new Error(data.error || 'Failed to reschedule session.');
+  if (error) throw new Error(error.message);
+
+  const res = typeof data === 'string' ? JSON.parse(data) : (data as any);
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('jadeer:human-calibration-changed'));
   }
-  return data;
+
+  // Reschedule existing Google Calendar event (non-blocking)
+  syncSessionToCalendar({
+    sessionId: res.session_id,
+    candidateUserId: params.candidateUserId,
+    sessionType: 'human_interview',
+    scheduledStartTime: res.scheduled_start_time,
+    scheduledEndTime: res.scheduled_end_time,
+    timezone: res.timezone || 'Asia/Riyadh',
+    meetingUrl: null,
+    expertName: 'Principal Calibration Lead',
+  }).catch(() => {
+    // Non-blocking
+  });
+
+  return {
+    success: true,
+    sessionId: res.session_id,
+    slotId: res.slot_id,
+    scheduledStartTime: res.scheduled_start_time,
+    scheduledEndTime: res.scheduled_end_time,
+    timezone: res.timezone || 'Asia/Riyadh',
+    dateKey: toDateKey(res.scheduled_start_time),
+    timeLabel: toTimeLabel(res.scheduled_start_time, res.scheduled_end_time),
+  };
 }
 
-/**
- * Cancels a confirmed session and releases the booked slot back to available.
- * Invokes cancel_session_atomic PostgreSQL RPC.
- */
+/* ═══════════════════════════════════════════════════════════════════════════
+   6. Cancel Human Interview (Slot Released)
+   ═══════════════════════════════════════════════════════════════════════════ */
 export async function cancelHumanInterview(params: {
   sessionId: string;
   reason?: string;
   cancelledBy?: string;
 }): Promise<{ success: boolean; sessionId: string; cancelledAt?: string }> {
-  if (isSupabaseConfigured) {
-    const { data, error } = await supabase.rpc('cancel_session_atomic', {
-      p_session_id: params.sessionId,
-      p_cancelled_by: params.cancelledBy || 'candidate',
-      p_cancellation_reason: params.reason || 'Candidate requested cancellation via portal',
-    });
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    const res = typeof data === 'string' ? JSON.parse(data) : data;
-    return {
-      success: true,
-      sessionId: res.session_id,
-      cancelledAt: new Date().toISOString(),
-    };
+  if (!isSupabaseConfigured) {
+    throw new Error('Supabase is not configured. Cannot cancel session.');
   }
 
-  const res = await fetch('/api/scheduling/cancel-session', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      sessionId: params.sessionId,
-      cancelledBy: params.cancelledBy || 'candidate',
-      reason: params.reason || 'Candidate requested cancellation',
-    }),
+  const { data, error } = await supabase.rpc('cancel_session_atomic', {
+    p_session_id: params.sessionId,
+    p_cancelled_by: params.cancelledBy || 'candidate',
+    p_cancellation_reason: params.reason || 'Candidate requested cancellation via portal',
   });
 
-  const data = await res.json();
-  if (!res.ok || !data.success) {
-    throw new Error(data.error || 'Failed to cancel session.');
+  if (error) throw new Error(error.message);
+
+  const res = typeof data === 'string' ? JSON.parse(data) : (data as any);
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('jadeer:human-calibration-changed'));
   }
-  return data;
-}
 
-/**
- * Fetches the candidate-visible evaluation scorecard & feedback.
- * Isolates internal deliberation notes away from candidate access.
- */
-export async function fetchCandidateVisibleInterviewResult(
-  candidateUserId: string = DEFAULT_CANDIDATE_ID
-): Promise<CandidateEvaluationResult> {
-  if (isSupabaseConfigured) {
-    const { data: sessionData, error } = await supabase
-      .from('sessions')
-      .select('id, human_interview_evaluations(overall_score, technical_score, problem_solving_score, communication_score, reasoning_score, recommendation, candidate_visible_feedback, strengths, recommendations, submitted_at)')
-      .eq('candidate_user_id', candidateUserId)
-      .eq('session_type', 'human_interview')
-      .eq('status', 'completed')
-      .order('created_at', { ascending: false })
-      .maybeSingle();
+  // Delete Google Calendar event (non-blocking)
+  (async () => {
+    try {
+      const { data: sess } = await supabase
+        .from('sessions')
+        .select('candidate_user_id, google_calendar_event_id')
+        .eq('id', params.sessionId)
+        .maybeSingle();
 
-    if (!error && sessionData && sessionData.human_interview_evaluations) {
-      const ev: any = Array.isArray(sessionData.human_interview_evaluations)
-        ? sessionData.human_interview_evaluations[0]
-        : sessionData.human_interview_evaluations;
-      if (ev) {
-        return {
-          hasEvaluation: true,
-          sessionId: sessionData.id,
-          overallScore: Number(ev.overall_score),
-          technicalScore: Number(ev.technical_score),
-          problemSolvingScore: Number(ev.problem_solving_score),
-          communicationScore: Number(ev.communication_score),
-          reasoningScore: Number(ev.reasoning_score),
-          recommendation: ev.recommendation,
-          candidateVisibleFeedback: ev.candidate_visible_feedback,
-          strengths: ev.strengths || [],
-          recommendations: ev.recommendations || [],
-          submittedAt: ev.submitted_at,
-          verifiedBadge: 'Jadeer Calibrated Engineer',
-        };
+      if (sess?.google_calendar_event_id) {
+        await deleteCalendarEvent(
+          sess.candidate_user_id,
+          sess.google_calendar_event_id,
+          params.sessionId
+        );
       }
+    } catch {
+      // Non-blocking: failure never undoes Jadeer cancellation
     }
-    return { hasEvaluation: false };
-  }
+  })();
 
-  const res = await fetch(
-    `/api/scheduling/evaluation-result?candidateUserId=${encodeURIComponent(candidateUserId)}`
-  );
-  if (!res.ok) {
-    throw new Error(`Failed to fetch evaluation result: ${res.statusText}`);
-  }
-  return res.json();
+  return {
+    success: true,
+    sessionId: res.session_id,
+    cancelledAt: new Date().toISOString(),
+  };
 }
 
-/**
- * Authoritative evaluation submission by the assigned interviewer or admin.
- * Invokes submit_calibration_evaluation_atomic PostgreSQL RPC.
- */
+/* ═══════════════════════════════════════════════════════════════════════════
+   7. Candidate-Visible Evaluation Scorecard
+   ═══════════════════════════════════════════════════════════════════════════ */
+export async function fetchCandidateVisibleInterviewResult(
+  candidateUserId: string
+): Promise<CandidateEvaluationResult> {
+  if (!isSupabaseConfigured) {
+    if (isDev) return { hasEvaluation: false };
+    throw new Error('Supabase is not configured.');
+  }
+
+  const { data, error } = await supabase.rpc('get_candidate_evaluation', {
+    p_candidate_user_id: candidateUserId,
+  });
+
+  if (error) throw new Error(error.message);
+  const parsed = typeof data === 'string' ? JSON.parse(data) : (data as any);
+
+  if (!parsed.has_evaluation) return { hasEvaluation: false };
+
+  return {
+    hasEvaluation: true,
+    sessionId: parsed.session_id,
+    overallScore: Number(parsed.overall_score),
+    technicalScore: Number(parsed.technical_score),
+    problemSolvingScore: Number(parsed.problem_solving_score),
+    communicationScore: Number(parsed.communication_score),
+    reasoningScore: Number(parsed.reasoning_score),
+    recommendation: parsed.recommendation,
+    candidateVisibleFeedback: parsed.candidate_visible_feedback,
+    strengths: parsed.strengths || [],
+    recommendations: parsed.recommendations || [],
+    submittedAt: parsed.submitted_at,
+    verifiedBadge: 'Jadeer Calibrated Engineer',
+  };
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   8. Evaluation Submission (by Interviewer / Admin only)
+   ═══════════════════════════════════════════════════════════════════════════ */
 export async function submitHumanInterviewEvaluation(params: {
   sessionId: string;
   evaluatorId: string;
@@ -623,76 +570,56 @@ export async function submitHumanInterviewEvaluation(params: {
   strengths?: string[];
   recommendations?: string[];
 }): Promise<{ success: boolean; evaluationId: string; status: string }> {
-  if (isSupabaseConfigured) {
-    const { data, error } = await supabase.rpc('submit_calibration_evaluation_atomic', {
-      p_session_id: params.sessionId,
-      p_evaluator_id: params.evaluatorId,
-      p_technical_score: params.technicalScore,
-      p_problem_solving_score: params.problemSolvingScore,
-      p_communication_score: params.communicationScore,
-      p_reasoning_score: params.reasoningScore,
-      p_overall_score: params.overallScore,
-      p_recommendation: params.recommendation,
-      p_candidate_visible_feedback: params.candidateVisibleFeedback,
-      p_internal_notes: params.internalNotes || null,
-      p_strengths: params.strengths || [],
-      p_recommendations: params.recommendations || [],
-    });
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    const res = typeof data === 'string' ? JSON.parse(data) : data;
-    return {
-      success: true,
-      evaluationId: res.evaluation_id,
-      status: res.status || 'completed',
-    };
+  if (!isSupabaseConfigured) {
+    throw new Error('Supabase is not configured. Cannot submit evaluation.');
   }
 
-  const res = await fetch('/api/scheduling/submit-evaluation', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(params),
+  const { data, error } = await supabase.rpc('submit_calibration_evaluation_atomic', {
+    p_session_id: params.sessionId,
+    p_evaluator_id: params.evaluatorId,
+    p_technical_score: params.technicalScore,
+    p_problem_solving_score: params.problemSolvingScore,
+    p_communication_score: params.communicationScore,
+    p_reasoning_score: params.reasoningScore,
+    p_overall_score: params.overallScore,
+    p_recommendation: params.recommendation,
+    p_candidate_visible_feedback: params.candidateVisibleFeedback,
+    p_internal_notes: params.internalNotes || null,
+    p_strengths: params.strengths || [],
+    p_recommendations: params.recommendations || [],
   });
 
-  const data = await res.json();
-  if (!res.ok || !data.success) {
-    throw new Error(data.error || 'Failed to submit evaluation.');
+  if (error) throw new Error(error.message);
+
+  const res = typeof data === 'string' ? JSON.parse(data) : (data as any);
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('jadeer:human-calibration-changed'));
   }
-  return data;
+
+  return {
+    success: true,
+    evaluationId: res.evaluation_id,
+    status: res.status || 'completed',
+  };
 }
 
-/**
- * Admin helper to assign an interviewer to a candidate.
- */
+/* ═══════════════════════════════════════════════════════════════════════════
+   9. Admin Helpers (server-side only — use admin API routes in production)
+   ═══════════════════════════════════════════════════════════════════════════ */
 export async function assignInterviewerByAdmin(
-  candidateUserId: string = DEFAULT_CANDIDATE_ID,
+  candidateUserId: string,
   expertId?: string
 ): Promise<{ success: boolean; expert: AssignedExpertProfile }> {
-  const res = await fetch('/api/scheduling/assign-interviewer', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ candidateUserId, expertId }),
-  });
-  const data = await res.json();
-  if (!res.ok || !data.success) {
-    throw new Error(data.error || 'Failed to assign interviewer.');
-  }
-  return data;
+  throw new Error(
+    'assignInterviewerByAdmin must be called from a server-side admin API route, not from the browser.'
+  );
 }
 
-/**
- * Development testing helper to reset candidate assignment.
- */
 export async function resetCandidateAssignment(
-  candidateUserId: string = DEFAULT_CANDIDATE_ID
+  candidateUserId: string
 ): Promise<{ success: boolean }> {
-  const res = await fetch('/api/scheduling/reset-assignment', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ candidateUserId }),
-  });
-  return res.json();
+  throw new Error(
+    'resetCandidateAssignment must be called from a server-side admin API route, not from the browser.'
+  );
 }

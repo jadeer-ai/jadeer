@@ -35,6 +35,15 @@ import {
   handleSubmitConsultationOutcome,
   handleGetConsultationOutcome,
 } from './schedulingRoutes.ts';
+import {
+  handleCalendarAuthUrl,
+  handleCalendarCallback,
+  handleCalendarStatus,
+  handleCalendarDisconnect,
+  handleSyncSession,
+  handleRetrySync,
+  handleDeleteCalendarEvent,
+} from './googleCalendarRoutes.ts';
 import type { SocialProvider } from './socialOAuth.ts';
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -633,6 +642,100 @@ export function jadeerBackendApiPlugin(): Plugin {
               sessionId: searchParams.get('sessionId') || '',
               candidateUserId: searchParams.get('candidateUserId') || '',
             });
+            sendJson(res, result.statusCode, result.data);
+          } catch (err: any) {
+            sendJson(res, 500, { error: err.message || 'Internal server error' });
+          }
+          return;
+        }
+
+        // 31. GET /api/calendar/connect-url
+        if (url === '/api/calendar/connect-url' && method === 'GET') {
+          try {
+            const searchParams = new URLSearchParams(req.url?.split('?')[1] || '');
+            const candidateUserId = searchParams.get('candidateUserId') || searchParams.get('candidate_user_id') || '';
+            const result = await handleCalendarAuthUrl(
+              req,
+              candidateUserId,
+              searchParams.get('returnUrl') || searchParams.get('return_url') || undefined
+            );
+            sendJson(res, result.statusCode, result.data);
+          } catch (err: any) {
+            sendJson(res, 500, { error: err.message || 'Internal server error' });
+          }
+          return;
+        }
+
+        // 32. GET /api/calendar/callback
+        if (url === '/api/calendar/callback' && method === 'GET') {
+          try {
+            const searchParams = new URLSearchParams(req.url?.split('?')[1] || '');
+            await handleCalendarCallback(
+              req,
+              res,
+              searchParams.get('code') || '',
+              searchParams.get('state') || ''
+            );
+          } catch (err: any) {
+            sendJson(res, 500, { error: err.message || 'Internal server error' });
+          }
+          return;
+        }
+
+        // 33. GET /api/calendar/status
+        if (url === '/api/calendar/status' && method === 'GET') {
+          try {
+            const searchParams = new URLSearchParams(req.url?.split('?')[1] || '');
+            const candidateUserId = searchParams.get('candidateUserId') || searchParams.get('candidate_user_id') || '';
+            const result = await handleCalendarStatus(candidateUserId);
+            sendJson(res, result.statusCode, result.data);
+          } catch (err: any) {
+            sendJson(res, 500, { error: err.message || 'Internal server error' });
+          }
+          return;
+        }
+
+        // 34. POST /api/calendar/disconnect
+        if (url === '/api/calendar/disconnect' && method === 'POST') {
+          try {
+            const body = await parseBody(req);
+            const result = await handleCalendarDisconnect(body);
+            sendJson(res, result.statusCode, result.data);
+          } catch (err: any) {
+            sendJson(res, 500, { error: err.message || 'Internal server error' });
+          }
+          return;
+        }
+
+        // 35. POST /api/calendar/sync-session
+        if (url === '/api/calendar/sync-session' && method === 'POST') {
+          try {
+            const body = await parseBody(req);
+            const result = await handleSyncSession(body);
+            sendJson(res, result.statusCode, result.data);
+          } catch (err: any) {
+            sendJson(res, 500, { error: err.message || 'Internal server error' });
+          }
+          return;
+        }
+
+        // 36. POST /api/calendar/retry-sync
+        if (url === '/api/calendar/retry-sync' && method === 'POST') {
+          try {
+            const body = await parseBody(req);
+            const result = await handleRetrySync(body);
+            sendJson(res, result.statusCode, result.data);
+          } catch (err: any) {
+            sendJson(res, 500, { error: err.message || 'Internal server error' });
+          }
+          return;
+        }
+
+        // 37. POST /api/calendar/delete-event
+        if (url === '/api/calendar/delete-event' && method === 'POST') {
+          try {
+            const body = await parseBody(req);
+            const result = await handleDeleteCalendarEvent(body);
             sendJson(res, result.statusCode, result.data);
           } catch (err: any) {
             sendJson(res, 500, { error: err.message || 'Internal server error' });

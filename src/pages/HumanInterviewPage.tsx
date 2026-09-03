@@ -1,7 +1,15 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { useUser } from '@clerk/clerk-react';
 import { useUserProfile, type HumanInterviewRubric } from '@/contexts/UserProfileContext';
+import { useUserRole } from '@/contexts/UserRoleContext';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
+import { AuthService } from '@/services/authService';
 import * as HumanInterviewService from '@/services/humanInterviewService';
+import {
+  getGoogleCalendarConnectUrl,
+  retryCalendarSync,
+} from '@/services/googleCalendarClient';
 import {
   Calendar,
   Clock,
@@ -15,9 +23,6 @@ import {
   FileText,
   X,
   Award,
-  Cpu,
-  Code2,
-  Brain,
   ChevronRight,
   AlertCircle,
   Laptop,
@@ -35,37 +40,7 @@ import {
    Atomic Booking, Reschedule, Cancellation, and Authoritative Evaluation.
    ═══════════════════════════════════════════════════════════════ */
 
-/* ── Evaluation Rubric Dimensions ───────────────────────────────────────── */
-const EVALUATION_WEIGHTS = [
-  {
-    key: 'systemThinking',
-    label: '1. System Architecture & Concurrency',
-    weight: '35%',
-    desc: 'Distributed topologies, non-blocking socket I/O, cache invalidation & memory safety.',
-    icon: Cpu,
-  },
-  {
-    key: 'codeQuality',
-    label: '2. Live Code Quality & RAII Safety',
-    weight: '30%',
-    desc: 'Idiomatic patterns, zero-cost abstractions in modern C++20 / Go, unit test resilience.',
-    icon: Code2,
-  },
-  {
-    key: 'technicalArticulation',
-    label: '3. Technical Articulation & Defense',
-    weight: '20%',
-    desc: 'Clear justification of architectural trade-offs, space/time complexity, and system design.',
-    icon: MessageSquare,
-  },
-  {
-    key: 'problemSolving',
-    label: '4. Edge-Case Problem Solving',
-    weight: '15%',
-    desc: 'Analytical debugging, handling network partitions, race conditions & timeout spikes.',
-    icon: Brain,
-  },
-];
+
 
 /* ── Default Completed Rubric Mock (Fallback) ───────────────────────────── */
 const DEFAULT_COMPLETED_RUBRIC: HumanInterviewRubric = {
@@ -175,9 +150,25 @@ function sanitizeCandidateError(error: any, fallback: string): string {
 
 export default function HumanInterviewPage() {
   const { profile, updateProfile } = useUserProfile();
+  const { user: clerkUser, isLoaded: isClerkLoaded } = useUser();
+  const { userRole } = useUserRole();
+  const { isAuthenticated: isAdminAuth, adminUser } = useAdminAuth();
+  const session = AuthService.getCurrentSession();
+
+  /* ── Authoritative Admin Role Verification ──
+     Admin actions are strictly restricted to authenticated administrators in admin context.
+     Candidate Portal users (students & graduates) never see or invoke admin controls. */
+  const isCandidateRole = userRole === 'student' || userRole === 'grad' || userRole === 'graduate';
+  const clerkRole = (clerkUser?.publicMetadata?.role as string)?.toUpperCase();
+  const isAdmin = !isCandidateRole && (
+    (isAdminAuth && (adminUser?.role === 'ADMIN' || adminUser?.role === 'SUPER_ADMIN')) ||
+    session?.user?.role === 'ADMIN' ||
+    clerkRole === 'ADMIN' ||
+    clerkRole === 'SUPER_ADMIN'
+  );
 
   /* ── Core State ── */
-  const [isLoading, setIsLoading] = useState(true);
+  const [_isLoading, setIsLoading] = useState(true);
   const [assignedExpert, setAssignedExpert] = useState<HumanInterviewService.AssignedExpertProfile | null>(null);
   const [availableSlots, setAvailableSlots] = useState<Record<string, HumanInterviewService.AvailabilitySlotItem[]>>({});
   const [sessionData, setSessionData] = useState<HumanInterviewService.ConfirmedSessionSummary | null>(null);
@@ -187,14 +178,15 @@ export default function HumanInterviewPage() {
   const [isBookingLoading, setIsBookingLoading] = useState(false);
   const [isAssigningLoading, setIsAssigningLoading] = useState(false);
   const [isReschedulingLoading, setIsReschedulingLoading] = useState(false);
+  const [isCalendarSyncing, setIsCalendarSyncing] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [rescheduleSelectedSlotId, setRescheduleSelectedSlotId] = useState<string | null>(null);
   const [checkedActionItems, setCheckedActionItems] = useState<Record<string, boolean>>({});
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  /* ── Candidate User ID ── */
-  const candidateUserId = 'usr-cand-001';
+  /* ── Candidate User ID — real Clerk user ID ── */
+  const candidateUserId = clerkUser?.id || '';
 
   /* ── Toast Helper ── */
   const triggerToast = (msg: string) => {
@@ -259,25 +251,45 @@ export default function HumanInterviewPage() {
       setErrorMessage(sanitizeCandidateError(err, 'Unable to sync calibration state from server.'));
       return 'awaiting_assignment';
     }
-  }, [candidateUserId]);
+  }, [candidateUserId, updateProfile]);
 
-  /* ── Initialize Page on Mount ── */
+  /* ── Initialize Page on Mount — provision profile then load state ── */
   useEffect(() => {
     let active = true;
+    if (!isClerkLoaded || !clerkUser) return;
+    const user = clerkUser; // narrow: clerkUser is non-null within this effect
 
     async function init() {
       setIsLoading(true);
-      await loadInterviewBackendState();
-      if (active) {
-        setIsLoading(false);
+      try {
+        // Ensure Supabase has a users + student_profiles row for this Clerk user
+        await HumanInterviewService.ensureCandidateProfile({
+          userId: user.id,
+          email: user.primaryEmailAddress?.emailAddress || '',
+          fullName: user.fullName || user.firstName || 'Jadeer Candidate',
+          track: profile.track,
+        });
+      } catch {
+        // Non-fatal: RPC may fail if user already exists; proceed to load state
       }
+      await loadInterviewBackendState();
+      if (active) setIsLoading(false);
     }
 
     init();
-    return () => {
-      active = false;
-    };
-  }, [loadInterviewBackendState]);
+
+    // Check for calendar connection redirect param
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get('calendar_status') === 'connected') {
+      triggerToast('Google Calendar connected! Your sessions will now sync automatically.');
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (searchParams.get('calendar_status') === 'failed') {
+      triggerToast('Google Calendar connection failed. Please retry.');
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+
+    return () => { active = false; };
+  }, [isClerkLoaded, clerkUser, profile.track, loadInterviewBackendState]);
 
   /* ── Derived Active Progress State ── */
   const activeProgressState: CalibrationProgressState = useMemo(() => {
@@ -392,6 +404,51 @@ export default function HumanInterviewPage() {
     }
   };
 
+  /* ── Handler: Connect Google Calendar ── */
+  const handleConnectGoogleCalendar = async () => {
+    try {
+      const authUrl = await getGoogleCalendarConnectUrl(candidateUserId, window.location.pathname);
+      if (authUrl) {
+        window.location.href = authUrl;
+      } else {
+        triggerToast('Calendar service unavailable.');
+      }
+    } catch {
+      triggerToast('Unable to initiate Google Calendar connection.');
+    }
+  };
+
+  /* ── Handler: Retry Google Calendar Sync ── */
+  const handleRetryCalendarSync = async () => {
+    if (!sessionData) return;
+    setIsCalendarSyncing(true);
+    try {
+      const result = await retryCalendarSync({
+        sessionId: sessionData.sessionId,
+        candidateUserId,
+        sessionType: 'human_interview',
+        scheduledStartTime: sessionData.scheduledStartTime,
+        scheduledEndTime: sessionData.scheduledEndTime,
+        timezone: sessionData.timezone || 'Asia/Riyadh',
+        meetingUrl: sessionData.meetingUrl,
+        expertName: assignedExpert?.fullName || 'Principal Calibration Lead',
+        expertTitle: assignedExpert?.title || 'Jadeer Calibration Lead',
+        track: profile.track,
+      });
+
+      if (result.success) {
+        triggerToast('Google Calendar synchronized successfully!');
+        await loadInterviewBackendState();
+      } else {
+        triggerToast(result.error || 'Calendar sync retry failed.');
+      }
+    } catch {
+      triggerToast('Retry failed.');
+    } finally {
+      setIsCalendarSyncing(false);
+    }
+  };
+
   /* ── Handler: Reschedule Session (Atomic RPC via Service) ── */
   const handleRescheduleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -477,8 +534,12 @@ export default function HumanInterviewPage() {
     }
   };
 
-  /* ── Handler: Admin Assign Interviewer (Simulated Action) ── */
+  /* ── Handler: Admin Assign Interviewer (Restricted to Admin Context) ── */
   const handleSimulateAssignInterviewer = async () => {
+    if (!isAdmin) {
+      triggerToast('Unauthorized: Interviewer assignment is restricted to Jadeer administrators.');
+      return;
+    }
     setIsAssigningLoading(true);
     try {
       const result = await HumanInterviewService.assignInterviewerByAdmin(candidateUserId);
@@ -496,8 +557,12 @@ export default function HumanInterviewPage() {
     }
   };
 
-  /* ── Handler: Reset State (Testing Helper) ── */
+  /* ── Handler: Reset State (Admin Context Only) ── */
   const handleResetFlow = async () => {
+    if (!isAdmin) {
+      triggerToast('Unauthorized: Resetting state is restricted to administrators.');
+      return;
+    }
     try {
       await HumanInterviewService.resetCandidateAssignment(candidateUserId);
       setAssignedExpert(null);
@@ -520,6 +585,10 @@ export default function HumanInterviewPage() {
 
   /* ── Handler: Authoritative Evaluation Submission (Interviewer/Admin Action) ── */
   const handleAuthoritativeEvaluationSubmit = async () => {
+    if (!isAdmin) {
+      triggerToast('Unauthorized: Submitting evaluations is restricted to evaluators.');
+      return;
+    }
     if (!assignedExpert) return;
 
     try {
@@ -748,16 +817,16 @@ export default function HumanInterviewPage() {
               </div>
             </div>
 
-            {/* Development Inspection Reset Control */}
-            {import.meta.env.DEV && activeProgressState !== 'awaiting_assignment' && (
+            {/* Development / Admin Inspection Reset Control */}
+            {isAdmin && activeProgressState !== 'awaiting_assignment' && (
               <button
                 type="button"
                 onClick={handleResetFlow}
                 className="text-[11px] text-slate-400 hover:text-slate-600 flex items-center gap-1 transition-colors cursor-pointer"
-                title="Reset test environment back to Awaiting Assignment"
+                title="Reset test environment back to Awaiting Assignment (Admin only)"
               >
                 <RotateCcw className="w-3 h-3" />
-                <span>Reset Assignment (Dev)</span>
+                <span>Reset Assignment (Admin)</span>
               </button>
             )}
           </div>
@@ -799,14 +868,14 @@ export default function HumanInterviewPage() {
                   <span>We’ll notify you once your interviewer is assigned.</span>
                 </div>
 
-                {/* Admin Assignment Trigger (Guarded for development inspection) */}
-                {import.meta.env.DEV && (
+                {/* Admin Assignment Trigger (Strictly gated to authenticated admin users in admin context) */}
+                {isAdmin && (
                   <button
                     type="button"
                     onClick={handleSimulateAssignInterviewer}
                     disabled={isAssigningLoading}
                     className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-[#5E8174] hover:bg-[#4D6D62] text-white text-xs font-semibold transition-all shadow-2xs cursor-pointer active:scale-95 disabled:opacity-50 w-full sm:w-auto"
-                    title="Simulate Admin assigning interviewer in Jadeer backend"
+                    title="Assign interviewer in Jadeer backend (Admin only)"
                   >
                     {isAssigningLoading ? (
                       <>
@@ -1099,15 +1168,42 @@ export default function HumanInterviewPage() {
               {/* Secondary Actions */}
               <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100">
                 <div className="flex flex-wrap items-center gap-3">
-                  <a
-                    href={googleCalendarUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#F8F9FA] hover:bg-white text-slate-700 hover:text-[#0F172A] border border-slate-200 text-xs font-semibold transition-all cursor-pointer shadow-2xs"
-                  >
-                    <CalendarPlus className="w-3.5 h-3.5 text-[#5E8174]" />
-                    <span>Add to Google Calendar</span>
-                  </a>
+                  {/* Google Calendar Integration Action */}
+                  {sessionData.googleCalendarSyncStatus === 'synced' ? (
+                    <a
+                      href={sessionData.googleCalendarHtmlLink || 'https://calendar.google.com'}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#5E8174]/10 hover:bg-[#5E8174]/15 text-[#5E8174] border border-[#5E8174]/30 text-xs font-semibold transition-all cursor-pointer shadow-2xs"
+                      title="View this calibration session in Google Calendar"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#5E8174]" />
+                      <span>Google Calendar: Synced (View)</span>
+                    </a>
+                  ) : sessionData.googleCalendarSyncStatus === 'failed' ? (
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800">
+                      <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                      <span>Calendar sync failed</span>
+                      <button
+                        type="button"
+                        onClick={handleRetryCalendarSync}
+                        disabled={isCalendarSyncing}
+                        className="font-bold underline hover:text-amber-900 cursor-pointer ml-1"
+                      >
+                        {isCalendarSyncing ? 'Syncing…' : 'Retry'}
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleConnectGoogleCalendar}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#F8F9FA] hover:bg-white text-slate-700 hover:text-[#0F172A] border border-slate-200 text-xs font-semibold transition-all cursor-pointer shadow-2xs"
+                      title="Connect Google Calendar to automatically sync Jadeer sessions"
+                    >
+                      <CalendarPlus className="w-3.5 h-3.5 text-[#5E8174]" />
+                      <span>Connect Google Calendar</span>
+                    </button>
+                  )}
 
                   <button
                     type="button"
@@ -1119,13 +1215,13 @@ export default function HumanInterviewPage() {
                   </button>
                 </div>
 
-                {/* Authoritative Evaluation Simulation (Guarded for development inspection) */}
-                {import.meta.env.DEV && (
+                {/* Authoritative Evaluation Simulation (Strictly gated to authenticated admin/evaluator users) */}
+                {isAdmin && (
                   <button
                     type="button"
                     onClick={handleAuthoritativeEvaluationSubmit}
                     className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#F8F9FA] hover:bg-white text-slate-600 hover:text-[#0F172A] border border-slate-200 text-xs font-medium transition-all cursor-pointer ml-auto"
-                    title="Submit authoritative evaluation as interviewer to complete stage"
+                    title="Submit authoritative evaluation as interviewer (Admin only)"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-[#5E8174]" />
                     <span>Submit Evaluation (Interviewer)</span>

@@ -564,6 +564,10 @@ model Session {
   cancelledBy              String?       @map("cancelled_by")
   cancelledAt              DateTime?     @map("cancelled_at")
   rescheduledFromSessionId String?       @map("rescheduled_from_session_id") @db.Uuid
+  googleCalendarEventId    String?       @map("google_calendar_event_id")
+  googleCalendarSyncStatus String        @default("not_connected") @map("google_calendar_sync_status")
+  googleCalendarSyncedAt   DateTime?     @map("google_calendar_synced_at")
+  googleCalendarLastError  String?       @map("google_calendar_last_error") @db.Text
   createdAt                DateTime      @default(now()) @map("created_at")
   updatedAt                DateTime      @default(now()) @updatedAt @map("updated_at")
 
@@ -689,3 +693,20 @@ model CandidateInterviewAssignment {
   @@index([expertId])
   @@map("candidate_interview_assignments")
 }
+
+/// Candidate Google Calendar OAuth token storage
+model CandidateGoogleToken {
+  id              String   @id @default(uuid()) @db.Uuid
+  candidateUserId String   @unique @map("candidate_user_id")
+  accessToken     String   @map("access_token") @db.Text
+  refreshToken    String?  @map("refresh_token") @db.Text
+  scope           String?
+  tokenType       String?  @default("Bearer") @map("token_type")
+  expiryDate      BigInt?  @map("expiry_date")
+  googleEmail     String?  @map("google_email")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("candidate_google_tokens")
+}
+

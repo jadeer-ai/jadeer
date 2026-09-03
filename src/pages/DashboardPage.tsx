@@ -6,6 +6,9 @@ import { useUserRole } from '@/contexts/UserRoleContext';
 import { useCandidateJourney } from '@/contexts/CandidateJourneyContext';
 import { useInterviewSchedule, type InterviewType } from '@/contexts/InterviewScheduleContext';
 import { AdminApiService } from '@/services/adminService';
+import { useDashboardConsultations } from '@/hooks/useDashboardConsultations';
+import { useDashboardHumanCalibration } from '@/hooks/useDashboardHumanCalibration';
+import DashboardCalibrationCard from '@/components/dashboard/DashboardCalibrationCard';
 import {
   Check,
   ArrowRight,
@@ -63,44 +66,6 @@ interface JourneyPhase {
   status: 'completed' | 'current' | 'upcoming';
 }
 
-const journeyPhases: JourneyPhase[] = [
-  {
-    id: 'onboarding',
-    step: '01',
-    name: 'Profile Onboarding',
-    desc: 'Identity & Track Binding',
-    status: 'completed',
-  },
-  {
-    id: 'ai-assessment',
-    step: '02',
-    name: 'AI Assessment',
-    desc: 'Adaptive Technical Evaluation',
-    status: 'current',
-  },
-  {
-    id: 'human-calibration',
-    step: '03',
-    name: 'Human Calibration',
-    desc: 'Mentor Verification Pod',
-    status: 'upcoming',
-  },
-  {
-    id: 'evidence-dossier',
-    step: '04',
-    name: 'Evidence Dossier',
-    desc: 'Verified Skills Portfolio',
-    status: 'upcoming',
-  },
-  {
-    id: 'job-matching',
-    step: '05',
-    name: 'Internship Matching',
-    desc: 'Evidence-Backed Hiring',
-    status: 'upcoming',
-  },
-];
-
 export default function DashboardPage() {
   const { userRole, lockedTrack } = useUserRole();
   const { isOnboarded } = useCandidateJourney();
@@ -114,17 +79,15 @@ export default function DashboardPage() {
   const clerkEmail = clerkUser?.primaryEmailAddress?.emailAddress;
   const clerkImage = clerkUser?.imageUrl;
 
+  const candidateUserId = clerkUser?.id || '';
+  const { consultations, activeCount, totalCount } = useDashboardConsultations(candidateUserId);
+  const calibration = useDashboardHumanCalibration(candidateUserId);
+
   // Load unified user data from AdminApiService
   const unifiedData = useMemo(() => {
-    return AdminApiService.getUnifiedCandidateProfile('usr-cnd-001');
-  }, []);
+    return AdminApiService.getUnifiedCandidateProfile(candidateUserId);
+  }, [candidateUserId]);
 
-  // Candidate interviews scheduled by employers
-  const candidateInterviews = getInterviewsForCandidate('JAD-8492')
-    .filter((i) => i.status === 'scheduled')
-    .sort((a, b) => a.date.localeCompare(b.date));
-
-  const consultations = unifiedData.consultations;
   const user = unifiedData.user;
   const profile = user.studentProfile;
   const activeTrack = userProfile.track || lockedTrack || (clerkUser?.publicMetadata?.track as string) || profile?.softwareTrack || 'Backend Development';
@@ -135,6 +98,73 @@ export default function DashboardPage() {
   const isStudent = userRole === 'student' || userProfile.role === 'student';
   const destinationTitle = isStudent ? 'Internship Matching' : 'Job Matching';
   const destinationDesc = isStudent ? 'Verified Internship Placement' : 'Evidence-Backed Hiring';
+
+  // Candidate interviews scheduled by employers (scoped to candidate)
+  const employerInterviews = candidateUserId
+    ? getInterviewsForCandidate(candidateUserId).filter((i) => i.status === 'scheduled')
+    : [];
+
+  const allUpcomingInterviews = useMemo(() => {
+    const list = [...employerInterviews];
+    if (calibration.state === 'confirmed' && calibration.confirmedDetails) {
+      list.unshift({
+        id: calibration.confirmedDetails.sessionId,
+        candidateId: candidateUserId,
+        candidateName: effectiveName,
+        candidateInitials: effectiveName.split(' ').map((n) => n[0]).join('').slice(0, 2),
+        company: calibration.confirmedDetails.interviewerCompany,
+        role: `Human Calibration • ${calibration.confirmedDetails.interviewerName}`,
+        date: calibration.confirmedDetails.scheduledDate,
+        timeSlot: calibration.confirmedDetails.scheduledTime,
+        timezone: calibration.confirmedDetails.timezone,
+        meetingLink: calibration.confirmedDetails.meetingUrl || '/candidates/human-interview',
+        type: 'human' as const,
+        status: 'scheduled' as const,
+        scheduledBy: 'candidate' as const,
+        createdAt: new Date().toISOString(),
+      });
+    }
+    return list.sort((a, b) => a.date.localeCompare(b.date));
+  }, [employerInterviews, calibration.state, calibration.confirmedDetails, candidateUserId, effectiveName]);
+
+  // Derived dynamic journey phases based on real Supabase calibration state
+  const journeyPhases: JourneyPhase[] = useMemo(() => [
+    {
+      id: 'onboarding',
+      step: '01',
+      name: 'Profile Onboarding',
+      desc: 'Identity & Track Binding',
+      status: 'completed',
+    },
+    {
+      id: 'ai-assessment',
+      step: '02',
+      name: 'AI Assessment',
+      desc: 'Adaptive Technical Evaluation',
+      status: calibration.state === 'completed' || calibration.state === 'confirmed' || calibration.state === 'choose_time' ? 'completed' : 'current',
+    },
+    {
+      id: 'human-calibration',
+      step: '03',
+      name: 'Human Calibration',
+      desc: 'Mentor Verification Pod',
+      status: calibration.state === 'completed' ? 'completed' : calibration.state === 'confirmed' || calibration.state === 'choose_time' ? 'current' : 'upcoming',
+    },
+    {
+      id: 'evidence-dossier',
+      step: '04',
+      name: 'Evidence Dossier',
+      desc: 'Verified Skills Portfolio',
+      status: calibration.state === 'completed' ? 'current' : 'upcoming',
+    },
+    {
+      id: 'job-matching',
+      step: '05',
+      name: destinationTitle,
+      desc: destinationDesc,
+      status: 'upcoming',
+    },
+  ], [calibration.state, destinationTitle, destinationDesc]);
 
   // Auto-redirect if user signed up via social login and lacks required profile fields
   useEffect(() => {
@@ -168,7 +198,7 @@ export default function DashboardPage() {
               <span className="text-slate-300">•</span>
               <span className="font-mono text-slate-400 text-[11px]">User_ID: {clerkUser?.id || user.id}</span>
               <span className="text-slate-300">•</span>
-              <span className="font-mono text-slate-400 text-[11px]">Candidate_ID: {profile?.id || 'stu-001'}</span>
+              <span className="font-mono text-slate-400 text-[11px]">Candidate_ID: {profile?.id || (candidateUserId ? `cnd-${candidateUserId.slice(-6)}` : 'cnd-live')}</span>
               <span className="text-slate-300">•</span>
               <span className="inline-flex items-center gap-1.5 text-[#5E8174] bg-[#5E8174]/10 border border-[#5E8174]/20 px-2 py-0.5 rounded-full font-medium text-[11px]">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#5E8174]" />
@@ -219,11 +249,11 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-slate-100">
           <div className="p-3.5 rounded-2xl bg-[#F4F0E8]/80 border border-[#E8E2D5]">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Validation Stage</p>
-            <p className="text-base font-bold text-[#0F172A] mt-0.5">Phase 2: AI Interview</p>
+            <p className="text-base font-bold text-[#0F172A] mt-0.5">{calibration.validationStageLabel}</p>
           </div>
           <div className="p-3.5 rounded-2xl bg-[#F8F9FA] border border-slate-200/60">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Consultations</p>
-            <p className="text-base font-bold text-[#5E8174] mt-0.5">{consultations.length} Active Bookings</p>
+            <p className="text-base font-bold text-[#5E8174] mt-0.5">{activeCount} Active Bookings</p>
           </div>
           <div className="p-3.5 rounded-2xl bg-[#F8F9FA] border border-slate-200/60">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Telemetry Score</p>
@@ -253,7 +283,7 @@ export default function DashboardPage() {
           </div>
           <span className="text-xs font-semibold text-[#5E8174] bg-[#5E8174]/10 border border-[#5E8174]/20 px-3 py-1 rounded-full flex items-center gap-1.5 w-fit">
             <span className="w-1.5 h-1.5 rounded-full bg-[#5E8174] animate-pulse" />
-            <span>Phase 2 of 5 • En Route to {destinationTitle}</span>
+            <span>Phase {calibration.stepperPhaseNumber} of 5 • En Route to {destinationTitle}</span>
           </span>
         </div>
 
@@ -453,7 +483,7 @@ export default function DashboardPage() {
                   to="/consultations"
                   className="text-xs font-semibold text-[#5E8174] hover:text-[#4D6D62] transition-colors"
                 >
-                  View All ({consultations.length}) →
+                  View All ({totalCount}) →
                 </Link>
               </div>
 
@@ -514,7 +544,14 @@ export default function DashboardPage() {
                                 month: 'short',
                                 day: 'numeric',
                               })}
+                              {session.timeLabel ? ` • ${session.timeLabel}` : ''}
                             </span>
+                            {session.timezone && (
+                              <>
+                                <span className="text-slate-300">•</span>
+                                <span className="text-slate-400 font-mono text-[10px]">{session.timezone}</span>
+                              </>
+                            )}
                             <span className="text-slate-300">•</span>
                             <span className="text-slate-400">{session.durationMinutes} mins</span>
                             {session.meetingLink && (
@@ -588,45 +625,12 @@ export default function DashboardPage() {
                 </Link>
               </div>
 
-              {/* Assessment Readiness Card */}
-              <div className="p-4 rounded-2xl bg-[#F8F9FA] border border-slate-200/60 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                    Target Technical Assessment
-                  </span>
-                  <span className="text-[11px] font-semibold text-[#5E8174] bg-[#5E8174]/10 border border-[#5E8174]/20 px-2.5 py-0.5 rounded-full">
-                    Adaptive C++ & Systems
-                  </span>
-                </div>
-
-                <div className="space-y-1">
-                  <h4 className="text-[14px] font-bold text-[#0F172A]">
-                    C++20 Object-Oriented Design & Memory Layout
-                  </h4>
-                  <p className="text-[12px] text-[#334155] leading-relaxed">
-                    Evaluates polymorphic dispatch, RAII, exception safety, and cache-friendly data structures to unlock verified internship badges.
-                  </p>
-                </div>
-
-                {/* Capability Dimensions Bar */}
-                <div className="space-y-2 pt-2 border-t border-slate-200/60">
-                  <div className="flex items-center justify-between text-[11px] font-medium">
-                    <span className="text-[#334155]">System Design & Memory Guarantees</span>
-                    <span className="font-bold text-[#0F172A]">92%</span>
-                  </div>
-                  <div className="w-full h-2 rounded-full bg-slate-200/80 overflow-hidden">
-                    <div className="h-full rounded-full bg-[#5E8174]" style={{ width: '92%' }} />
-                  </div>
-
-                  <div className="flex items-center justify-between text-[11px] font-medium pt-1">
-                    <span className="text-[#334155]">Algorithmic Efficiency & Concurrency</span>
-                    <span className="font-bold text-[#0F172A]">85%</span>
-                  </div>
-                  <div className="w-full h-2 rounded-full bg-slate-200/80 overflow-hidden">
-                    <div className="h-full rounded-full bg-[#84A98C]" style={{ width: '85%' }} />
-                  </div>
-                </div>
-              </div>
+              {/* Human Calibration Status Card (Authoritative Supabase State) */}
+              <DashboardCalibrationCard
+                calibration={calibration}
+                track={activeTrack}
+                isStudent={isStudent}
+              />
 
               {/* Verified Badges & Proof Chips */}
               <div className="space-y-2">
@@ -680,9 +684,9 @@ export default function DashboardPage() {
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════
-         5. UPCOMING INTERVIEWS (SYNCED FROM EMPLOYER PORTAL)
+         5. UPCOMING INTERVIEWS (SYNCED FROM JADEER PLATFORM)
          ═══════════════════════════════════════════════════════════════ */}
-      {candidateInterviews.length > 0 && (
+      {allUpcomingInterviews.length > 0 && (
         <div className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.03)] overflow-hidden">
           <div className="flex items-center justify-between px-6 sm:px-8 py-5 border-b border-slate-100">
             <div className="flex items-center gap-2.5">
@@ -690,17 +694,17 @@ export default function DashboardPage() {
                 <CalendarCheck2 className="w-4 h-4" />
               </div>
               <div>
-                <h2 className="text-[14px] font-bold text-[#0F172A]">Employer & Internship Interviews</h2>
+                <h2 className="text-[14px] font-bold text-[#0F172A]">Upcoming Interviews & Calibration</h2>
                 <p className="text-[11px] text-slate-400 font-medium">Synchronized directly through Jadeer</p>
               </div>
             </div>
             <span className="text-[10px] font-semibold uppercase tracking-wider text-[#5E8174] bg-[#5E8174]/10 border border-[#5E8174]/20 px-2.5 py-0.5 rounded-full">
-              {candidateInterviews.length} upcoming
+              {allUpcomingInterviews.length} upcoming
             </span>
           </div>
 
           <div className="divide-y divide-slate-100">
-            {candidateInterviews.map((interview) => {
+            {allUpcomingInterviews.map((interview) => {
               const TypeIcon = interviewTypeIcons[interview.type];
               return (
                 <div
@@ -746,6 +750,17 @@ export default function DashboardPage() {
                         Join Meeting
                         <ExternalLink className="w-3 h-3" />
                       </a>
+                      {interview.type === 'human' && calibration.confirmedDetails?.googleCalendarSyncStatus === 'synced' && (
+                        <a
+                          href={calibration.confirmedDetails.googleCalendarHtmlLink || 'https://calendar.google.com'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-[11px] font-semibold text-[#5E8174] hover:underline"
+                        >
+                          <CalendarCheck2 className="w-3 h-3 text-[#5E8174]" />
+                          <span>Google Calendar</span>
+                        </a>
+                      )}
                     </div>
                   </div>
                 </div>
