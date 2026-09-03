@@ -24,7 +24,7 @@ async function run() {
   const humanInterviewSrc = fs.readFileSync(
     path.join(__dirname, '../src/pages/HumanInterviewPage.tsx'),
     'utf8'
-  );
+  ).replace(/\r\n/g, '\n');
 
   // 1. Confirm "Assign Interviewer (Admin)" is NOT guarded by import.meta.env.DEV alone
   assert(

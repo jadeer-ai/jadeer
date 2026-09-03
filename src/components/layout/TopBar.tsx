@@ -50,7 +50,7 @@ export default function TopBar() {
   const clerkName = clerkUser?.fullName || clerkUser?.firstName || clerkUser?.username;
   const clerkEmail = clerkUser?.primaryEmailAddress?.emailAddress;
   const clerkImage = clerkUser?.imageUrl;
-  const displayName = userProfile.fullName || clerkName || (currentRole === 'student' ? 'Ahmad Student' : 'Ahmad Al-Hassan');
+  const displayName = userProfile.fullName || clerkName || (currentRole === 'student' ? 'Candidate Student' : 'Candidate');
   const displayEmail = userProfile.email || clerkEmail;
   const displayImage = userProfile.imageUrl || clerkImage;
   const displayRoleTitle = userProfile.title || (currentRole === 'student' ? 'University Student' : 'Junior Software Engineer');

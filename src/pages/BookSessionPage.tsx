@@ -132,7 +132,7 @@ export default function BookSessionPage() {
     else if (currentStep === 'confirm') {
       scheduleInterview({
         candidateId: 'JAD-8492',
-        candidateName: profile.fullName || 'Ahmad Al-Hassan',
+        candidateName: profile.fullName || 'Candidate',
         candidateInitials: 'AH',
         role: selectedTopicData?.label || '1-on-1 Mentorship Session',
         company: 'Eng. Mariam Ashraf (Principal Software Engineer)',

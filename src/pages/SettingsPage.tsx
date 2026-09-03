@@ -41,7 +41,7 @@ export default function SettingsPage() {
 
   // Account state
   const session = AuthService.getCurrentSession();
-  const [email, setEmail] = useState(session?.user?.email || 'ahmad.hassan@example.com');
+  const [email, setEmail] = useState(session?.user?.email || '');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -168,7 +168,7 @@ export default function SettingsPage() {
                 Account Security & Delivery
               </span>
               <span className="text-xs font-semibold px-2.5 py-0.5 rounded-lg bg-[#F8F9FA] text-[#334155] border border-slate-200/60">
-                {userProfile.fullName || 'Ahmad Al-Hassan'}
+                {userProfile.fullName || 'Candidate'}
               </span>
             </div>
 

@@ -46,7 +46,7 @@ export default function PortfolioPage() {
     : 'AH';
 
   const handleShareLink = () => {
-    navigator.clipboard.writeText(`https://jadeer.io/candidates/${(profile.fullName || 'ahmad-al-hassan').toLowerCase().replace(/\s+/g, '-')}`);
+    navigator.clipboard.writeText(`https://jadeer.io/candidates/${(profile.fullName || 'candidate').toLowerCase().replace(/\s+/g, '-')}`);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
   };
@@ -80,7 +80,7 @@ export default function PortfolioPage() {
             <div className="space-y-1">
               <div className="flex items-center gap-2.5">
                 <h1 className="text-2xl sm:text-3xl font-bold text-[#0F172A] tracking-tight">
-                  {profile.fullName || 'Ahmad Al-Hassan'}
+                  {profile.fullName || 'Candidate Profile'}
                 </h1>
                 <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#5E8174] bg-[#5E8174]/10 px-2.5 py-0.5 rounded-full border border-[#5E8174]/20">
                   <ShieldCheck className="w-3.5 h-3.5 text-[#5E8174]" />
@@ -97,11 +97,11 @@ export default function PortfolioPage() {
                 </span>
                 <span className="flex items-center gap-1">
                   <Mail className="w-3.5 h-3.5 text-[#5E8174]" />
-                  {profile.email || 'ahmad.hassan@example.com'}
+                  {profile.email || 'No email provided'}
                 </span>
                 <span className="flex items-center gap-1">
                   <GitHubIcon className="w-3.5 h-3.5 text-[#0F172A]" />
-                  {profile.githubUrl ? profile.githubUrl.replace('https://', '') : 'github.com/ahmad-hassan'}
+                  {profile.githubUrl ? profile.githubUrl.replace('https://', '') : 'GitHub not linked'}
                 </span>
               </div>
             </div>
@@ -289,8 +289,8 @@ export default function PortfolioPage() {
 
           {/* Warm Beige Quote Surface */}
           <div className="p-4 rounded-2xl bg-[#F4F0E8]/80 border border-[#E8E2D5] text-xs sm:text-[12.5px] text-[#334155] leading-relaxed italic space-y-2">
-            <p>
-              "Ahmad demonstrated exceptional command over low-level C++ mechanics during our technical calibration session. His code structure reflects a solid grasp of RAII, thread safety, and cache alignment that is rare for a junior engineer."
+            <p className={!profile.bio ? "not-italic text-center text-slate-400" : ""}>
+              {profile.bio || 'Bio not provided.'}
             </p>
             <div className="flex items-center gap-1 text-[11px] font-bold text-[#5E8174] not-italic">
               <CheckCircle2 className="w-3.5 h-3.5 text-[#5E8174]" />

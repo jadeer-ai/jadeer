@@ -90,11 +90,11 @@ export default function DashboardPage() {
 
   const user = unifiedData.user;
   const profile = user.studentProfile;
-  const activeTrack = userProfile.track || lockedTrack || (clerkUser?.publicMetadata?.track as string) || profile?.softwareTrack || 'Backend Development';
-  const effectiveName = userProfile.fullName || clerkName || profile?.fullName || 'Ahmad Al-Hassan';
-  const effectiveEmail = userProfile.email || clerkEmail || user?.email || 'ahmad.hassan@example.com';
+  const activeTrack = userProfile.track || lockedTrack || (clerkUser?.publicMetadata?.track as string) || profile?.softwareTrack || 'Track Not Selected';
+  const effectiveName = userProfile.fullName || clerkName || profile?.fullName || 'Candidate';
+  const effectiveEmail = userProfile.email || clerkEmail || user?.email || 'N/A';
   const effectiveImage = userProfile.imageUrl || clerkImage;
-  const effectiveUniversity = userProfile.university || (clerkUser?.publicMetadata?.university as string) || profile?.university || 'KFUPM';
+  const effectiveUniversity = userProfile.university || (clerkUser?.publicMetadata?.university as string) || profile?.university || 'University Not Specified';
   const isStudent = userRole === 'student' || userProfile.role === 'student';
   const destinationTitle = isStudent ? 'Internship Matching' : 'Job Matching';
   const destinationDesc = isStudent ? 'Verified Internship Placement' : 'Evidence-Backed Hiring';

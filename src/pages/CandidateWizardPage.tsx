@@ -22,6 +22,7 @@ import {
   Sparkles,
   CheckCircle2,
   Lock,
+  GraduationCap,
 } from 'lucide-react';
 
 /* ── Inline Brand Icons ─────────────────────────────────────────────────── */
@@ -51,6 +52,7 @@ function LinkedInIcon({ className }: { className?: string }) {
 
 const STEPS = [
   { id: 'profile', label: 'Basic Profile', icon: User },
+  { id: 'education', label: 'Education', icon: GraduationCap },
   { id: 'skills', label: 'Technical Skills', icon: Code2 },
   { id: 'resources', label: 'Resume & Links', icon: FileUp },
 ] as const;
@@ -113,13 +115,22 @@ const skillCategories: SkillCategory[] = [
 interface WizardFormData {
   fullName: string;
   title: string;
-  location: string;
+  city: string;
+  country: string;
   bio: string;
   university?: string;
+  degree?: string;
+  faculty?: string;
+  specialization?: string;
+  gpa?: string;
+  startDate?: string;
+  endDate?: string;
   selectedRole?: 'student' | 'graduate';
+  selectedTrack?: string;
   selectedSkills: string[];
   skillSearch: string;
   resumeFile: File | null;
+  avatarDataUrl?: string;
   githubUrl: string;
   linkedinUrl: string;
   portfolioUrl: string;
@@ -128,10 +139,16 @@ interface WizardFormData {
 const initialFormData: WizardFormData = {
   fullName: '',
   title: '',
-  location: '',
+  city: '',
+  country: '',
   bio: '',
-  university: 'King Fahd University of Petroleum & Minerals (KFUPM)',
+  university: '',
+  degree: '',
+  faculty: '',
+  specialization: '',
+  gpa: '',
   selectedRole: undefined,
+  selectedTrack: '',
   selectedSkills: [],
   skillSearch: '',
   resumeFile: null,
@@ -247,36 +264,39 @@ function BasicProfileStep({
         </p>
       </div>
 
-      {/* Bound Technical Track Notification */}
-      <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <Lock className="w-4 h-4 text-amber-600 shrink-0" />
-          <div>
-            <p className="text-xs font-bold text-amber-900">
-              Bound Technical Track: <span className="underline">{lockedTrack || 'Software Engineering'}</span>
-            </p>
-            <p className="text-[11px] text-amber-800/70">
-              Locked permanently upon registration to anchor your AI telemetry, evaluations, and Evidence Dossier.
-            </p>
-          </div>
-        </div>
-        <span className="text-[10px] font-bold text-amber-800 bg-amber-200/60 px-2 py-0.5 rounded-md uppercase tracking-wider shrink-0 border border-amber-300/40">
-          Locked
-        </span>
-      </div>
-
-      {/* Avatar + Name row */}
+{/* Avatar + Name row */}
       <div className="flex items-start gap-5">
         {/* Avatar placeholder */}
-        <div className="shrink-0">
-          <div className={`w-[72px] h-[72px] rounded-2xl border-2 border-dashed flex items-center justify-center cursor-pointer transition-all duration-200 group
+        <div className="shrink-0 relative">
+          <label className={`w-[72px] h-[72px] rounded-2xl border-2 border-dashed flex items-center justify-center cursor-pointer transition-all duration-200 group overflow-hidden
             ${isStudent
               ? 'bg-student-500/[0.08] border-student-500/20 hover:border-student-500/40 hover:bg-student-500/[0.12]'
               : 'bg-[#6E8F75]/[0.08] border-[#6E8F75]/20 hover:border-[#6E8F75]/40 hover:bg-[#6E8F75]/[0.12]'
             }
           `}>
-            <User className={`w-6 h-6 transition-colors ${isStudent ? 'text-student-500/40 group-hover:text-student-500/60' : 'text-[#6E8F75]/40 group-hover:text-[#6E8F75]/60'}`} />
-          </div>
+            {data.avatarDataUrl ? (
+              <img src={data.avatarDataUrl} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              <User className={`w-6 h-6 transition-colors ${isStudent ? 'text-student-500/40 group-hover:text-student-500/60' : 'text-[#6E8F75]/40 group-hover:text-[#6E8F75]/60'}`} />
+            )}
+            <input 
+              type="file" 
+              accept="image/*" 
+              className="hidden" 
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  if (!file.type.startsWith('image/')) {
+                    alert('Please upload a valid image file');
+                    return;
+                  }
+                  const reader = new FileReader();
+                  reader.onload = (evt) => onChange({ avatarDataUrl: evt.target?.result as string });
+                  reader.readAsDataURL(file);
+                }
+              }} 
+            />
+          </label>
           <p className="text-[10px] text-[#0B0F19]/30 text-center mt-1.5 font-medium">Add photo</p>
         </div>
 
@@ -317,20 +337,63 @@ function BasicProfileStep({
         </div>
       </div>
 
-      {/* Location */}
+      {/* Technical Track */}
       <div>
-        <label htmlFor="wiz-location" className="block text-[13px] font-semibold text-[#0B0F19]/60 mb-1.5">
-          Location
+        <label htmlFor="wiz-track" className="block text-[13px] font-semibold text-[#0B0F19]/60 mb-1.5">
+          Technical Track <span className="text-[#f43f5e]">*</span>
         </label>
         <div className="relative">
-          <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#0B0F19]/20" />
+          <Code2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#0B0F19]/20" />
+          <select
+            id="wiz-track"
+            value={data.selectedTrack}
+            onChange={(e) => onChange({ selectedTrack: e.target.value })}
+            className={`${inputClass} !pl-10 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%230B0F1940%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem] bg-[right_1rem_center] bg-no-repeat`}
+          >
+            <option value="" disabled>Select your primary track</option>
+            <option value="Frontend Development">Frontend Development</option>
+            <option value="Backend Development">Backend Development</option>
+            <option value="Full-Stack Development">Full-Stack Development</option>
+            <option value="Mobile Development">Mobile Development</option>
+            <option value="AI/ML Engineering">AI/ML Engineering</option>
+            <option value="Data Engineering">Data Engineering</option>
+            <option value="DevOps / SRE">DevOps / SRE</option>
+            <option value="Cybersecurity">Cybersecurity</option>
+            <option value="Embedded Systems">Embedded Systems</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Location (City & Country) */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="wiz-city" className="block text-[13px] font-semibold text-[#0B0F19]/60 mb-1.5">
+            City <span className="text-[#f43f5e]">*</span>
+          </label>
+          <div className="relative">
+            <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#0B0F19]/20" />
+            <input
+              id="wiz-city"
+              type="text"
+              value={data.city}
+              onChange={(e) => onChange({ city: e.target.value })}
+              className={`${inputClass} !pl-10`}
+              placeholder="e.g. Riyadh"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label htmlFor="wiz-country" className="block text-[13px] font-semibold text-[#0B0F19]/60 mb-1.5">
+            Country <span className="text-[#f43f5e]">*</span>
+          </label>
           <input
-            id="wiz-location"
+            id="wiz-country"
             type="text"
-            value={data.location}
-            onChange={(e) => onChange({ location: e.target.value })}
-            placeholder="e.g. Riyadh, Saudi Arabia"
-            className={`${inputClass} !pl-10`}
+            value={data.country}
+            onChange={(e) => onChange({ country: e.target.value })}
+            className={inputClass}
+            placeholder="e.g. Saudi Arabia"
           />
         </div>
       </div>
@@ -367,7 +430,176 @@ function BasicProfileStep({
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   STEP 2 — TECHNICAL SKILLS SELECTION
+   STEP 2 — EDUCATION
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function EducationStep({
+  data,
+  onChange,
+}: {
+  data: WizardFormData;
+  onChange: (patch: Partial<WizardFormData>) => void;
+}) {
+  const { isStudent } = useUserRole();
+
+  const inputClass = `
+    w-full h-[48px] px-4 rounded-xl
+    bg-[#FAF9F6] border border-[#0B0F19]/[0.07]
+    text-[15px] text-[#0B0F19] placeholder:text-[#0B0F19]/25
+    transition-all duration-200
+    hover:border-[#0B0F19]/12
+    focus:outline-none focus:bg-white
+    ${isStudent ? 'focus:border-student-500 focus:ring-[3px] focus:ring-student-500/10' : 'focus:border-[#6E8F75] focus:ring-[3px] focus:ring-[#6E8F75]/10'}
+  `;
+
+  return (
+    <div className="space-y-6">
+      {/* Section header */}
+      <div>
+        <h3 className="text-xl font-bold text-[#0B0F19] mb-1">Education Background</h3>
+        <p className="text-[14px] text-[#0B0F19]/45 leading-relaxed">
+          Tell us about your academic journey to help match you with the right opportunities.
+        </p>
+      </div>
+
+      {/* University */}
+      <div>
+        <label htmlFor="wiz-university" className="block text-[13px] font-semibold text-[#0B0F19]/60 mb-1.5">
+          University / School Name <span className="text-[#f43f5e]">*</span>
+        </label>
+        <div className="relative">
+          <GraduationCap className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#0B0F19]/20" />
+          <input
+            id="wiz-university"
+            type="text"
+            value={data.university || ''}
+            onChange={(e) => onChange({ university: e.target.value })}
+            placeholder="e.g. University Name"
+            className={`${inputClass} !pl-10`}
+          />
+        </div>
+      </div>
+
+      {/* Degree */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="wiz-degree" className="block text-[13px] font-semibold text-[#0B0F19]/60 mb-1.5">
+            Degree <span className="text-[#f43f5e]">*</span>
+          </label>
+          <div className="relative">
+            <FileText className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#0B0F19]/20" />
+            <select
+              id="wiz-degree"
+              value={data.degree || ''}
+              onChange={(e) => onChange({ degree: e.target.value })}
+              className={`${inputClass} !pl-10 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%230B0F1940%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem] bg-[right_0.5rem_center] bg-no-repeat`}
+            >
+              <option value="" disabled>Select Degree</option>
+              <option value="BSc">BSc (Bachelor)</option>
+              <option value="Master">Master</option>
+              <option value="PhD">PhD</option>
+              <option value="Diploma">Diploma</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Faculty */}
+        <div>
+          <label htmlFor="wiz-faculty" className="block text-[13px] font-semibold text-[#0B0F19]/60 mb-1.5">
+            Faculty <span className="text-[#f43f5e]">*</span>
+          </label>
+          <div className="relative">
+            <input
+              id="wiz-faculty"
+              type="text"
+              value={data.faculty || ''}
+              onChange={(e) => onChange({ faculty: e.target.value })}
+              placeholder="e.g. Computing"
+              className={inputClass}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Specialization */}
+      <div>
+        <label htmlFor="wiz-specialization" className="block text-[13px] font-semibold text-[#0B0F19]/60 mb-1.5">
+          Specialization / Major <span className="text-[#f43f5e]">*</span>
+        </label>
+        <div className="relative">
+          <Code2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#0B0F19]/20" />
+          <input
+            id="wiz-specialization"
+            type="text"
+            value={data.specialization || ''}
+            onChange={(e) => onChange({ specialization: e.target.value })}
+            placeholder="e.g. Software Engineering"
+            className={`${inputClass} !pl-10`}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        {/* Start Date */}
+        <div>
+          <label htmlFor="wiz-start-date" className="block text-[13px] font-semibold text-[#0B0F19]/60 mb-1.5">
+            Start Date <span className="text-[#f43f5e]">*</span>
+          </label>
+          <input
+            id="wiz-start-date"
+            type="month"
+            value={data.startDate || ''}
+            onChange={(e) => onChange({ startDate: e.target.value })}
+            className={inputClass}
+          />
+        </div>
+
+        {/* End Date */}
+        <div>
+          <label htmlFor="wiz-end-date" className="block text-[13px] font-semibold text-[#0B0F19]/60 mb-1.5">
+            End Date (or Expected) <span className="text-[#f43f5e]">*</span>
+          </label>
+          <input
+            id="wiz-end-date"
+            type="month"
+            value={data.endDate || ''}
+            onChange={(e) => onChange({ endDate: e.target.value })}
+            className={inputClass}
+          />
+        </div>
+      </div>
+
+      {/* GPA */}
+      <div>
+        <label htmlFor="wiz-gpa" className="block text-[13px] font-semibold text-[#0B0F19]/60 mb-1.5">
+          GPA <span className="text-[#0B0F19]/30 font-normal ml-1">(Optional)</span>
+        </label>
+        <div className="relative">
+          <input
+            id="wiz-gpa"
+            type="number"
+            step="0.01"
+            min="0"
+            max="4"
+            value={data.gpa || ''}
+            onChange={(e) => {
+              const val = parseFloat(e.target.value);
+              if (e.target.value === '' || (!isNaN(val) && val >= 0 && val <= 4)) {
+                onChange({ gpa: e.target.value });
+              }
+            }}
+            placeholder="e.g. 3.8"
+            className={`${inputClass}`}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   STEP 3 — TECHNICAL SKILLS SELECTION
    ═══════════════════════════════════════════════════════════════════════════ */
 
 function SkillsSelectionStep({
@@ -696,7 +928,14 @@ function ResumeUploadStep({
       setIsDragging(false);
       const files = e.dataTransfer.files;
       if (files.length > 0) {
-        onChange({ resumeFile: files[0] });
+        const file = files[0];
+        const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+        const isValidType = validTypes.includes(file.type) || file.name.endsWith('.pdf') || file.name.endsWith('.doc') || file.name.endsWith('.docx');
+        if (!isValidType) {
+          alert('Please upload a valid PDF or Word document');
+          return;
+        }
+        onChange({ resumeFile: file });
       }
     },
     [onChange],
@@ -704,7 +943,14 @@ function ResumeUploadStep({
 
   const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      onChange({ resumeFile: e.target.files[0] });
+      const file = e.target.files[0];
+      const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      const isValidType = validTypes.includes(file.type) || file.name.endsWith('.pdf') || file.name.endsWith('.doc') || file.name.endsWith('.docx');
+      if (!isValidType) {
+        alert('Please upload a valid PDF or Word document');
+        return;
+      }
+      onChange({ resumeFile: file });
     }
   };
 
@@ -1053,15 +1299,17 @@ export default function CandidateWizard({ embedded = false }: { embedded?: boole
     return {
       ...initialFormData,
       fullName: session?.user?.name || userProfile.fullName || '',
-      title: session?.user?.name ? (isStudent ? 'Software Engineering Intern' : 'Junior Software Engineer') : userProfile.title,
+      title: userProfile.title || '',
       location: userProfile.location || '',
       bio: userProfile.bio || '',
-      university: userProfile.university || 'King Fahd University of Petroleum & Minerals (KFUPM)',
+      university: userProfile.university || '',
+      selectedTrack: userProfile.track || '',
       githubUrl: session?.user?.githubUsername
         ? `https://github.com/${session.user.githubUsername}`
         : userProfile.githubUrl || '',
       linkedinUrl: userProfile.linkedinUrl || '',
       portfolioUrl: userProfile.portfolioUrl || '',
+      avatarDataUrl: '',
       selectedSkills: userProfile.skills && userProfile.skills.length > 0 ? userProfile.skills : [],
     };
   });
@@ -1072,7 +1320,7 @@ export default function CandidateWizard({ embedded = false }: { embedded?: boole
       setFormData((prev) => ({
         ...prev,
         fullName: prev.fullName || clerkName || '',
-        title: prev.title || (isStudent ? 'Software Engineering Intern' : 'Junior Software Engineer'),
+        title: prev.title || '',
       }));
     }
   }, [isClerkLoaded, clerkUser, clerkName, isStudent]);
@@ -1084,10 +1332,21 @@ export default function CandidateWizard({ embedded = false }: { embedded?: boole
   const canProceed = () => {
     switch (currentStep) {
       case 0:
-        return formData.fullName.trim() !== '' && formData.title.trim() !== '';
+        return formData.fullName.trim() !== '' && 
+               formData.title.trim() !== '' && 
+               formData.city.trim() !== '' && 
+               formData.country.trim() !== '' && 
+               (formData.selectedTrack || '').trim() !== '';
       case 1:
+        return (formData.university || '').trim() !== '' && 
+               (formData.degree || '').trim() !== '' && 
+               (formData.faculty || '').trim() !== '' && 
+               (formData.specialization || '').trim() !== '' && 
+               (formData.startDate || '').trim() !== '' && 
+               (formData.endDate || '').trim() !== '';
+      case 2:
         return formData.selectedSkills.length >= 1;
-      case 2: {
+      case 3: {
         const hasResume = formData.resumeFile !== null;
         const hasLinks = formData.githubUrl.trim() !== '' || formData.linkedinUrl.trim() !== '';
         return hasResume && hasLinks;
@@ -1107,11 +1366,18 @@ export default function CandidateWizard({ embedded = false }: { embedded?: boole
       updateProfile({
         fullName: formData.fullName,
         title: formData.title,
-        location: formData.location,
+        city: formData.city,
+        country: formData.country,
         bio: formData.bio,
-        university: formData.university || 'King Fahd University of Petroleum & Minerals (KFUPM)',
+        university: formData.university || '',
+        degree: formData.degree,
+        faculty: formData.faculty,
+        specialization: formData.specialization,
+        gpa: formData.gpa,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
         role: effectiveRole,
-        track: effectiveTrack,
+        track: formData.selectedTrack || effectiveTrack,
         githubUrl: formData.githubUrl,
         linkedinUrl: formData.linkedinUrl,
         portfolioUrl: formData.portfolioUrl,
@@ -1176,9 +1442,12 @@ export default function CandidateWizard({ embedded = false }: { embedded?: boole
                 <BasicProfileStep data={formData} onChange={updateFormData} />
               )}
               {currentStep === 1 && (
-                <SkillsSelectionStep data={formData} onChange={updateFormData} />
+                <EducationStep data={formData} onChange={updateFormData} />
               )}
               {currentStep === 2 && (
+                <SkillsSelectionStep data={formData} onChange={updateFormData} />
+              )}
+              {currentStep === 3 && (
                 <ResumeUploadStep data={formData} onChange={updateFormData} />
               )}
             </div>
@@ -1217,7 +1486,7 @@ export default function CandidateWizard({ embedded = false }: { embedded?: boole
                 id="wizard-next"
                 onClick={goNext}
                 disabled={!canProceed()}
-                title={!canProceed() && currentStep === 2 ? 'Upload your resume and provide at least one profile link to complete onboarding' : undefined}
+                title={!canProceed() && currentStep === 3 ? 'Upload your resume and provide at least one profile link to complete onboarding' : undefined}
                 className={`
                   inline-flex items-center gap-2 px-6 py-3 rounded-xl
                   text-[14px] font-semibold transition-all duration-300

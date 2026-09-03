@@ -151,20 +151,34 @@ export default function SignUpPage() {
         });
         return;
       }
+    } catch (err: any) {
+      console.warn('Clerk OAuth configuration not found. Falling back to local mock authentication...');
+    }
 
-      // Direct fallback if Clerk is still mounting
+    // Direct fallback if Clerk is missing or failed (local dev mock)
+    try {
       const res = await AuthService.initiateSocialAuth(provider, {
         role: candidateType,
         track: effectiveTrack || 'General Engineering',
         mode: 'direct',
       });
       setSocialLoading(null);
-      if (!res.success) {
+      if (res.success) {
+        setUserRole(candidateType);
+        updateProfile({ role: candidateType, track: effectiveTrack || 'General Engineering' });
+        try {
+          // ensure track is available globally
+          localStorage.setItem('jadeer_track', effectiveTrack || 'General Engineering');
+        } catch {
+          // ignore
+        }
+        navigate(res.redirectUrl || '/candidates/wizard');
+      } else {
         setError(res.error || `Failed to sign up with ${provider}.`);
       }
-    } catch (err: any) {
+    } catch (fallbackErr: any) {
       setSocialLoading(null);
-      setError(err?.errors?.[0]?.longMessage || err?.message || `Failed to sign up with ${provider}.`);
+      setError(fallbackErr?.message || `Failed to sign up with ${provider}.`);
     }
   };
 
@@ -381,7 +395,7 @@ export default function SignUpPage() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required
-                placeholder="Ahmad Al-Hassan"
+                placeholder="Candidate Full Name"
                 className={`w-full h-11 px-4 rounded-2xl bg-white border border-slate-200 text-sm text-[#0F172A] font-medium focus:bg-white focus:outline-none transition-all placeholder:text-slate-400 ${focusRingClass}`}
               />
             </div>
@@ -431,8 +445,6 @@ export default function SignUpPage() {
                 Your technical track anchors your AI assessment algorithms and live evidence dossier.
               </p>
             </div>
-
-            {/* Email */}
             <div className="space-y-1.5">
               <label
                 htmlFor="email"

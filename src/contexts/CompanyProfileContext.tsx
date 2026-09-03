@@ -83,6 +83,32 @@ export function CompanyProfileProvider({ children }: { children: React.ReactNode
   const [companyProfile, setCompanyProfile] = useState<CompanyProfile>(loadInitialProfile);
   const [isEmployerOnboarded, setIsEmployerOnboarded] = useState<boolean>(loadInitialOnboardedState);
 
+  // Fetch from backend API on mount
+  React.useEffect(() => {
+    fetch('/api/employer/profile')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.profile) {
+          setCompanyProfile(prev => ({
+            ...prev,
+            companyName: data.profile.companyName || prev.companyName,
+            companyInitials: data.profile.companyInitials || prev.companyInitials,
+            industry: data.profile.industry || prev.industry,
+            companySize: data.profile.companySize || prev.companySize,
+            location: data.profile.location || prev.location,
+            website: data.profile.website || prev.website,
+            commercialRegistrationNumber: data.profile.commercialRegistrationNumber || prev.commercialRegistrationNumber,
+            isCRVerified: data.profile.isCRVerified !== undefined ? data.profile.isCRVerified : prev.isCRVerified,
+            contactName: data.profile.contactName || prev.contactName,
+            contactRole: data.profile.contactRole || prev.contactRole,
+            workModel: data.profile.workModel ? data.profile.workModel.toLowerCase() as WorkModel : prev.workModel,
+          }));
+          setIsEmployerOnboarded(true);
+        }
+      })
+      .catch(console.error);
+  }, []);
+
   const signupCompany = useCallback(
     (profileData: Omit<CompanyProfile, 'companyInitials' | 'isCRVerified' | 'onboardedAt'>) => {
       const initials = getInitials(profileData.companyName || 'Jadeer');
@@ -102,6 +128,12 @@ export function CompanyProfileProvider({ children }: { children: React.ReactNode
       } catch {
         // localStorage unavailable
       }
+
+      fetch('/api/employer/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newProfile)
+      }).catch(console.error);
     },
     [],
   );

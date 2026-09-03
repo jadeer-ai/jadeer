@@ -128,19 +128,25 @@ export default function SignInPage() {
         });
         return;
       }
+    } catch (err: any) {
+      console.warn('Clerk OAuth configuration not found. Falling back to local mock authentication...');
+    }
 
-      // Direct fallback if Clerk is still mounting
+    // Direct fallback if Clerk is missing or failed (local dev mock)
+    try {
       const res = await AuthService.initiateSocialAuth(provider, {
         role: isStudent ? 'student' : 'graduate',
         mode: 'direct',
       });
       setSocialLoading(null);
-      if (!res.success) {
+      if (res.success) {
+        navigate(res.redirectUrl || '/dashboard');
+      } else {
         setError(res.error || `Failed to authenticate with ${provider}.`);
       }
-    } catch (err: any) {
+    } catch (fallbackErr: any) {
       setSocialLoading(null);
-      setError(err?.errors?.[0]?.longMessage || err?.message || `Failed to authenticate with ${provider}.`);
+      setError(fallbackErr?.message || `Failed to authenticate with ${provider}.`);
     }
   };
 

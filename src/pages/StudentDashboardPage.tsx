@@ -67,7 +67,7 @@ export default function StudentDashboardPage() {
   const user = unifiedData.user;
   const profile = user.studentProfile;
   const activeTrack = userProfile.track || lockedTrack || (clerkUser?.publicMetadata?.track as string) || profile?.softwareTrack || 'Backend Development';
-  const effectiveName = userProfile.fullName || clerkName || profile?.fullName || 'Ahmad';
+  const effectiveName = userProfile.fullName || clerkName || profile?.fullName || 'Candidate';
   const effectiveEmail = userProfile.email || clerkEmail || user?.email || 'ahmad.student@example.com';
   const effectiveImage = userProfile.imageUrl || clerkImage;
   const effectiveUniversity = userProfile.university || (clerkUser?.publicMetadata?.university as string) || profile?.university || 'KFUPM';

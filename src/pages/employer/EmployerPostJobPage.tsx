@@ -193,15 +193,40 @@ export default function EmployerPostJobPage() {
     formData.location.trim() !== '' &&
     formData.description.trim() !== '';
 
-  const handlePublish = (e: FormEvent) => {
+  const handlePublish = async (e: FormEvent) => {
     e.preventDefault();
     if (!isFormValid) return;
-    setIsPublished(true);
+    
+    try {
+      const res = await fetch('/api/employer/jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formData, status: 'Active' })
+      });
+      if (res.ok) {
+        setIsPublished(true);
+      } else {
+        console.error('Failed to publish job');
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const handleSaveDraft = () => {
-    setIsSavedDraft(true);
-    setTimeout(() => setIsSavedDraft(false), 3000);
+  const handleSaveDraft = async () => {
+    try {
+      const res = await fetch('/api/employer/jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formData, status: 'Draft' })
+      });
+      if (res.ok) {
+        setIsSavedDraft(true);
+        setTimeout(() => setIsSavedDraft(false), 3000);
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   /* ── Published Success State ───────────────────────────────────────── */

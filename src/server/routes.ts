@@ -11,109 +11,18 @@ import {
   processSocialAuthCallback,
   type SocialProvider,
   type SocialUserProfile,
-  type CandidateDossierTelemetry,
 } from './socialOAuth.ts';
 import { sendOtpEmail } from './emailService.ts';
+import { db } from './db.ts';
+import { UserRole, CandidateType, AuthProvider } from '@prisma/client';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    JADEER BACKEND — MULTI-PROVIDER API ROUTE HANDLERS & DATABASE STORE
    ─────────────────────────────────────────────────────────────────────────
-   Unified Login API, Multi-Provider Social OAuth (Google, GitHub, LinkedIn, Apple),
-   Candidate Dossier Telemetry Linking, Session & Security Management.
+   Unified Login API, Multi-Provider Social OAuth, Candidate Dossier Telemetry
    ═══════════════════════════════════════════════════════════════════════════ */
 
-export interface DbUserRecord {
-  id: string;
-  email: string;
-  passwordHash: string;
-  role: 'STUDENT' | 'GRADUATE' | 'EMPLOYER' | 'ADMIN';
-  candidateType: 'STUDENT' | 'GRADUATE' | null;
-  authProvider: 'EMAIL' | 'GOOGLE' | 'GITHUB' | 'APPLE' | 'LINKEDIN';
-  isVerified: boolean;
-  isActive: boolean;
-  twoFactorEnabled?: boolean;
-  twoFactorSecret?: string;
-  fullName: string;
-  softwareTrack?: string;
-  avatarUrl?: string;
-  githubUsername?: string;
-  dossierTelemetry?: CandidateDossierTelemetry;
-  createdAt: string;
-  lastLoginAt: string;
-}
 
-// In-Memory Synchronized Store (Seed records with bcrypt hashes & sandbox compatibility)
-const userDatabase: DbUserRecord[] = [
-  {
-    id: 'usr-adm-001',
-    email: 'admin@jadeer.io',
-    passwordHash: '$2b$10$EP0125kUqJpM1Lz9JzO2y.2.8zFmPjLg1iL6t6rR6HhVfL1t8o3mG', // 'JadeerAdmin2026!'
-    role: 'ADMIN',
-    candidateType: null,
-    authProvider: 'EMAIL',
-    isVerified: true,
-    isActive: true,
-    fullName: 'Platform Administrator',
-    createdAt: new Date('2026-01-01').toISOString(),
-    lastLoginAt: new Date().toISOString(),
-  },
-  {
-    id: 'usr-emp-001',
-    email: 'talent@jadeer.io',
-    passwordHash: '$2b$10$EP0125kUqJpM1Lz9JzO2y.2.8zFmPjLg1iL6t6rR6HhVfL1t8o3mG', // 'JadeerTalent2026!'
-    role: 'EMPLOYER',
-    candidateType: null,
-    authProvider: 'EMAIL',
-    isVerified: true,
-    isActive: true,
-    fullName: 'Sultan Al-Otaibi (Jadeer Technologies)',
-    createdAt: new Date('2026-01-15').toISOString(),
-    lastLoginAt: new Date().toISOString(),
-  },
-  {
-    id: 'usr-grad-001',
-    email: 'yourname@gmail.com',
-    passwordHash: '$2b$10$EP0125kUqJpM1Lz9JzO2y.2.8zFmPjLg1iL6t6rR6HhVfL1t8o3mG', // 'Candidate2026!'
-    role: 'GRADUATE',
-    candidateType: 'GRADUATE',
-    authProvider: 'EMAIL',
-    isVerified: true,
-    isActive: true,
-    fullName: 'Ahmad Al-Hassan',
-    softwareTrack: 'Full-Stack Engineering',
-    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&crop=faces',
-    githubUsername: 'ahmad-dev-engineer',
-    createdAt: new Date('2026-02-01').toISOString(),
-    lastLoginAt: new Date().toISOString(),
-  },
-  {
-    id: 'usr-stu-001',
-    email: 'student@kfupm.edu.sa',
-    passwordHash: '$2b$10$EP0125kUqJpM1Lz9JzO2y.2.8zFmPjLg1iL6t6rR6HhVfL1t8o3mG', // 'Student2026!'
-    role: 'STUDENT',
-    candidateType: 'STUDENT',
-    authProvider: 'EMAIL',
-    isVerified: true,
-    isActive: true,
-    fullName: 'Faisal Al-Dosari',
-    softwareTrack: 'Backend & Cloud Systems',
-    createdAt: new Date('2026-02-10').toISOString(),
-    lastLoginAt: new Date().toISOString(),
-  },
-  {
-    id: 'usr-emp-002',
-    email: 'employer@tamara.co',
-    passwordHash: '$2b$10$EP0125kUqJpM1Lz9JzO2y.2.8zFmPjLg1iL6t6rR6HhVfL1t8o3mG', // 'TamaraRecruit2026!'
-    role: 'EMPLOYER',
-    candidateType: null,
-    authProvider: 'EMAIL',
-    isVerified: true,
-    isActive: true,
-    fullName: 'Tamara Tech Recruiting',
-    createdAt: new Date('2026-02-15').toISOString(),
-    lastLoginAt: new Date().toISOString(),
-  },
-];
 
 // Rate Limiter Memory Store
 const rateLimitMap = new Map<string, { attempts: number; lastAttempt: number; lockedUntil?: number }>();
@@ -182,7 +91,7 @@ export async function handleRegister(body: {
   const cleanEmail = email.toLowerCase().trim();
   const cleanName = name.trim();
   const cleanPass = password.trim();
-  const cleanTrack = track?.trim() || 'Full-Stack Engineering';
+  const cleanTrack = track?.trim() || 'FULLSTACK'; // Ensure enum compatibility
 
   // 2. Email format validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -196,7 +105,6 @@ export async function handleRegister(body: {
     };
   }
 
-  // 3. Password length check
   if (cleanPass.length < 8) {
     return {
       status: 400,
@@ -207,8 +115,8 @@ export async function handleRegister(body: {
     };
   }
 
-  // 4. Duplicate Check: Query database to ensure email does not already exist
-  const existingUser = userDatabase.find((u) => u.email === cleanEmail);
+  // 4. Duplicate Check
+  const existingUser = await db.user.findUnique({ where: { email: cleanEmail } });
   if (existingUser) {
     return {
       status: 400,
@@ -219,55 +127,50 @@ export async function handleRegister(body: {
     };
   }
 
-  // 5. Password Hashing: Securely hash password using bcrypt
   const passwordHash = await hashPassword(cleanPass);
+  const isStudent = role?.toUpperCase() === 'STUDENT';
+  const candidateRole: UserRole = isStudent ? UserRole.STUDENT : UserRole.GRADUATE;
+  const candidateType: CandidateType = isStudent ? CandidateType.STUDENT : CandidateType.GRADUATE;
 
-  // Determine candidate role
-  const isStudent = role?.toUpperCase() === 'STUDENT' || role?.toLowerCase() === 'student';
-  const candidateRole: 'STUDENT' | 'GRADUATE' = isStudent ? 'STUDENT' : 'GRADUATE';
+  // Map track to enum
+  let softwareTrackEnum: any = 'FULLSTACK';
+  if (cleanTrack === 'Backend & Cloud Systems') softwareTrackEnum = 'BACKEND';
+  if (cleanTrack === 'Frontend Engineering') softwareTrackEnum = 'FRONTEND';
 
   // 6. Database Insertion
-  const newUser: DbUserRecord = {
-    id: `usr-${candidateRole.toLowerCase().substring(0, 4)}-${Date.now()}`,
-    email: cleanEmail,
-    passwordHash,
-    role: candidateRole,
-    candidateType: candidateRole,
-    authProvider: 'EMAIL',
-    isVerified: true,
-    isActive: true,
-    fullName: cleanName,
-    softwareTrack: cleanTrack,
-    createdAt: new Date().toISOString(),
-    lastLoginAt: new Date().toISOString(),
-  };
-
-  userDatabase.push(newUser);
+  const newUser = await db.user.create({
+    data: {
+      email: cleanEmail,
+      passwordHash,
+      role: candidateRole,
+      candidateType: candidateType,
+      authProvider: AuthProvider.EMAIL,
+      isVerified: true,
+      isActive: true,
+      studentProfile: {
+        create: {
+          fullName: cleanName,
+          softwareTrack: softwareTrackEnum,
+        }
+      }
+    },
+    include: {
+      studentProfile: true,
+    }
+  });
 
   // 7. JWT Generation
   const tokenPayload: JwtUserPayload = {
     userId: newUser.id,
     email: newUser.email,
     role: newUser.role,
-    candidateType: newUser.candidateType,
-    name: newUser.fullName,
-    track: newUser.softwareTrack,
+    candidateType: newUser.candidateType as 'STUDENT' | 'GRADUATE',
+    name: newUser.studentProfile?.fullName || cleanName,
+    track: newUser.studentProfile?.softwareTrack || 'Full-Stack Engineering',
     isVerified: newUser.isVerified,
   };
 
   const token = signJwt(tokenPayload);
-
-  // 8. Return 201 with Created User Object (strictly excluding password/passwordHash)
-  const createdUser = {
-    id: newUser.id,
-    email: newUser.email,
-    name: newUser.fullName,
-    role: newUser.role,
-    candidateType: newUser.candidateType,
-    track: newUser.softwareTrack,
-    isVerified: newUser.isVerified,
-    createdAt: newUser.createdAt,
-  };
 
   return {
     status: 201,
@@ -275,7 +178,16 @@ export async function handleRegister(body: {
       success: true,
       message: 'User registered successfully.',
       token,
-      user: createdUser,
+      user: {
+        id: newUser.id,
+        email: newUser.email,
+        name: newUser.studentProfile?.fullName,
+        role: newUser.role,
+        candidateType: newUser.candidateType,
+        track: newUser.studentProfile?.softwareTrack,
+        isVerified: newUser.isVerified,
+        createdAt: newUser.createdAt.toISOString(),
+      },
       redirectUrl: '/candidates/wizard',
     },
   };
@@ -289,7 +201,6 @@ export async function handleRegister(body: {
 export async function handleLogin(body: { email?: string; password?: string }) {
   const { email, password } = body || {};
 
-  // 1. Missing Required Fields Check
   if (!email || !email.trim() || !password || !password.trim()) {
     return {
       status: 400,
@@ -303,35 +214,35 @@ export async function handleLogin(body: { email?: string; password?: string }) {
   const cleanEmail = email.toLowerCase().trim();
   const cleanPass = password.trim();
 
-  // 2. Email Formatting Check
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(cleanEmail)) {
     return {
       status: 400,
       data: {
         success: false,
-        error: 'Please enter a valid email address format (e.g. yourname@domain.com).',
+        error: 'Please enter a valid email address format.',
       },
     };
   }
 
-  // 3. Brute-Force Rate Limiting Check
   const rate = checkRateLimit(cleanEmail);
   if (!rate.allowed) {
     return {
       status: 429,
       data: {
         success: false,
-        error: `Too many failed login attempts. Please wait ${rate.remainingSeconds}s before retrying.`,
+        error: `Too many failed login attempts. Please wait ${rate.remainingSeconds}s.`,
         remainingCooldownSeconds: rate.remainingSeconds,
       },
     };
   }
 
-  // 4. Database Query: Find User Record by normalized email
-  const user = userDatabase.find((u) => u.email === cleanEmail);
+  const user = await db.user.findUnique({
+    where: { email: cleanEmail },
+    include: { studentProfile: true, companyProfile: true }
+  });
 
-  if (!user) {
+  if (!user || !user.passwordHash) {
     return {
       status: 401,
       data: {
@@ -351,7 +262,6 @@ export async function handleLogin(body: { email?: string; password?: string }) {
     };
   }
 
-  // 5. Password Verification: Compare input against stored bcrypt password hash
   const isValid = await comparePassword(cleanPass, user.passwordHash);
   if (!isValid) {
     return {
@@ -363,10 +273,8 @@ export async function handleLogin(body: { email?: string; password?: string }) {
     };
   }
 
-  // Clear rate limit on successful authentication
   clearRateLimit(cleanEmail);
 
-  // 6. Check if Two-Factor Authentication (2FA) is enabled for user
   if (user.twoFactorEnabled) {
     handleGenerate2faOtp({ email: user.email, purpose: 'login' });
     return {
@@ -377,45 +285,59 @@ export async function handleLogin(body: { email?: string; password?: string }) {
         email: user.email,
         maskedEmail: maskEmail(user.email),
         redirectUrl: `/verify-otp?email=${encodeURIComponent(user.email)}&mode=2fa`,
-        message: 'Two-Factor Authentication required. Verification code sent to email.',
+        message: 'Two-Factor Authentication required.',
       },
     };
   }
 
-  // Update last login timestamp
-  user.lastLoginAt = new Date().toISOString();
+  await db.user.update({
+    where: { id: user.id },
+    data: { lastLoginAt: new Date() }
+  });
 
-  // 7. JWT Session Token Generation
+  let name = cleanEmail.split('@')[0];
+  let track = 'Full-Stack Engineering';
+  let avatarUrl = undefined;
+  let githubUsername = undefined;
+
+  if (user.studentProfile) {
+    name = user.studentProfile.fullName;
+    track = user.studentProfile.softwareTrack || track;
+    avatarUrl = user.studentProfile.avatarUrl || undefined;
+    githubUsername = user.studentProfile.githubUrl ? user.studentProfile.githubUrl.split('/').pop() : undefined;
+  } else if (user.companyProfile) {
+    name = user.companyProfile.companyName;
+    avatarUrl = user.companyProfile.logoUrl || undefined;
+  }
+
   const tokenPayload: JwtUserPayload = {
     userId: user.id,
     email: user.email,
     role: user.role,
-    candidateType: user.candidateType,
-    name: user.fullName,
-    track: user.softwareTrack,
-    avatarUrl: user.avatarUrl,
-    githubUsername: user.githubUsername,
+    candidateType: user.candidateType as any,
+    name,
+    track,
+    avatarUrl,
+    githubUsername,
     isVerified: user.isVerified,
   };
 
   const token = signJwt(tokenPayload);
 
-  // 8. Sanitized User Profile (Strictly excluding password and passwordHash)
   const sanitizedUser = {
     id: user.id,
     email: user.email,
-    name: user.fullName,
+    name,
     role: user.role,
     candidateType: user.candidateType,
-    track: user.softwareTrack,
-    avatarUrl: user.avatarUrl,
-    githubUsername: user.githubUsername,
+    track,
+    avatarUrl,
+    githubUsername,
     isVerified: user.isVerified,
-    createdAt: user.createdAt,
-    lastLoginAt: user.lastLoginAt,
+    createdAt: user.createdAt.toISOString(),
+    lastLoginAt: new Date().toISOString(),
   };
 
-  // Determine redirection URL
   let redirectUrl = '/dashboard';
   if (user.role === 'ADMIN') redirectUrl = '/admin/dashboard';
   else if (user.role === 'EMPLOYER') redirectUrl = '/employer/dashboard';
@@ -428,7 +350,6 @@ export async function handleLogin(body: { email?: string; password?: string }) {
       message: 'Logged in successfully.',
       token,
       user: sanitizedUser,
-      dossierTelemetry: user.dossierTelemetry,
       redirectUrl,
     },
   };
@@ -458,63 +379,73 @@ export async function handleSocialCallback(
   params: { code?: string; idToken?: string; state?: string; redirectUri?: string; user?: any; role?: string; track?: string }
 ) {
   try {
-    // 1. Process provider-specific OAuth token exchange & profile extraction
     const profile: SocialUserProfile = await processSocialAuthCallback(provider, params);
-
     const userEmail = profile.email.toLowerCase();
 
-    // 2. Determine Candidate Role from state or params
-    let candidateRole: 'STUDENT' | 'GRADUATE' = 'GRADUATE';
+    let candidateRole: UserRole = UserRole.GRADUATE;
+    let candidateType: CandidateType = CandidateType.GRADUATE;
     if (params.role === 'student' || (params.state && params.state.includes('student'))) {
-      candidateRole = 'STUDENT';
+      candidateRole = UserRole.STUDENT;
+      candidateType = CandidateType.STUDENT;
     }
 
-    const assignedTrack = params.track || (profile.dossierTelemetry?.verifiedLanguages?.[0]?.language) || 'Full-Stack Engineering';
+    const assignedTrack = params.track || 'FULLSTACK';
 
-    // 3. Find or auto-provision Candidate in database
-    let user = userDatabase.find((u) => u.email === userEmail || (u.authProvider === profile.provider && u.id.includes(profile.providerId)));
+    let user = await db.user.findFirst({
+      where: {
+        OR: [
+          { email: userEmail },
+        ]
+      },
+      include: { studentProfile: true }
+    });
 
     if (!user) {
-      user = {
-        id: `usr-${provider.substring(0, 2)}-${Date.now()}`,
-        email: userEmail,
-        passwordHash: '$2b$10$EP0125kUqJpM1Lz9JzO2y.2.8zFmPjLg1iL6t6rR6HhVfL1t8o3mG',
-        role: candidateRole,
-        candidateType: candidateRole,
-        authProvider: profile.provider,
-        isVerified: profile.verified,
-        isActive: true,
-        fullName: profile.name,
-        softwareTrack: assignedTrack,
-        avatarUrl: profile.avatarUrl,
-        githubUsername: profile.dossierTelemetry?.githubUsername,
-        dossierTelemetry: profile.dossierTelemetry,
-        createdAt: new Date().toISOString(),
-        lastLoginAt: new Date().toISOString(),
-      };
-      userDatabase.push(user);
+      user = await db.user.create({
+        data: {
+          email: userEmail,
+          passwordHash: await hashPassword(Math.random().toString(36).slice(-8)),
+          role: candidateRole,
+          candidateType: candidateType,
+          authProvider: provider.toUpperCase() as AuthProvider,
+          isVerified: profile.verified,
+          isActive: true,
+          studentProfile: {
+            create: {
+              fullName: profile.name,
+              softwareTrack: assignedTrack as any,
+              avatarUrl: profile.avatarUrl,
+              githubUrl: profile.dossierTelemetry?.githubUsername ? `https://github.com/${profile.dossierTelemetry.githubUsername}` : undefined,
+            }
+          }
+        },
+        include: { studentProfile: true }
+      });
     } else {
-      // Update linked profile data & dossier
-      if (params.role) {
-        user.role = candidateRole;
-        user.candidateType = candidateRole;
-      }
-      if (profile.avatarUrl) user.avatarUrl = profile.avatarUrl;
-      if (profile.dossierTelemetry) user.dossierTelemetry = profile.dossierTelemetry;
-      if (profile.dossierTelemetry?.githubUsername) user.githubUsername = profile.dossierTelemetry.githubUsername;
-      user.lastLoginAt = new Date().toISOString();
+      user = await db.user.update({
+        where: { id: user.id },
+        data: {
+          lastLoginAt: new Date(),
+          studentProfile: {
+            update: {
+              avatarUrl: profile.avatarUrl || user.studentProfile?.avatarUrl,
+              githubUrl: profile.dossierTelemetry?.githubUsername ? `https://github.com/${profile.dossierTelemetry.githubUsername}` : user.studentProfile?.githubUrl,
+            }
+          }
+        },
+        include: { studentProfile: true }
+      });
     }
 
-    // 4. Generate Signed JWT Session Token
     const tokenPayload: JwtUserPayload = {
       userId: user.id,
       email: user.email,
       role: user.role,
-      candidateType: user.candidateType,
-      name: user.fullName,
-      track: user.softwareTrack,
-      avatarUrl: user.avatarUrl,
-      githubUsername: user.githubUsername,
+      candidateType: user.candidateType as any,
+      name: user.studentProfile?.fullName || profile.name,
+      track: user.studentProfile?.softwareTrack || 'Full-Stack Engineering',
+      avatarUrl: user.studentProfile?.avatarUrl || profile.avatarUrl,
+      githubUsername: profile.dossierTelemetry?.githubUsername,
       isVerified: user.isVerified,
     };
 
@@ -527,7 +458,7 @@ export async function handleSocialCallback(
         provider,
         token,
         user: tokenPayload,
-        dossierTelemetry: user.dossierTelemetry,
+        dossierTelemetry: profile.dossierTelemetry,
         redirectUrl: '/candidates/wizard',
       },
     };
@@ -551,7 +482,7 @@ export async function handleGitHubCallback(body: { code?: string; redirectUri?: 
  * 4. GET /api/auth/me
  * Validates JWT session token and returns active session data
  */
-export function handleGetMe(authHeader?: string | null, cookieHeader?: string | null) {
+export async function handleGetMe(authHeader?: string | null, cookieHeader?: string | null) {
   const token = extractTokenFromHeaderOrCookies(authHeader, cookieHeader);
 
   if (!token) {
@@ -569,14 +500,23 @@ export function handleGetMe(authHeader?: string | null, cookieHeader?: string | 
     };
   }
 
-  const user = userDatabase.find((u) => u.id === decoded.userId || u.email === decoded.email);
+  const user = await db.user.findUnique({
+    where: { id: decoded.userId },
+    include: { studentProfile: true, companyProfile: true }
+  });
+
+  if (!user) {
+    return {
+      status: 401,
+      data: { success: false, error: 'User no longer exists in database.' },
+    };
+  }
 
   return {
     status: 200,
     data: {
       success: true,
       user: decoded,
-      dossierTelemetry: user?.dossierTelemetry,
     },
   };
 }
@@ -655,7 +595,7 @@ function maskEmail(email: string): string {
  * Generates a cryptographically random 6-digit verification code with 5-minute expiry.
  * Enforces rate limiting on code resends (minimum 30s cooldown, max 5 resends/hr).
  */
-export function handleGenerate2faOtp(body: { email?: string; purpose?: 'login' | 'setup' | 'reset' }) {
+export async function handleGenerate2faOtp(body: { email?: string; purpose?: 'login' | 'setup' | 'reset' }) {
   const { email, purpose = 'login' } = body || {};
 
   if (!email || !email.trim()) {
@@ -666,12 +606,17 @@ export function handleGenerate2faOtp(body: { email?: string; purpose?: 'login' |
   }
 
   const cleanEmail = email.toLowerCase().trim();
-  const now = Date.now();
-  const existing = otpStore.get(cleanEmail);
+  const now = new Date();
 
-  // Check rate limit: 30-second cooldown between resends
-  if (existing && now - existing.lastResendAt < 30 * 1000) {
-    const waitSec = Math.ceil((30 * 1000 - (now - existing.lastResendAt)) / 1000);
+  // Check rate limit
+  const recentOtps = await db.otpVerification.findMany({
+    where: { email: cleanEmail, createdAt: { gte: new Date(now.getTime() - 60 * 60 * 1000) } },
+    orderBy: { createdAt: 'desc' }
+  });
+
+  const latest = recentOtps[0];
+  if (latest && now.getTime() - latest.createdAt.getTime() < 30 * 1000) {
+    const waitSec = Math.ceil((30 * 1000 - (now.getTime() - latest.createdAt.getTime())) / 1000);
     return {
       status: 429,
       data: {
@@ -683,7 +628,7 @@ export function handleGenerate2faOtp(body: { email?: string; purpose?: 'login' |
   }
 
   // Check hourly limit: Max 5 resends per hour
-  if (existing && now - existing.createdAt < 60 * 60 * 1000 && existing.resendCount >= 5) {
+  if (recentOtps.length >= 5) {
     return {
       status: 429,
       data: {
@@ -695,20 +640,20 @@ export function handleGenerate2faOtp(body: { email?: string; purpose?: 'login' |
 
   // Generate secure 6-digit numeric OTP (100000 - 999999)
   const code = Math.floor(100000 + Math.random() * 900000).toString();
-  const expiresAt = now + 5 * 60 * 1000; // 5 minutes expiration
+  const expiresAt = new Date(now.getTime() + 5 * 60 * 1000); // 5 minutes expiration
+  const codeHash = await hashPassword(code);
 
-  const newRecord: OtpRecord = {
-    email: cleanEmail,
-    code,
-    expiresAt,
-    attempts: 0,
-    createdAt: existing && now - existing.createdAt < 60 * 60 * 1000 ? existing.createdAt : now,
-    lastResendAt: now,
-    resendCount: existing && now - existing.createdAt < 60 * 60 * 1000 ? existing.resendCount + 1 : 1,
-    purpose,
-  };
+  await db.otpVerification.deleteMany({ where: { email: cleanEmail } });
 
-  otpStore.set(cleanEmail, newRecord);
+  await db.otpVerification.create({
+    data: {
+      email: cleanEmail,
+      codeHash,
+      expiresAt,
+      attempts: 0,
+      purpose,
+    }
+  });
 
   // Dispatch transactional email via EmailService
   sendOtpEmail({ to: cleanEmail, code, purpose, expiresMinutes: 5 }).catch((err) => {
@@ -720,7 +665,7 @@ export function handleGenerate2faOtp(body: { email?: string; purpose?: 'login' |
     data: {
       success: true,
       message: `Verification code sent to ${maskEmail(cleanEmail)}.`,
-      expiresAt,
+      expiresAt: expiresAt.getTime(),
       maskedEmail: maskEmail(cleanEmail),
       purpose,
       demoCode: code, // Provided for sandbox/dev convenience
@@ -745,8 +690,12 @@ export async function handleVerify2faOtp(body: { email?: string; code?: string; 
 
   const cleanEmail = email.toLowerCase().trim();
   const cleanCode = code.trim();
-  const record = otpStore.get(cleanEmail);
-  const now = Date.now();
+  const now = new Date();
+
+  const record = await db.otpVerification.findFirst({
+    where: { email: cleanEmail },
+    orderBy: { createdAt: 'desc' }
+  });
 
   // Sandbox bypass for testing
   const isSandboxMasterCode = cleanCode === '123456';
@@ -762,7 +711,7 @@ export async function handleVerify2faOtp(body: { email?: string; code?: string; 
   }
 
   if (record && now > record.expiresAt && !isSandboxMasterCode) {
-    otpStore.delete(cleanEmail);
+    await db.otpVerification.delete({ where: { id: record.id } });
     return {
       status: 400,
       data: {
@@ -773,7 +722,7 @@ export async function handleVerify2faOtp(body: { email?: string; code?: string; 
   }
 
   if (record && record.attempts >= 5 && !isSandboxMasterCode) {
-    otpStore.delete(cleanEmail);
+    await db.otpVerification.delete({ where: { id: record.id } });
     return {
       status: 429,
       data: {
@@ -783,12 +732,20 @@ export async function handleVerify2faOtp(body: { email?: string; code?: string; 
     };
   }
 
-  if (record && record.code !== cleanCode && !isSandboxMasterCode) {
-    record.attempts += 1;
-    const remaining = 5 - record.attempts;
+  let isMatch = isSandboxMasterCode;
+  if (!isSandboxMasterCode && record) {
+    isMatch = await comparePassword(cleanCode, record.codeHash);
+  }
 
-    if (record.attempts >= 5) {
-      otpStore.delete(cleanEmail);
+  if (record && !isMatch) {
+    const updated = await db.otpVerification.update({
+      where: { id: record.id },
+      data: { attempts: record.attempts + 1 }
+    });
+    const remaining = 5 - updated.attempts;
+
+    if (updated.attempts >= 5) {
+      await db.otpVerification.delete({ where: { id: record.id } });
       return {
         status: 429,
         data: {
@@ -810,14 +767,23 @@ export async function handleVerify2faOtp(body: { email?: string; code?: string; 
 
   // Success: consume OTP (single use)
   const purpose = record?.purpose || body?.purpose || 'login';
-  otpStore.delete(cleanEmail);
+  if (record) {
+    await db.otpVerification.delete({ where: { id: record.id } });
+  }
 
   // Look up user if existing
-  const user = userDatabase.find((u) => u.email === cleanEmail);
+  let user = await db.user.findUnique({
+    where: { email: cleanEmail },
+    include: { studentProfile: true }
+  });
 
   if (user) {
     if (purpose === 'setup') {
-      user.twoFactorEnabled = true;
+      user = await db.user.update({
+        where: { id: user.id },
+        data: { twoFactorEnabled: true },
+        include: { studentProfile: true }
+      });
     }
   }
 
@@ -827,9 +793,9 @@ export async function handleVerify2faOtp(body: { email?: string; code?: string; 
         userId: user.id,
         email: user.email,
         role: user.role,
-        candidateType: user.candidateType,
-        name: user.fullName,
-        track: user.softwareTrack,
+        candidateType: user.candidateType as any,
+        name: user.studentProfile?.fullName || cleanEmail.split('@')[0],
+        track: user.studentProfile?.softwareTrack || 'Full-Stack Engineering',
         isVerified: true,
       }
     : {
@@ -881,7 +847,7 @@ export async function handleToggle2fa(body: { email?: string; enable?: boolean; 
   }
 
   const cleanEmail = email.toLowerCase().trim();
-  const user = userDatabase.find((u) => u.email === cleanEmail);
+  const user = await db.user.findUnique({ where: { email: cleanEmail } });
 
   if (!user) {
     return {
@@ -891,7 +857,7 @@ export async function handleToggle2fa(body: { email?: string; enable?: boolean; 
   }
 
   // If password provided, verify it
-  if (password && password.trim()) {
+  if (password && password.trim() && user.passwordHash) {
     const isValid = await comparePassword(password, user.passwordHash);
     if (!isValid) {
       return {
@@ -901,14 +867,17 @@ export async function handleToggle2fa(body: { email?: string; enable?: boolean; 
     }
   }
 
-  user.twoFactorEnabled = Boolean(enable);
+  const updatedUser = await db.user.update({
+    where: { id: user.id },
+    data: { twoFactorEnabled: Boolean(enable) }
+  });
 
   return {
     status: 200,
     data: {
       success: true,
-      twoFactorEnabled: user.twoFactorEnabled,
-      message: user.twoFactorEnabled
+      twoFactorEnabled: updatedUser.twoFactorEnabled,
+      message: updatedUser.twoFactorEnabled
         ? 'Two-Factor Authentication (2FA) has been enabled for your account.'
         : 'Two-Factor Authentication (2FA) has been disabled.',
     },
@@ -919,7 +888,7 @@ export async function handleToggle2fa(body: { email?: string; enable?: boolean; 
  * 10. GET /api/auth/2fa/status
  * Returns 2FA status for a user.
  */
-export function handleGet2faStatus(email?: string | null) {
+export async function handleGet2faStatus(email?: string | null) {
   if (!email || !email.trim()) {
     return {
       status: 400,
@@ -928,7 +897,7 @@ export function handleGet2faStatus(email?: string | null) {
   }
 
   const cleanEmail = email.toLowerCase().trim();
-  const user = userDatabase.find((u) => u.email === cleanEmail);
+  const user = await db.user.findUnique({ where: { email: cleanEmail } });
 
   return {
     status: 200,

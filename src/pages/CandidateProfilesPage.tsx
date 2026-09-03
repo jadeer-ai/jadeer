@@ -154,8 +154,13 @@ export interface CandidateData {
   skills: string[];
   education: {
     degree: string;
+    faculty?: string;
+    specialization?: string;
+    gpa?: string;
     institution: string;
     graduationYear: string;
+    startDate?: string;
+    endDate?: string;
   };
 }
 
@@ -163,11 +168,11 @@ export const candidateDatabase: Record<string, CandidateData> = {
   'JAD-8492': {
     id: 'app-1',
     candidateCode: 'JAD-8492',
-    fullName: 'Ahmad Al-Hassan',
+    fullName: 'Candidate',
     initials: 'AH',
     title: 'Junior Backend & Systems Engineer',
     location: 'Riyadh, Saudi Arabia',
-    email: 'ahmad.hassan@example.com',
+    email: 'candidate@example.com',
     role: 'grad',
     track: 'Backend Development',
     bio: 'Junior Software Engineer specialized in low-latency backend systems, asynchronous socket multiplexing with Linux epoll, and modern C++20 object-oriented architecture. Passionate about high-throughput distributed architectures, zero-cost abstractions, and rigorous memory safety with RAII.',
@@ -180,7 +185,7 @@ export const candidateDatabase: Record<string, CandidateData> = {
       { id: 'link-4', platform: 'leetcode', label: 'LeetCode Profile', url: 'https://leetcode.com/u/ahmad_hassan_dev' },
       { id: 'link-5', platform: 'codeforces', label: 'Codeforces Profile', url: 'https://codeforces.com/profile/ahmad_dev' },
     ],
-    resumeFileName: 'Ahmad_Al-Hassan_Resume.pdf',
+    resumeFileName: 'Candidate_Al-Hassan_Resume.pdf',
     resumeUploadDate: '2026-08-28',
     resumeFileSize: '1.4 MB',
     skills: ['C++20', 'Go', 'Linux epoll', 'POSIX Sockets', 'gRPC', 'Redis', 'PostgreSQL', 'Docker', 'CMake', 'Valgrind'],
@@ -285,7 +290,7 @@ export default function CandidateProfilesPage() {
       email: userProfile.email || clerkEmail || base.email,
       title: userProfile.title || (currentRole === 'student' ? 'University Student (Engineering)' : base.title),
       location: userProfile.location || base.location,
-      bio: userProfile.bio || base.bio,
+      bio: userProfile.bio ?? '',
       role: currentRole,
       track: currentTrack,
       socialLinks: resolvedInitialLinks.length > 0 ? resolvedInitialLinks : base.socialLinks,
@@ -296,7 +301,12 @@ export default function CandidateProfilesPage() {
       skills: userProfile.skills && userProfile.skills.length > 0 ? userProfile.skills : base.skills,
       education: {
         institution: userProfile.university || base.education.institution,
-        degree: userProfile.major || base.education.degree,
+        degree: userProfile.degree || base.education.degree,
+        faculty: userProfile.faculty,
+        specialization: userProfile.specialization,
+        gpa: userProfile.gpa,
+        startDate: userProfile.startDate,
+        endDate: userProfile.endDate,
         graduationYear: userProfile.graduationYear ? userProfile.graduationYear.replace(/[^0-9]/g, '') : '2025',
       },
       initials: name
@@ -333,8 +343,24 @@ export default function CandidateProfilesPage() {
     setIsEditing(false);
   };
 
-  /* ── Save Changes Flow ── */
+  /* 📌 Save Changes Flow 📌 */
   const handleSaveEdit = () => {
+    // Validate Dates
+    if (draft.education.startDate && draft.education.endDate) {
+      const start = new Date(draft.education.startDate);
+      const end = new Date(draft.education.endDate);
+      if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+        const diffInYears = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 365);
+        if (diffInYears < 1) {
+          alert("End date can't be before start date or less than a year.");
+          return;
+        }
+      }
+    } else if (draft.education.startDate || draft.education.endDate) {
+      alert("Please provide both valid start and end dates.");
+      return;
+    }
+
     // Filter out any link with empty URL
     const cleanedLinks = draft.socialLinks.filter((link) => Boolean(link.url && link.url.trim()));
 
@@ -361,7 +387,12 @@ export default function CandidateProfilesPage() {
       bio: draft.bio,
       track: draft.track,
       university: draft.education.institution,
-      major: draft.education.degree,
+      degree: draft.education.degree,
+      faculty: draft.education.faculty,
+      specialization: draft.education.specialization,
+      gpa: draft.education.gpa,
+      startDate: draft.education.startDate,
+      endDate: draft.education.endDate,
       graduationYear: draft.education.graduationYear.replace(/[^0-9]/g, '') || draft.education.graduationYear,
       socialLinks: cleanedLinks,
       githubUrl: githubLink,
@@ -467,10 +498,17 @@ export default function CandidateProfilesPage() {
     }
   };
 
-  /* ── Resume Upload Handler ── */
+  /* 📌 Resume Upload Handler 📌 */
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    const isValidType = validTypes.includes(file.type) || file.name.endsWith('.pdf') || file.name.endsWith('.doc') || file.name.endsWith('.docx');
+    if (!isValidType) {
+      alert('Please upload a valid PDF or Word document');
+      return;
+    }
 
     const fileName = file.name;
     const sizeInMB = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
@@ -507,7 +545,7 @@ export default function CandidateProfilesPage() {
   /* ── Resume Download Handler ── */
   const handleDownloadResume = () => {
     const dataUrl = profile.resumeDataUrl;
-    const fileName = profile.resumeFileName || 'Ahmad_Al-Hassan_Resume.pdf';
+    const fileName = profile.resumeFileName || 'Candidate_Al-Hassan_Resume.pdf';
 
     if (dataUrl) {
       const link = document.createElement('a');
@@ -671,19 +709,13 @@ export default function CandidateProfilesPage() {
                       title="Role locked at registration. Elevation managed by institution administration."
                     >
                       <Lock className="w-3 h-3 text-slate-400" />
-                      <span>{profile.role === 'student' ? 'University Student' : 'Graduate Engineer'}</span>
+                      <span>{profile.role === 'student' ? 'Student Candidate' : 'Graduate Candidate'}</span>
                     </span>
 
                     {/* Candidate Track Badge */}
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#5E8174]/10 text-[#5E8174] text-xs font-semibold border border-[#5E8174]/20">
                       <Layers className="w-3 h-3" />
                       <span>{profile.track}</span>
-                    </span>
-
-                    {/* Telemetry Match Score */}
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#5E8174]/10 text-[#5E8174] text-xs font-bold border border-[#5E8174]/20">
-                      <Sparkles className="w-3 h-3 text-[#5E8174]" />
-                      <span>{profile.matchScore}% Telemetry Rating</span>
                     </span>
                   </div>
 
@@ -1043,18 +1075,32 @@ export default function CandidateProfilesPage() {
             </div>
 
             {!isEditing ? (
-              <div className="flex items-start justify-between p-4 rounded-2xl bg-[#F4F0E8]/80 border border-[#E8E2D5]">
-                <div className="space-y-1">
-                  <h3 className="text-sm font-bold text-[#0F172A]">
-                    {profile.education.degree}
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    {profile.education.institution} • Class of {profile.education.graduationYear}
-                  </p>
+              <div className="flex flex-col gap-2 p-4 rounded-2xl bg-[#F4F0E8]/80 border border-[#E8E2D5]">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-bold text-[#0F172A]">
+                      {profile.education.degree || 'Degree Not Specified'} {profile.education.specialization ? `in ${profile.education.specialization}` : ''}
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      {profile.education.institution || 'Institution Not Specified'} {profile.education.faculty ? `— ${profile.education.faculty}` : ''} • Class of {profile.education.graduationYear || '2025'}
+                    </p>
+                  </div>
+                  {profile.education.graduationYear && (
+                    <span className="text-xs font-mono font-semibold text-slate-600 bg-white border border-slate-200 px-2.5 py-0.5 rounded-full">
+                      {profile.education.graduationYear}
+                    </span>
+                  )}
                 </div>
-                <span className="text-xs font-mono font-semibold text-slate-600 bg-white border border-slate-200 px-2.5 py-0.5 rounded-full">
-                  {profile.education.graduationYear}
-                </span>
+                {(profile.education.gpa || (profile.education.startDate && profile.education.endDate)) && (
+                  <div className="flex items-center gap-4 mt-1 text-xs text-slate-500 font-medium">
+                    {profile.education.gpa && (
+                      <span className="bg-white border border-slate-200 px-2 py-0.5 rounded-md">GPA: {profile.education.gpa}</span>
+                    )}
+                    {(profile.education.startDate && profile.education.endDate) && (
+                      <span>{profile.education.startDate} to {profile.education.endDate}</span>
+                    )}
+                  </div>
+                )}
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
@@ -1109,6 +1155,40 @@ export default function CandidateProfilesPage() {
                     }
                     className="w-full h-10 px-3 rounded-xl bg-[#F8F9FA] border border-slate-200 text-xs font-semibold text-[#0F172A] focus:bg-white focus:border-[#5E8174] focus:outline-none transition-colors"
                     placeholder="e.g. B.S. in Computer Science & Software Engineering"
+                  />
+                </div>
+
+                <div className="sm:col-span-1">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#0B0F19]/50 mb-1">
+                    Start Date
+                  </label>
+                  <input
+                    type="month"
+                    value={draft.education.startDate || ''}
+                    onChange={(e) =>
+                      setDraft({
+                        ...draft,
+                        education: { ...draft.education, startDate: e.target.value },
+                      })
+                    }
+                    className="w-full h-10 px-3 rounded-xl bg-[#FAF9F6] border border-[#0B0F19]/[0.1] text-xs font-semibold text-[#0B0F19] focus:bg-white focus:border-[#6E8F75] focus:outline-none"
+                  />
+                </div>
+
+                <div className="sm:col-span-1">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#0B0F19]/50 mb-1">
+                    End Date
+                  </label>
+                  <input
+                    type="month"
+                    value={draft.education.endDate || ''}
+                    onChange={(e) =>
+                      setDraft({
+                        ...draft,
+                        education: { ...draft.education, endDate: e.target.value },
+                      })
+                    }
+                    className="w-full h-10 px-3 rounded-xl bg-[#FAF9F6] border border-[#0B0F19]/[0.1] text-xs font-semibold text-[#0B0F19] focus:bg-white focus:border-[#6E8F75] focus:outline-none"
                   />
                 </div>
               </div>
@@ -1269,7 +1349,7 @@ export default function CandidateProfilesPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-bold text-[#0F172A] truncate" title={profile.resumeFileName}>
-                    {profile.resumeFileName || 'Ahmad_Al-Hassan_Resume.pdf'}
+                    {profile.resumeFileName || 'Candidate_Resume.pdf'}
                   </p>
                   <p className="text-[11px] text-slate-400 mt-0.5">
                     {profile.resumeFileSize || '1.4 MB'} • Uploaded {profile.resumeUploadDate || 'Aug 28, 2026'}
@@ -1317,9 +1397,6 @@ export default function CandidateProfilesPage() {
                 <ShieldCheck className="w-4 h-4 text-[#5E8174]" />
                 <span>Verified Badges</span>
               </h2>
-              <span className="text-[10px] font-mono font-semibold text-[#5E8174] bg-[#5E8174]/10 px-2 py-0.5 rounded-full border border-[#5E8174]/20">
-                {userProfile.assessmentScore || 94}% Telemetry
-              </span>
             </div>
 
             <div className="space-y-2.5">

@@ -245,7 +245,7 @@ export default function Sidebar() {
 
               <div className="flex items-center justify-between gap-2 pt-0.5">
                 <p className="text-[13.5px] font-bold text-white truncate">
-                  {profile.fullName || 'Ahmad Al-Hassan'}
+                  {profile.fullName || 'Candidate'}
                 </p>
                 {profile.verifiedBadges && profile.verifiedBadges.length > 0 && (
                   <span className="text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#5E8174]/15 text-[#84A98C] border border-[#5E8174]/25 shrink-0">
