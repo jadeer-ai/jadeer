@@ -113,8 +113,11 @@ model User {
   updatedAt         DateTime       @updatedAt
 
   // ── Relations ──────────────────────────────────────────────────────
-  studentProfile StudentProfile?
-  companyProfile CompanyProfile?
+  studentProfile      StudentProfile?
+  companyProfile      CompanyProfile?
+  expertProfile       Expert?
+  candidateSessions   Session[]                      @relation("CandidateUserSessions")
+  interviewAssignment CandidateInterviewAssignment?
 
   @@index([email])
   @@index([role])
@@ -172,6 +175,7 @@ model StudentProfile {
   applications          Application[]
   consultations         ConsultationSession[]
   assessmentSubmissions AssessmentSubmission[]
+  sessions              Session[]              @relation("CandidateSessions")
 
   @@index([softwareTrack])
   @@index([userId])
@@ -448,5 +452,272 @@ model ConsultationSession {
   @@map("consultation_sessions")
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// 6. SHARED SCHEDULING & SESSIONS BACKEND (Human Interview & Consultations)
+// ═══════════════════════════════════════════════════════════════════════════
 
+enum ExpertRole {
+  INTERVIEWER
+  CONSULTANT
+  BOTH
+
+  @@map("expert_role")
+}
+
+enum SlotStatus {
+  available
+  held
+  booked
+  blocked
+
+  @@map("slot_status")
+}
+
+enum SessionType {
+  human_interview
+  consultation
+
+  @@map("session_type")
+}
+
+enum SessionStatus {
+  scheduled
+  completed
+  cancelled
+  in_progress
+  no_show
+
+  @@map("session_status")
+}
+
+enum EvaluationRecommendation {
+  STRONG_HIRE
+  HIRE
+  CALIBRATED_JUNIOR
+  NEEDS_PRACTICE
+
+  @@map("evaluation_recommendation")
+}
+
+/// Expert mentor and technical interviewer profile
+model Expert {
+  id                String        @id
+  userId            String?       @unique @map("user_id")
+  role              ExpertRole    @default(BOTH)
+  fullName          String        @map("full_name")
+  initials          String?
+  title             String
+  company           String
+  bio               String?       @db.Text
+  track             SoftwareTrack @default(BACKEND)
+  specialties       String[]
+  rating            Decimal       @default(5.00) @db.Decimal(3, 2)
+  reviewCount       Int           @default(0) @map("review_count")
+  sessionsCompleted Int           @default(0) @map("sessions_completed")
+  avatarUrl         String?       @map("avatar_url")
+  languages         String[]      @default(["Arabic", "English"])
+  isActive          Boolean       @default(true) @map("is_active")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  user              User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  availabilitySlots ExpertAvailabilitySlot[]
+  sessions          Session[]     @relation("ExpertSessions")
+  evaluations       HumanInterviewEvaluation[]
+  internalNotes     HumanInterviewInternalNote[]
+  assignments       CandidateInterviewAssignment[]
+
+  @@index([role])
+  @@index([track])
+  @@index([isActive])
+  @@map("experts")
+}
+
+/// Expert availability calendar slots
+model ExpertAvailabilitySlot {
+  id        String     @id @default(uuid()) @db.Uuid
+  expertId  String     @map("expert_id")
+  startTime DateTime   @map("start_time")
+  endTime   DateTime   @map("end_time")
+  timezone  String     @default("Asia/Riyadh")
+  status    SlotStatus @default(available)
+  heldUntil DateTime?  @map("held_until")
+  heldBy    String?    @map("held_by")
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  expert   Expert    @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  sessions Session[]
+
+  @@index([expertId, status])
+  @@index([startTime])
+  @@index([status])
+  @@map("expert_availability_slots")
+}
+
+/// Shared core booking entity for Human Interview and Consultations
+model Session {
+  id                       String        @id @default(uuid()) @db.Uuid
+  candidateId              String        @map("candidate_id")
+  candidateUserId          String        @map("candidate_user_id")
+  expertId                 String        @map("expert_id")
+  slotId                   String?       @map("slot_id") @db.Uuid
+  sessionType              SessionType   @map("session_type")
+  status                   SessionStatus @default(scheduled)
+  scheduledStartTime       DateTime      @map("scheduled_start_time")
+  scheduledEndTime         DateTime      @map("scheduled_end_time")
+  timezone                 String        @default("Asia/Riyadh")
+  meetingProvider          String?       @default("custom") @map("meeting_provider")
+  meetingUrl               String?       @map("meeting_url")
+  cancellationReason       String?       @map("cancellation_reason") @db.Text
+  cancelledBy              String?       @map("cancelled_by")
+  cancelledAt              DateTime?     @map("cancelled_at")
+  rescheduledFromSessionId String?       @map("rescheduled_from_session_id") @db.Uuid
+  googleCalendarEventId    String?       @map("google_calendar_event_id")
+  googleCalendarSyncStatus String        @default("not_connected") @map("google_calendar_sync_status")
+  googleCalendarSyncedAt   DateTime?     @map("google_calendar_synced_at")
+  googleCalendarLastError  String?       @map("google_calendar_last_error") @db.Text
+  createdAt                DateTime      @default(now()) @map("created_at")
+  updatedAt                DateTime      @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  candidate             StudentProfile              @relation("CandidateSessions", fields: [candidateId], references: [id], onDelete: Restrict)
+  candidateUser         User                        @relation("CandidateUserSessions", fields: [candidateUserId], references: [id], onDelete: Restrict)
+  expert                Expert                      @relation("ExpertSessions", fields: [expertId], references: [id], onDelete: Restrict)
+  slot                  ExpertAvailabilitySlot?     @relation(fields: [slotId], references: [id], onDelete: SetNull)
+  rescheduledFrom       Session?                    @relation("SessionRescheduleHistory", fields: [rescheduledFromSessionId], references: [id], onDelete: SetNull)
+  rescheduledSessions   Session[]                   @relation("SessionRescheduleHistory")
+  humanInterviewDetails HumanInterviewDetail?
+  consultationDetails   ConsultationDetail?
+  evaluation            HumanInterviewEvaluation?
+
+  @@index([candidateUserId])
+  @@index([expertId])
+  @@index([sessionType, status])
+  @@index([scheduledStartTime])
+  @@map("sessions")
+}
+
+/// Stage 02B Human Technical Calibration specific context
+model HumanInterviewDetail {
+  id               String        @id @default(uuid()) @db.Uuid
+  sessionId        String        @unique @map("session_id") @db.Uuid
+  softwareTrack    SoftwareTrack @default(BACKEND) @map("software_track")
+  calibrationStage String        @default("Stage 02B: Human Technical Calibration") @map("calibration_stage")
+  candidateNotes   String?       @map("candidate_notes") @db.Text
+  targetRole       String?       @default("Junior Software Engineer") @map("target_role")
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([softwareTrack])
+  @@map("human_interview_details")
+}
+
+/// 1-to-1 Mentorship specific details, outcome notes, and action items
+model ConsultationDetail {
+  id                String   @id @default(uuid()) @db.Uuid
+  sessionId         String   @unique @map("session_id") @db.Uuid
+  topic             String
+  topicTitle        String   @map("topic_title")
+  goal              String?  @db.Text
+  candidateMessage  String?  @map("candidate_message") @db.Text
+  outcomeSummary    String?  @map("outcome_summary") @db.Text
+  actionItems       Json?    @default("[]") @map("action_items")
+  deliverables      Json?    @default("{}")
+  candidateRating   Int?     @map("candidate_rating")
+  candidateFeedback String?  @map("candidate_feedback") @db.Text
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([topic])
+  @@map("consultation_details")
+}
+
+/// Candidate-visible technical scorecard, score breakdown, and recommendations
+model HumanInterviewEvaluation {
+  id                       String   @id @default(uuid()) @db.Uuid
+  sessionId                String   @unique @map("session_id") @db.Uuid
+  evaluatorId              String   @map("evaluator_id")
+  technicalScore           Decimal  @map("technical_score") @db.Decimal(5, 2)
+  problemSolvingScore      Decimal  @map("problem_solving_score") @db.Decimal(5, 2)
+  communicationScore       Decimal  @map("communication_score") @db.Decimal(5, 2)
+  reasoningScore           Decimal  @map("reasoning_score") @db.Decimal(5, 2)
+  overallScore             Decimal  @map("overall_score") @db.Decimal(5, 2)
+  recommendation           String
+  candidateVisibleFeedback String   @map("candidate_visible_feedback") @db.Text
+  strengths                Json?    @default("[]")
+  recommendations          Json?    @default("[]")
+  submittedAt              DateTime @default(now()) @map("submitted_at")
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  session      Session                      @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  evaluator    Expert                       @relation(fields: [evaluatorId], references: [id], onDelete: Restrict)
+  internalNote HumanInterviewInternalNote?
+
+  @@index([evaluatorId])
+  @@index([overallScore])
+  @@map("human_interview_evaluations")
+}
+
+/// Isolated interviewer-only internal deliberation notes (RLS-gated from candidates)
+model HumanInterviewInternalNote {
+  id            String   @id @default(uuid()) @db.Uuid
+  evaluationId  String   @unique @map("evaluation_id") @db.Uuid
+  evaluatorId   String   @map("evaluator_id")
+  internalNotes String   @map("internal_notes") @db.Text
+  privateFlags  Json?    @default("{}") @map("private_flags")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  evaluation HumanInterviewEvaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  evaluator  Expert                   @relation(fields: [evaluatorId], references: [id], onDelete: Restrict)
+
+  @@map("human_interview_internal_notes")
+}
+
+/// Tracks which interviewer is assigned to which candidate (by admin or auto-match)
+model CandidateInterviewAssignment {
+  id              String   @id @default(uuid()) @db.Uuid
+  candidateUserId String   @unique @map("candidate_user_id")
+  expertId        String   @map("expert_id")
+  assignedBy      String   @default("system") @map("assigned_by")
+  assignedAt      DateTime @default(now()) @map("assigned_at")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  candidateUser User   @relation(fields: [candidateUserId], references: [id], onDelete: Cascade)
+  expert        Expert @relation(fields: [expertId], references: [id], onDelete: Cascade)
+
+  @@index([expertId])
+  @@map("candidate_interview_assignments")
+}
+
+/// Candidate Google Calendar OAuth token storage
+model CandidateGoogleToken {
+  id              String   @id @default(uuid()) @db.Uuid
+  candidateUserId String   @unique @map("candidate_user_id")
+  accessToken     String   @map("access_token") @db.Text
+  refreshToken    String?  @map("refresh_token") @db.Text
+  scope           String?
+  tokenType       String?  @default("Bearer") @map("token_type")
+  expiryDate      BigInt?  @map("expiry_date")
+  googleEmail     String?  @map("google_email")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("candidate_google_tokens")
+}
 

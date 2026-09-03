@@ -1,11 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="32" y2="32">
-      <stop offset="0%" stop-color="#1b57f5"/>
-      <stop offset="100%" stop-color="#06b6d4"/>
-    </linearGradient>
-  </defs>
-  <rect width="32" height="32" rx="8" fill="url(#g)"/>
-  <path d="M10 8h4v12a4 4 0 01-4-4V8z" fill="white" opacity="0.9"/>
-  <circle cx="12" cy="22" r="2" fill="white" opacity="0.7"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <rect width="100" height="100" rx="20" fill="#172132"/>
+  <!-- Left Outer Monolith -->
+  <path d="M43 14 L20 32 C16 35 14 39 14 44 L14 78 C14 84 17 87 21 88 L28 89 C29 89 30 88 31 87 L36 76 C40 68 43 54 43 36 Z" fill="#F0F2F4"/>
+  <!-- Right Outer Monolith -->
+  <path d="M57 14 L80 32 C84 35 86 39 86 44 L86 78 C86 84 83 87 79 88 L72 89 C71 89 70 88 69 87 L64 76 C60 68 57 54 57 36 Z" fill="#F0F2F4"/>
+  <!-- Lower Left Ramp -->
+  <path d="M38 46 C38 68 31 82 22 88 L21 86 C29 79 35 66 35 46 Z" fill="#F0F2F4"/>
+  <!-- Lower Right Ramp -->
+  <path d="M62 46 C62 68 69 82 78 88 L79 86 C71 79 65 66 65 46 Z" fill="#F0F2F4"/>
+  <!-- Central Jadeer Figure Head Nodes (Terracotta) -->
+  <circle cx="45" cy="28" r="3.2" fill="#C4846C"/>
+  <circle cx="55" cy="28" r="3.2" fill="#C4846C"/>
+  <!-- Central Jadeer Facing Hooks -->
+  <path d="M43 32 L43 38 C43 43 45 45 48 45 C49 45 50 44 50 43 C50 39 48 37 48 32 Z" fill="#F0F2F4"/>
+  <path d="M57 32 L57 38 C57 43 55 45 52 45 C51 45 50 44 50 43 C50 39 52 37 52 32 Z" fill="#F0F2F4"/>
 </svg>

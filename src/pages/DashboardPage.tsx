@@ -1,20 +1,19 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
 import { useUserProfile } from '@/contexts/UserProfileContext';
 import { useUserRole } from '@/contexts/UserRoleContext';
 import { useCandidateJourney } from '@/contexts/CandidateJourneyContext';
 import { useInterviewSchedule, type InterviewType } from '@/contexts/InterviewScheduleContext';
-import { AdminApiService, type AdminConsultationRecord } from '@/services/adminService';
+import { AdminApiService } from '@/services/adminService';
+import { useDashboardConsultations } from '@/hooks/useDashboardConsultations';
+import { useDashboardHumanCalibration } from '@/hooks/useDashboardHumanCalibration';
+import DashboardCalibrationCard from '@/components/dashboard/DashboardCalibrationCard';
 import {
   Check,
-  BrainCircuit,
   ArrowRight,
-  Sparkles,
   Clock,
-  Mic,
   ShieldCheck,
-  FileText,
   UserCheck,
   CalendarCheck2,
   Video,
@@ -23,15 +22,10 @@ import {
   Building2,
   ExternalLink,
   Calendar,
-  Star,
   Zap,
-  Briefcase,
-  ChevronRight,
-  Code2,
-  Layers,
-  ArrowUpRight,
   CheckCircle2,
-  SlidersHorizontal,
+  User,
+  Briefcase,
 } from 'lucide-react';
 
 /* ── Interview type display helpers ────────────────────────────────────── */
@@ -49,9 +43,9 @@ const interviewTypeIcons: Record<InterviewType, typeof Bot> = {
 };
 
 const interviewTypeColors: Record<InterviewType, string> = {
-  ai: 'bg-[#f3e8ff] text-[#7c3aed] border-[#e9d5ff]',
-  human: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  panel: 'bg-[#E6EEFB] text-[#0056D6] border-[#BFCFF2]',
+  ai: 'bg-[#5E8174]/10 text-[#5E8174] border-[#5E8174]/20',
+  human: 'bg-slate-100 text-[#334155] border-slate-200',
+  panel: 'bg-[#5E8174]/15 text-[#4D6D62] border-[#5E8174]/30',
 };
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -72,46 +66,8 @@ interface JourneyPhase {
   status: 'completed' | 'current' | 'upcoming';
 }
 
-const journeyPhases: JourneyPhase[] = [
-  {
-    id: 'onboarding',
-    step: '01',
-    name: 'Profile Onboarding',
-    desc: 'Identity & Track Binding',
-    status: 'completed',
-  },
-  {
-    id: 'ai-assessment',
-    step: '02',
-    name: 'AI Assessment',
-    desc: 'Adaptive Technical Evaluation',
-    status: 'current',
-  },
-  {
-    id: 'human-calibration',
-    step: '03',
-    name: 'Human Calibration',
-    desc: 'Mentor Verification Pod',
-    status: 'upcoming',
-  },
-  {
-    id: 'evidence-dossier',
-    step: '04',
-    name: 'Evidence Dossier',
-    desc: 'Verified Skills Portfolio',
-    status: 'upcoming',
-  },
-  {
-    id: 'job-matching',
-    step: '05',
-    name: 'Internship Matching',
-    desc: 'Evidence-Backed Hiring',
-    status: 'upcoming',
-  },
-];
-
 export default function DashboardPage() {
-  const { isStudent, userRole, lockedTrack } = useUserRole();
+  const { userRole, lockedTrack } = useUserRole();
   const { isOnboarded } = useCandidateJourney();
   const { profile: userProfile } = useUserProfile();
   const navigate = useNavigate();
@@ -123,17 +79,15 @@ export default function DashboardPage() {
   const clerkEmail = clerkUser?.primaryEmailAddress?.emailAddress;
   const clerkImage = clerkUser?.imageUrl;
 
+  const candidateUserId = clerkUser?.id || '';
+  const { consultations, activeCount, totalCount } = useDashboardConsultations(candidateUserId);
+  const calibration = useDashboardHumanCalibration(candidateUserId);
+
   // Load unified user data from AdminApiService
   const unifiedData = useMemo(() => {
-    return AdminApiService.getUnifiedCandidateProfile('usr-cnd-001');
-  }, []);
+    return AdminApiService.getUnifiedCandidateProfile(candidateUserId);
+  }, [candidateUserId]);
 
-  // Candidate interviews scheduled by employers
-  const candidateInterviews = getInterviewsForCandidate('JAD-8492')
-    .filter((i) => i.status === 'scheduled')
-    .sort((a, b) => a.date.localeCompare(b.date));
-
-  const consultations = unifiedData.consultations;
   const user = unifiedData.user;
   const profile = user.studentProfile;
   const activeTrack = userProfile.track || lockedTrack || (clerkUser?.publicMetadata?.track as string) || profile?.softwareTrack || 'Track Not Selected';
@@ -141,6 +95,76 @@ export default function DashboardPage() {
   const effectiveEmail = userProfile.email || clerkEmail || user?.email || 'N/A';
   const effectiveImage = userProfile.imageUrl || clerkImage;
   const effectiveUniversity = userProfile.university || (clerkUser?.publicMetadata?.university as string) || profile?.university || 'University Not Specified';
+  const isStudent = userRole === 'student' || userProfile.role === 'student';
+  const destinationTitle = isStudent ? 'Internship Matching' : 'Job Matching';
+  const destinationDesc = isStudent ? 'Verified Internship Placement' : 'Evidence-Backed Hiring';
+
+  // Candidate interviews scheduled by employers (scoped to candidate)
+  const employerInterviews = candidateUserId
+    ? getInterviewsForCandidate(candidateUserId).filter((i) => i.status === 'scheduled')
+    : [];
+
+  const allUpcomingInterviews = useMemo(() => {
+    const list = [...employerInterviews];
+    if (calibration.state === 'confirmed' && calibration.confirmedDetails) {
+      list.unshift({
+        id: calibration.confirmedDetails.sessionId,
+        candidateId: candidateUserId,
+        candidateName: effectiveName,
+        candidateInitials: effectiveName.split(' ').map((n) => n[0]).join('').slice(0, 2),
+        company: calibration.confirmedDetails.interviewerCompany,
+        role: `Human Calibration • ${calibration.confirmedDetails.interviewerName}`,
+        date: calibration.confirmedDetails.scheduledDate,
+        timeSlot: calibration.confirmedDetails.scheduledTime,
+        timezone: calibration.confirmedDetails.timezone,
+        meetingLink: calibration.confirmedDetails.meetingUrl || '/candidates/human-interview',
+        type: 'human' as const,
+        status: 'scheduled' as const,
+        scheduledBy: 'candidate' as const,
+        createdAt: new Date().toISOString(),
+      });
+    }
+    return list.sort((a, b) => a.date.localeCompare(b.date));
+  }, [employerInterviews, calibration.state, calibration.confirmedDetails, candidateUserId, effectiveName]);
+
+  // Derived dynamic journey phases based on real Supabase calibration state
+  const journeyPhases: JourneyPhase[] = useMemo(() => [
+    {
+      id: 'onboarding',
+      step: '01',
+      name: 'Profile Onboarding',
+      desc: 'Identity & Track Binding',
+      status: 'completed',
+    },
+    {
+      id: 'ai-assessment',
+      step: '02',
+      name: 'AI Assessment',
+      desc: 'Adaptive Technical Evaluation',
+      status: calibration.state === 'completed' || calibration.state === 'confirmed' || calibration.state === 'choose_time' ? 'completed' : 'current',
+    },
+    {
+      id: 'human-calibration',
+      step: '03',
+      name: 'Human Calibration',
+      desc: 'Mentor Verification Pod',
+      status: calibration.state === 'completed' ? 'completed' : calibration.state === 'confirmed' || calibration.state === 'choose_time' ? 'current' : 'upcoming',
+    },
+    {
+      id: 'evidence-dossier',
+      step: '04',
+      name: 'Evidence Dossier',
+      desc: 'Verified Skills Portfolio',
+      status: calibration.state === 'completed' ? 'current' : 'upcoming',
+    },
+    {
+      id: 'job-matching',
+      step: '05',
+      name: destinationTitle,
+      desc: destinationDesc,
+      status: 'upcoming',
+    },
+  ], [calibration.state, destinationTitle, destinationDesc]);
 
   // Auto-redirect if user signed up via social login and lacks required profile fields
   useEffect(() => {
@@ -159,62 +183,62 @@ export default function DashboardPage() {
   }, [isClerkLoaded, clerkUser, userProfile, userRole, lockedTrack, isOnboarded, navigate]);
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 sm:space-y-10 animate-[fade-in_0.4s_ease] py-2 sm:py-6">
+    <div className="w-full space-y-8 sm:space-y-10 animate-[fade-in_0.4s_ease] py-2 sm:py-6">
 
       {/* ═══════════════════════════════════════════════════════════════
          1. UNIFIED IDENTITY & ENTITY HEADER (SINGLE USER ENTITY)
          ═══════════════════════════════════════════════════════════════ */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#0B0F19]/[0.06] shadow-[0_2px_16px_rgba(0,0,0,0.02)] space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-[#0B0F19]/50">
-              <span className="px-2.5 py-0.5 rounded-full bg-[#6E8F75]/10 text-[#6E8F75] font-bold">
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.03)] space-y-5">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-400">
+              <span className="px-2.5 py-0.5 rounded-full bg-[#5E8174]/10 border border-[#5E8174]/20 text-[#5E8174] font-semibold text-xs">
                 {activeTrack}
               </span>
-              <span>•</span>
-              <span className="font-mono text-[#0B0F19]/60">User_ID: {clerkUser?.id || user.id}</span>
-              <span>•</span>
-              <span className="font-mono text-[#0B0F19]/60">Candidate_ID: {profile?.id || 'stu-001'}</span>
-              <span>•</span>
-              <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-bold text-[11px]">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span className="text-slate-300">•</span>
+              <span className="font-mono text-slate-400 text-[11px]">User_ID: {clerkUser?.id || user.id}</span>
+              <span className="text-slate-300">•</span>
+              <span className="font-mono text-slate-400 text-[11px]">Candidate_ID: {profile?.id || (candidateUserId ? `cnd-${candidateUserId.slice(-6)}` : 'cnd-live')}</span>
+              <span className="text-slate-300">•</span>
+              <span className="inline-flex items-center gap-1.5 text-[#5E8174] bg-[#5E8174]/10 border border-[#5E8174]/20 px-2 py-0.5 rounded-full font-medium text-[11px]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#5E8174]" />
                 Single Unified Entity Active
               </span>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3.5">
               {effectiveImage ? (
                 <img
                   src={effectiveImage}
                   alt={effectiveName}
-                  className="w-12 h-12 rounded-2xl object-cover ring-2 ring-[#6E8F75]/20 shadow-sm"
+                  className="w-12 h-12 rounded-2xl object-cover ring-2 ring-[#5E8174]/20 shadow-2xs"
                 />
               ) : null}
               <div>
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#0B0F19] tracking-tight">
-                  Welcome back, <span className="text-[#6E8F75]">{effectiveName}</span>
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#0F172A] tracking-tight">
+                  Welcome back, <span className="text-[#5E8174]">{effectiveName}</span>
                 </h1>
                 {effectiveEmail && (
-                  <p className="text-xs text-[#0B0F19]/40 font-mono mt-0.5">{effectiveEmail}</p>
+                  <p className="text-xs text-slate-400 font-mono mt-0.5">{effectiveEmail}</p>
                 )}
               </div>
             </div>
 
-            <p className="text-[14px] sm:text-[15px] text-[#0B0F19]/60 max-w-2xl leading-relaxed">
+            <p className="text-[14px] sm:text-[15px] text-[#334155] max-w-2xl leading-relaxed">
               Unified Portal: Seamlessly manage your 1-on-1 mentor consultations, technical validation telemetry, and internship matching pipeline without data fragmentation.
             </p>
           </div>
 
-          {/* Quick Profile Summary Badge */}
-          <div className="flex sm:flex-col items-end justify-between sm:justify-center gap-2 p-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.05] shrink-0">
+          {/* Quick Profile Summary Badge (Warm Beige Surface) */}
+          <div className="flex sm:flex-col items-end justify-between sm:justify-center gap-2.5 p-4 rounded-2xl bg-[#F4F0E8]/80 border border-[#E8E2D5] shrink-0">
             <div className="text-left sm:text-right">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-[#0B0F19]/45">Academic Institution</p>
-              <p className="text-xs font-bold text-[#0B0F19] truncate max-w-[200px]">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Academic Institution</p>
+              <p className="text-xs font-bold text-[#0F172A] truncate max-w-[200px]">
                 {effectiveUniversity}
               </p>
             </div>
             <div className="text-right">
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-student-600 bg-student-500/10 px-2.5 py-0.5 rounded-full">
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#5E8174] bg-white border border-[#5E8174]/20 px-2.5 py-0.5 rounded-full shadow-2xs">
                 Track Locked • Class of {profile?.graduationYear || 2025}
               </span>
             </div>
@@ -222,22 +246,22 @@ export default function DashboardPage() {
         </div>
 
         {/* ── Top Metric Ribbon ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-[#0B0F19]/[0.05]">
-          <div className="p-3.5 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.04]">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-[#0B0F19]/45">Validation Stage</p>
-            <p className="text-base font-extrabold text-[#0B0F19] mt-0.5">Phase 2: AI Interview</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-slate-100">
+          <div className="p-3.5 rounded-2xl bg-[#F4F0E8]/80 border border-[#E8E2D5]">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Validation Stage</p>
+            <p className="text-base font-bold text-[#0F172A] mt-0.5">{calibration.validationStageLabel}</p>
           </div>
-          <div className="p-3.5 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.04]">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-[#0B0F19]/45">Consultations</p>
-            <p className="text-base font-extrabold text-student-600 mt-0.5">{consultations.length} Active Bookings</p>
+          <div className="p-3.5 rounded-2xl bg-[#F8F9FA] border border-slate-200/60">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Consultations</p>
+            <p className="text-base font-bold text-[#5E8174] mt-0.5">{activeCount} Active Bookings</p>
           </div>
-          <div className="p-3.5 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.04]">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-[#0B0F19]/45">Telemetry Score</p>
-            <p className="text-base font-extrabold text-emerald-600 mt-0.5">88% Live Rating</p>
+          <div className="p-3.5 rounded-2xl bg-[#F8F9FA] border border-slate-200/60">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Telemetry Score</p>
+            <p className="text-base font-bold text-[#5E8174] mt-0.5">88% Live Rating</p>
           </div>
-          <div className="p-3.5 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.04]">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-[#0B0F19]/45">Internship Pipeline</p>
-            <p className="text-base font-extrabold text-employer-600 mt-0.5">3 Matches Ready</p>
+          <div className="p-3.5 rounded-2xl bg-[#F8F9FA] border border-slate-200/60">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Internship Pipeline</p>
+            <p className="text-base font-bold text-[#0F172A] mt-0.5">3 Matches Ready</p>
           </div>
         </div>
       </div>
@@ -245,27 +269,35 @@ export default function DashboardPage() {
       {/* ═══════════════════════════════════════════════════════════════
          2. VALIDATION PIPELINE PROGRESS (5-PHASE STEPPER)
          ═══════════════════════════════════════════════════════════════ */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#0B0F19]/[0.05] shadow-[0_2px_16px_rgba(0,0,0,0.02)] space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.03)] space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <ShieldCheck className="w-5 h-5 text-[#6E8F75]" />
+            <ShieldCheck className="w-5 h-5 text-[#5E8174]" />
             <div>
-              <h2 className="text-xs font-bold uppercase tracking-wider text-[#0B0F19]/50">
-                Internship & Engineering Validation Pipeline
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                {isStudent ? 'Internship' : 'Career'} & Engineering Validation Pipeline
               </h2>
-              <p className="text-[13px] font-bold text-[#0B0F19]">Continuous End-to-End Competence Tracking</p>
+              <p className="text-[13.5px] font-bold text-[#0F172A]">Continuous End-to-End Competence Tracking</p>
             </div>
           </div>
-          <span className="text-xs font-bold text-[#6E8F75] bg-[#6E8F75]/10 px-3 py-1 rounded-full">
-            Phase 2 of 5 Active
+          <span className="text-xs font-semibold text-[#5E8174] bg-[#5E8174]/10 border border-[#5E8174]/20 px-3 py-1 rounded-full flex items-center gap-1.5 w-fit">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#5E8174] animate-pulse" />
+            <span>Phase {calibration.stepperPhaseNumber} of 5 • En Route to {destinationTitle}</span>
           </span>
         </div>
 
         {/* Stepper Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-5 gap-4 sm:gap-2 relative">
+        <div className="grid grid-cols-1 sm:grid-cols-5 gap-5 sm:gap-2 relative pt-2">
           {journeyPhases.map((phase, idx) => {
             const isCompleted = phase.status === 'completed';
             const isCurrent = phase.status === 'current';
+            const isDestination = idx === journeyPhases.length - 1;
+            const currentPhaseIndex = journeyPhases.findIndex((p) => p.status === 'current');
+            const isNear = currentPhaseIndex >= 2;
+
+            const displayName = isDestination ? destinationTitle : phase.name;
+            const displayDesc = isDestination ? destinationDesc : phase.desc;
 
             const phaseRouteMap: Record<string, string> = {
               'profile-onboarding': '/profile',
@@ -280,30 +312,72 @@ export default function DashboardPage() {
               <Link
                 key={phase.id}
                 to={targetRoute}
-                className="flex sm:flex-col items-start gap-4 sm:gap-3 relative group hover:opacity-90 transition-opacity"
+                className="flex sm:flex-col items-start gap-3.5 sm:gap-2 relative group hover:opacity-95 transition-opacity"
               >
                 {/* Horizontal connector line on desktop */}
                 {idx < journeyPhases.length - 1 && (
                   <div
                     className={`
-                      hidden sm:block absolute top-4 left-[28px] right-[-14px] h-[2px] z-0
-                      ${isCompleted ? 'bg-[#6E8F75]' : 'bg-[#0B0F19]/[0.06]'}
+                      hidden sm:block absolute top-[36px] left-[28px] right-[-14px] h-[2px] z-0 transition-colors duration-500
+                      ${isCompleted ? 'bg-[#5E8174]' : 'bg-slate-200'}
                     `}
                   />
                 )}
 
-                {/* Step indicator icon/circle */}
-                <div className="relative z-10 shrink-0">
-                  {isCompleted ? (
-                    <div className="w-8 h-8 rounded-full bg-[#6E8F75] text-white flex items-center justify-center shadow-[0_2px_8px_rgba(110,143,117,0.3)] group-hover:scale-105 transition-transform">
-                      <Check className="w-4 h-4" strokeWidth={2.5} />
+                {/* Vertical connector line on mobile */}
+                {idx < journeyPhases.length - 1 && (
+                  <div
+                    className={`
+                      sm:hidden absolute top-8 bottom-[-16px] left-[15px] w-[2px] z-0 transition-colors duration-500
+                      ${isCompleted ? 'bg-[#5E8174]' : 'bg-slate-200'}
+                    `}
+                  />
+                )}
+
+                {/* Top soft destination label (only on destination step) */}
+                <div className="hidden sm:flex items-center h-4 mb-1">
+                  {isDestination && (
+                    <span
+                      className={`text-[10px] font-semibold uppercase tracking-wider transition-colors ${
+                        isCurrent || isCompleted ? 'text-[#5E8174]' : 'text-slate-400'
+                      }`}
+                    >
+                      {isCurrent || isCompleted ? 'Destination Reached' : 'Your Destination'}
+                    </span>
+                  )}
+                </div>
+
+                {/* Node icon / circle container */}
+                <div className="h-10 flex items-center justify-center relative shrink-0 z-10">
+                  {isDestination ? (
+                    /* Final Destination Node (Briefcase) */
+                    <div
+                      className={`
+                        rounded-full flex items-center justify-center transition-all duration-300 group-hover:scale-105
+                        ${
+                          isCurrent || isCompleted
+                            ? 'w-10 h-10 bg-[#5E8174] text-white border-2 border-[#5E8174] shadow-[0_0_20px_rgba(94,129,116,0.35)] ring-4 ring-[#5E8174]/20 animate-[pulse_2.5s_ease-in-out_1]'
+                            : isNear
+                            ? 'w-8 h-8 bg-[#5E8174]/5 border border-[#5E8174]/30 text-[#5E8174] shadow-xs'
+                            : 'w-8 h-8 bg-[#F8F9FA] border border-slate-200 text-slate-400 group-hover:border-[#5E8174]/40 group-hover:text-[#5E8174]'
+                        }
+                      `}
+                    >
+                      <Briefcase className={isCurrent || isCompleted ? 'w-4.5 h-4.5 text-white' : 'w-4 h-4'} />
                     </div>
                   ) : isCurrent ? (
-                    <div className="w-8 h-8 rounded-full bg-white border-2 border-[#6E8F75] flex items-center justify-center shadow-[0_0_12px_rgba(110,143,117,0.25)] group-hover:scale-105 transition-transform">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#6E8F75] animate-pulse" />
+                    /* Active Single Candidate Marker (Slightly larger with Muted Sage outline & soft halo) */
+                    <div className="w-10 h-10 rounded-full bg-white border-2 border-[#5E8174] text-[#5E8174] flex items-center justify-center shadow-[0_0_16px_rgba(94,129,116,0.22)] ring-4 ring-[#5E8174]/15 transition-all group-hover:scale-105">
+                      <User className="w-4.5 h-4.5 text-[#5E8174]" />
+                    </div>
+                  ) : isCompleted ? (
+                    /* Completed Stage (Clean Muted Sage Check State) */
+                    <div className="w-8 h-8 rounded-full bg-[#5E8174] text-white flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform">
+                      <Check className="w-4 h-4" strokeWidth={2.5} />
                     </div>
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-[#0B0F19]/30 flex items-center justify-center text-xs font-bold group-hover:border-[#6E8F75]/40 transition-colors">
+                    /* Upcoming Stage (Light Slate) */
+                    <div className="w-8 h-8 rounded-full bg-[#F8F9FA] border border-slate-200 text-slate-400 flex items-center justify-center text-xs font-semibold group-hover:border-[#5E8174]/40 transition-colors">
                       {phase.step}
                     </div>
                   )}
@@ -313,14 +387,14 @@ export default function DashboardPage() {
                 <div className="space-y-0.5 min-w-0">
                   <p
                     className={`
-                      text-[13px] font-bold leading-tight group-hover:text-[#6E8F75] transition-colors
-                      ${isCurrent ? 'text-[#0B0F19]' : isCompleted ? 'text-[#0B0F19]/80' : 'text-[#0B0F19]/35'}
+                      text-[13px] font-bold leading-tight group-hover:text-[#5E8174] transition-colors
+                      ${isCurrent ? 'text-[#0F172A]' : isCompleted ? 'text-[#334155]' : 'text-slate-400'}
                     `}
                   >
-                    {phase.name}
+                    {displayName}
                   </p>
-                  <p className="text-[11px] text-[#0B0F19]/45 leading-snug">
-                    {phase.desc}
+                  <p className="text-[11px] text-slate-400 leading-snug">
+                    {displayDesc}
                   </p>
                 </div>
               </Link>
@@ -332,16 +406,15 @@ export default function DashboardPage() {
       {/* ═══════════════════════════════════════════════════════════════
          3. SEAMLESS BRIDGE FLOW: DIRECT 'START INTERNSHIP VALIDATION' CTA
          ═══════════════════════════════════════════════════════════════ */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0B0F19] via-[#141C2C] to-[#1E2C42] p-7 sm:p-9 text-white shadow-[0_8px_32px_rgba(11,15,25,0.18)] border border-white/[0.08]">
+      <div className="relative overflow-hidden rounded-3xl bg-[#0F172A] p-7 sm:p-9 text-white shadow-[0_12px_36px_rgba(15,23,42,0.12)] border border-slate-800">
         {/* Subtle Background Glow */}
-        <div className="absolute top-0 right-0 w-80 h-80 bg-[#6E8F75]/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/3 w-60 h-60 bg-student-500/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-80 h-80 bg-[#5E8174]/15 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
           <div className="space-y-3 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 backdrop-blur-md">
-              <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-              <span className="text-xs font-bold text-white uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.08] border border-white/[0.12] backdrop-blur-md">
+              <Zap className="w-3.5 h-3.5 text-[#84A98C] fill-[#84A98C]" />
+              <span className="text-xs font-semibold text-slate-200 uppercase tracking-wider">
                 Seamless Bridge • 1-Click Transition
               </span>
             </div>
@@ -349,7 +422,7 @@ export default function DashboardPage() {
             <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
               Ready to convert consultation insights into verified code proof?
             </h2>
-            <p className="text-[14px] sm:text-[15px] text-white/70 leading-relaxed">
+            <p className="text-[14px] sm:text-[15px] text-slate-300 leading-relaxed">
               Transition seamlessly from your mentor session into the AI Technical Assessment. Your candidate profile and track are permanently synchronized—no re-registration or redundant forms required.
             </p>
           </div>
@@ -359,9 +432,9 @@ export default function DashboardPage() {
               to="/candidates/ai-interview"
               className="
                 inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl
-                bg-[#6E8F75] text-white text-[15px] font-bold
-                hover:bg-[#5d7d64] hover:shadow-[0_10px_28px_rgba(110,143,117,0.45)]
-                transition-all duration-200 active:scale-[0.98] shadow-lg
+                bg-[#5E8174] text-white text-[15px] font-bold
+                hover:bg-[#4D6D62] hover:shadow-[0_10px_28px_rgba(94,129,116,0.35)]
+                transition-all duration-200 active:scale-[0.98] shadow-md
               "
             >
               <span>Start Internship Validation</span>
@@ -372,11 +445,11 @@ export default function DashboardPage() {
               to="/consultations/book"
               className="
                 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl
-                bg-white/10 text-white/90 text-xs font-bold border border-white/15
-                hover:bg-white/15 hover:text-white transition-colors
+                bg-white/[0.08] text-white/90 text-xs font-semibold border border-white/[0.12]
+                hover:bg-white/[0.14] hover:text-white transition-colors
               "
             >
-              <Calendar className="w-3.5 h-3.5 text-student-400" />
+              <Calendar className="w-3.5 h-3.5 text-slate-300" />
               <span>Book Follow-up Consultation</span>
             </Link>
           </div>
@@ -392,31 +465,31 @@ export default function DashboardPage() {
 
         {/* ── LEFT WIDGET: MY CONSULTATIONS DESK (lg:col-span-6) ── */}
         <div className="lg:col-span-6 space-y-5">
-          <div className="bg-white rounded-3xl p-6 sm:p-7 border border-[#0B0F19]/[0.06] shadow-[0_2px_16px_rgba(0,0,0,0.02)] space-y-5 flex flex-col justify-between h-full">
+          <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.03)] space-y-5 flex flex-col justify-between h-full">
             <div className="space-y-5">
               {/* Widget Header */}
-              <div className="flex items-center justify-between pb-3 border-b border-[#0B0F19]/[0.05]">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-student-500/10 text-student-500 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-[#5E8174]/10 text-[#5E8174] flex items-center justify-center">
                     <Calendar className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-[#0B0F19]">My Consultations</h3>
-                    <p className="text-[11px] text-[#0B0F19]/45 font-medium">1-to-1 Industry Guidance Sessions</p>
+                    <h3 className="text-sm font-bold text-[#0F172A]">My Consultations</h3>
+                    <p className="text-[11px] text-slate-400 font-medium">1-to-1 Industry Guidance Sessions</p>
                   </div>
                 </div>
 
                 <Link
                   to="/consultations"
-                  className="text-xs font-bold text-student-500 hover:text-student-600 transition-colors"
+                  className="text-xs font-semibold text-[#5E8174] hover:text-[#4D6D62] transition-colors"
                 >
-                  View All ({consultations.length}) →
+                  View All ({totalCount}) →
                 </Link>
               </div>
 
               {/* Consultation Cards */}
               {consultations.length === 0 ? (
-                <div className="py-8 text-center text-xs text-[#0B0F19]/40">
+                <div className="py-8 text-center text-xs text-slate-400">
                   No consultation sessions booked. Connect with a mentor to get started.
                 </div>
               ) : (
@@ -428,11 +501,11 @@ export default function DashboardPage() {
                     return (
                       <div
                         key={session.id}
-                        className="p-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.04] hover:border-[#6E8F75]/20 transition-all space-y-3"
+                        className="p-4 rounded-2xl bg-[#F8F9FA] border border-slate-200/60 hover:border-[#5E8174]/30 transition-all space-y-3"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-10 h-10 rounded-full bg-[#6E8F75] text-white flex items-center justify-center text-xs font-bold shrink-0 shadow-[0_2px_8px_rgba(110,143,117,0.25)]">
+                            <div className="w-10 h-10 rounded-full bg-[#5E8174] text-white flex items-center justify-center text-xs font-bold shrink-0 shadow-2xs">
                               {session.mentorName
                                 .split(' ')
                                 .map((n) => n[0])
@@ -440,48 +513,55 @@ export default function DashboardPage() {
                                 .slice(0, 2)}
                             </div>
                             <div className="min-w-0">
-                              <p className="text-[13.5px] font-bold text-[#0B0F19] truncate">{session.mentorName}</p>
-                              <p className="text-[11px] text-[#0B0F19]/50 truncate">
-                                {session.mentorTitle} • <span className="font-semibold text-[#6E8F75]">{session.mentorCompany}</span>
+                              <p className="text-[13.5px] font-bold text-[#0F172A] truncate">{session.mentorName}</p>
+                              <p className="text-[11px] text-[#334155] truncate">
+                                {session.mentorTitle} • <span className="font-semibold text-[#5E8174]">{session.mentorCompany}</span>
                               </p>
                             </div>
                           </div>
 
                           <span
-                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shrink-0 ${
+                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider shrink-0 ${
                               isCompleted
-                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                ? 'bg-slate-100 text-[#334155] border border-slate-200'
                                 : isConfirmed
-                                ? 'bg-[#6E8F75]/10 text-[#6E8F75] border border-[#6E8F75]/20'
-                                : 'bg-amber-100 text-amber-800 border border-amber-200'
+                                ? 'bg-[#5E8174]/10 text-[#5E8174] border border-[#5E8174]/20'
+                                : 'bg-slate-100 text-[#334155] border border-slate-200'
                             }`}
                           >
                             {session.status.replace('_', ' ')}
                           </span>
                         </div>
 
-                        {/* Topic & Timing */}
-                        <div className="px-3 py-2 rounded-xl bg-white border border-[#0B0F19]/[0.04] space-y-1">
-                          <p className="text-[12px] font-semibold text-[#0B0F19]">{session.topicTitle}</p>
-                          <div className="flex flex-wrap items-center gap-3 text-[11px] text-[#0B0F19]/50">
-                            <span className="flex items-center gap-1 font-medium">
-                              <Clock className="w-3 h-3 text-[#6E8F75]" />
+                        {/* Topic & Timing (Warm Beige Surface) */}
+                        <div className="px-3.5 py-2.5 rounded-xl bg-[#F4F0E8]/70 border border-[#E8E2D5] space-y-1">
+                          <p className="text-[12px] font-semibold text-[#0F172A]">{session.topicTitle}</p>
+                          <div className="flex flex-wrap items-center gap-3 text-[11px] text-[#334155]">
+                            <span className="flex items-center gap-1 font-medium text-[#334155]">
+                              <Clock className="w-3 h-3 text-[#5E8174]" />
                               {new Date(session.scheduledAt).toLocaleDateString(undefined, {
                                 weekday: 'short',
                                 month: 'short',
                                 day: 'numeric',
                               })}
+                              {session.timeLabel ? ` • ${session.timeLabel}` : ''}
                             </span>
-                            <span>•</span>
-                            <span>{session.durationMinutes} mins</span>
+                            {session.timezone && (
+                              <>
+                                <span className="text-slate-300">•</span>
+                                <span className="text-slate-400 font-mono text-[10px]">{session.timezone}</span>
+                              </>
+                            )}
+                            <span className="text-slate-300">•</span>
+                            <span className="text-slate-400">{session.durationMinutes} mins</span>
                             {session.meetingLink && (
                               <>
-                                <span>•</span>
+                                <span className="text-slate-300">•</span>
                                 <a
                                   href={session.meetingLink}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 font-bold text-[#6E8F75] hover:text-[#587a60]"
+                                  className="inline-flex items-center gap-1 font-semibold text-[#5E8174] hover:text-[#4D6D62]"
                                 >
                                   <Video className="w-3 h-3" />
                                   Join Room
@@ -492,8 +572,8 @@ export default function DashboardPage() {
                         </div>
 
                         {session.notes && (
-                          <p className="text-[11px] text-[#0B0F19]/45 italic line-clamp-1">
-                            <span className="font-bold not-italic text-[#0B0F19]/55">Prep:</span> {session.notes}
+                          <p className="text-[11px] text-slate-400 italic line-clamp-1">
+                            <span className="font-semibold not-italic text-slate-500">Prep:</span> {session.notes}
                           </p>
                         )}
                       </div>
@@ -504,14 +584,14 @@ export default function DashboardPage() {
             </div>
 
             {/* Book Session CTA */}
-            <div className="pt-3 border-t border-[#0B0F19]/[0.05]">
+            <div className="pt-3 border-t border-slate-100">
               <Link
                 to="/consultations"
                 className="
                   flex items-center justify-center gap-2 w-full px-5 py-3 rounded-2xl
-                  bg-[#6E8F75] text-white text-[13px] font-bold
-                  hover:bg-[#587a60] hover:shadow-[0_6px_20px_rgba(110,143,117,0.25)]
-                  transition-all active:scale-[0.99]
+                  bg-[#5E8174] text-white text-[13px] font-bold
+                  hover:bg-[#4D6D62] hover:shadow-[0_6px_20px_rgba(94,129,116,0.25)]
+                  transition-all active:scale-[0.99] shadow-xs
                 "
               >
                 <Calendar className="w-4 h-4" />
@@ -523,80 +603,47 @@ export default function DashboardPage() {
 
         {/* ── RIGHT WIDGET: VALIDATION PIPELINE & TELEMETRY (lg:col-span-6) ── */}
         <div className="lg:col-span-6 space-y-5">
-          <div className="bg-white rounded-3xl p-6 sm:p-7 border border-[#0B0F19]/[0.06] shadow-[0_2px_16px_rgba(0,0,0,0.02)] space-y-5 flex flex-col justify-between h-full">
+          <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.03)] space-y-5 flex flex-col justify-between h-full">
             <div className="space-y-5">
               {/* Widget Header */}
-              <div className="flex items-center justify-between pb-3 border-b border-[#0B0F19]/[0.05]">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-[#6E8F75]/15 text-[#6E8F75] flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-[#5E8174]/10 text-[#5E8174] flex items-center justify-center">
                     <ShieldCheck className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-[#0B0F19]">Validation Pipeline & Telemetry</h3>
-                    <p className="text-[11px] text-[#0B0F19]/45 font-medium">Internship Assessment & Skills Evidence</p>
+                    <h3 className="text-sm font-bold text-[#0F172A]">Validation Pipeline & Telemetry</h3>
+                    <p className="text-[11px] text-slate-400 font-medium">Internship Assessment & Skills Evidence</p>
                   </div>
                 </div>
 
                 <Link
                   to="/candidates/portfolio"
-                  className="text-xs font-bold text-[#6E8F75] hover:text-[#5d7d64] transition-colors"
+                  className="text-xs font-semibold text-[#5E8174] hover:text-[#4D6D62] transition-colors"
                 >
                   Evidence Portfolio →
                 </Link>
               </div>
 
-              {/* Assessment Readiness Card */}
-              <div className="p-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.04] space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#0B0F19]/45">
-                    Target Technical Assessment
-                  </span>
-                  <span className="text-[11px] font-bold text-[#6E8F75] bg-[#6E8F75]/10 px-2.5 py-0.5 rounded-full">
-                    Adaptive C++ & Systems
-                  </span>
-                </div>
-
-                <div className="space-y-1">
-                  <h4 className="text-[14px] font-bold text-[#0B0F19]">
-                    C++20 Object-Oriented Design & Memory Layout
-                  </h4>
-                  <p className="text-[12px] text-[#0B0F19]/55 leading-relaxed">
-                    Evaluates polymorphic dispatch, RAII, exception safety, and cache-friendly data structures to unlock verified internship badges.
-                  </p>
-                </div>
-
-                {/* Capability Dimensions Bar */}
-                <div className="space-y-2 pt-2 border-t border-[#0B0F19]/[0.05]">
-                  <div className="flex items-center justify-between text-[11px] font-medium">
-                    <span className="text-[#0B0F19]/60">System Design & Memory Guarantees</span>
-                    <span className="font-bold text-[#0B0F19]">92%</span>
-                  </div>
-                  <div className="w-full h-2 rounded-full bg-[#FAF9F6] border border-[#0B0F19]/[0.06] overflow-hidden">
-                    <div className="h-full rounded-full bg-[#6E8F75]" style={{ width: '92%' }} />
-                  </div>
-
-                  <div className="flex items-center justify-between text-[11px] font-medium pt-1">
-                    <span className="text-[#0B0F19]/60">Algorithmic Efficiency & Concurrency</span>
-                    <span className="font-bold text-[#0B0F19]">85%</span>
-                  </div>
-                  <div className="w-full h-2 rounded-full bg-[#FAF9F6] border border-[#0B0F19]/[0.06] overflow-hidden">
-                    <div className="h-full rounded-full bg-student-500" style={{ width: '85%' }} />
-                  </div>
-                </div>
-              </div>
+              {/* Human Calibration Status Card (Authoritative Supabase State) */}
+              <DashboardCalibrationCard
+                calibration={calibration}
+                track={activeTrack}
+                isStudent={isStudent}
+              />
 
               {/* Verified Badges & Proof Chips */}
               <div className="space-y-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-[#0B0F19]/45 block">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block">
                   Synchronized Telemetry Badges:
                 </span>
                 <div className="flex flex-wrap gap-2">
                   {['RAII Memory Safe', 'vtable Layout Verified', 'Async IO Ready', 'PostgreSQL Sharding'].map((b) => (
                     <span
                       key={b}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white border border-[#0B0F19]/[0.06] text-[11px] font-bold text-[#0B0F19]/70 shadow-2xs"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white border border-slate-200 text-[11px] font-semibold text-[#0F172A] shadow-2xs"
                     >
-                      <CheckCircle2 className="w-3 h-3 text-[#6E8F75]" />
+                      <CheckCircle2 className="w-3 h-3 text-[#5E8174]" />
                       {b}
                     </span>
                   ))}
@@ -605,14 +652,14 @@ export default function DashboardPage() {
             </div>
 
             {/* Validation Actions */}
-            <div className="pt-3 border-t border-[#0B0F19]/[0.05] grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div className="pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <Link
                 to="/candidates/ai-interview"
                 className="
                   flex items-center justify-center gap-2 px-4 py-3 rounded-2xl
-                  bg-[#6E8F75] text-white text-[13px] font-bold
-                  hover:bg-[#587a60] hover:shadow-[0_6px_20px_rgba(110,143,117,0.3)]
-                  transition-all active:scale-[0.99]
+                  bg-[#5E8174] text-white text-[13px] font-bold
+                  hover:bg-[#4D6D62] hover:shadow-[0_6px_20px_rgba(94,129,116,0.25)]
+                  transition-all active:scale-[0.99] shadow-xs
                 "
               >
                 <span>AI Interview</span>
@@ -623,12 +670,12 @@ export default function DashboardPage() {
                 to="/candidates/human-interview"
                 className="
                   flex items-center justify-center gap-2 px-4 py-3 rounded-2xl
-                  bg-[#FAF9F6] text-[#0B0F19] text-[13px] font-bold border border-[#0B0F19]/[0.08]
-                  hover:bg-[#6E8F75]/10 hover:border-[#6E8F75]/30 hover:text-[#6E8F75]
+                  bg-[#F8F9FA] text-[#0F172A] text-[13px] font-bold border border-slate-200
+                  hover:bg-white hover:border-[#5E8174]/40 hover:text-[#5E8174]
                   transition-all active:scale-[0.99]
                 "
               >
-                <UserCheck className="w-4 h-4 text-[#6E8F75]" />
+                <UserCheck className="w-4 h-4 text-[#5E8174]" />
                 <span>Human Interview</span>
               </Link>
             </div>
@@ -637,51 +684,51 @@ export default function DashboardPage() {
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════
-         5. UPCOMING INTERVIEWS (SYNCED FROM EMPLOYER PORTAL)
+         5. UPCOMING INTERVIEWS (SYNCED FROM JADEER PLATFORM)
          ═══════════════════════════════════════════════════════════════ */}
-      {candidateInterviews.length > 0 && (
-        <div className="bg-white rounded-3xl border border-employer-200/40 shadow-[0_2px_16px_rgba(217,119,6,0.04)] overflow-hidden">
-          <div className="flex items-center justify-between px-6 sm:px-8 py-5 border-b border-[#0B0F19]/[0.04]">
+      {allUpcomingInterviews.length > 0 && (
+        <div className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.03)] overflow-hidden">
+          <div className="flex items-center justify-between px-6 sm:px-8 py-5 border-b border-slate-100">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-employer-50 text-employer-500 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-xl bg-[#5E8174]/10 text-[#5E8174] flex items-center justify-center">
                 <CalendarCheck2 className="w-4 h-4" />
               </div>
               <div>
-                <h2 className="text-[14px] font-bold text-[#0B0F19]">Employer & Internship Interviews</h2>
-                <p className="text-[11px] text-[#0B0F19]/40 font-medium">Synchronized directly through Jadeer</p>
+                <h2 className="text-[14px] font-bold text-[#0F172A]">Upcoming Interviews & Calibration</h2>
+                <p className="text-[11px] text-slate-400 font-medium">Synchronized directly through Jadeer</p>
               </div>
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-employer-600 bg-employer-50 border border-employer-200/60 px-2.5 py-0.5 rounded-full">
-              {candidateInterviews.length} upcoming
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-[#5E8174] bg-[#5E8174]/10 border border-[#5E8174]/20 px-2.5 py-0.5 rounded-full">
+              {allUpcomingInterviews.length} upcoming
             </span>
           </div>
 
-          <div className="divide-y divide-[#0B0F19]/[0.04]">
-            {candidateInterviews.map((interview) => {
+          <div className="divide-y divide-slate-100">
+            {allUpcomingInterviews.map((interview) => {
               const TypeIcon = interviewTypeIcons[interview.type];
               return (
                 <div
                   key={interview.id}
-                  className="px-6 sm:px-8 py-5 hover:bg-employer-50/30 transition-colors"
+                  className="px-6 sm:px-8 py-5 hover:bg-slate-50/60 transition-colors"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-4 min-w-0">
-                      <div className="w-11 h-11 rounded-xl bg-employer-500 text-white flex items-center justify-center text-[13px] font-bold shrink-0 shadow-[0_2px_8px_rgba(217,119,6,0.2)]">
-                        <Building2 className="w-5 h-5" />
+                      <div className="w-11 h-11 rounded-xl bg-slate-100 text-[#0F172A] flex items-center justify-center text-[13px] font-bold shrink-0 shadow-2xs">
+                        <Building2 className="w-5 h-5 text-[#334155]" />
                       </div>
                       <div className="min-w-0 space-y-1">
-                        <h3 className="text-[14px] font-bold text-[#0B0F19]">{interview.company}</h3>
-                        <p className="text-[13px] text-[#0B0F19]/55 font-medium">{interview.role}</p>
+                        <h3 className="text-[14px] font-bold text-[#0F172A]">{interview.company}</h3>
+                        <p className="text-[13px] text-[#334155] font-medium">{interview.role}</p>
                         <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                          <span className="flex items-center gap-1 text-[12px] font-bold text-[#0B0F19]/70">
-                            <CalendarCheck2 className="w-3.5 h-3.5 text-employer-500" />
+                          <span className="flex items-center gap-1 text-[12px] font-semibold text-[#334155]">
+                            <CalendarCheck2 className="w-3.5 h-3.5 text-[#5E8174]" />
                             {interview.date}
                           </span>
-                          <span className="flex items-center gap-1 text-[12px] font-bold text-[#0B0F19]/70">
-                            <Clock className="w-3.5 h-3.5 text-employer-500" />
+                          <span className="flex items-center gap-1 text-[12px] font-semibold text-[#334155]">
+                            <Clock className="w-3.5 h-3.5 text-[#5E8174]" />
                             {interview.timeSlot}
                           </span>
-                          <span className="text-[11px] text-[#0B0F19]/35 font-medium">
+                          <span className="text-[11px] text-slate-400 font-medium">
                             {interview.timezone}
                           </span>
                         </div>
@@ -689,7 +736,7 @@ export default function DashboardPage() {
                     </div>
 
                     <div className="flex flex-col items-end gap-2 shrink-0">
-                      <span className={`flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full border ${interviewTypeColors[interview.type]}`}>
+                      <span className={`flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border ${interviewTypeColors[interview.type]}`}>
                         <TypeIcon className="w-3 h-3" />
                         {interviewTypeLabels[interview.type]}
                       </span>
@@ -697,12 +744,23 @@ export default function DashboardPage() {
                         href={interview.meetingLink}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 text-[11px] font-bold text-employer-500 hover:text-employer-600 transition-colors"
+                        className="flex items-center gap-1.5 text-[11px] font-semibold text-[#5E8174] hover:text-[#4D6D62] transition-colors"
                       >
                         <Video className="w-3.5 h-3.5" />
                         Join Meeting
                         <ExternalLink className="w-3 h-3" />
                       </a>
+                      {interview.type === 'human' && calibration.confirmedDetails?.googleCalendarSyncStatus === 'synced' && (
+                        <a
+                          href={calibration.confirmedDetails.googleCalendarHtmlLink || 'https://calendar.google.com'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-[11px] font-semibold text-[#5E8174] hover:underline"
+                        >
+                          <CalendarCheck2 className="w-3 h-3 text-[#5E8174]" />
+                          <span>Google Calendar</span>
+                        </a>
+                      )}
                     </div>
                   </div>
                 </div>

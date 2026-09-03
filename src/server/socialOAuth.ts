@@ -254,7 +254,7 @@ export async function exchangeGitHubCode(code: string): Promise<SocialUserProfil
       email: 'yourname@gmail.com',
       name: 'Ahmad Al-Hassan',
       avatarUrl: simulatedDossier.avatarUrl,
-      bio: null,
+      bio: undefined,
       verified: true,
       dossierTelemetry: simulatedDossier,
     };
@@ -385,7 +385,7 @@ export async function exchangeGitHubCode(code: string): Promise<SocialUserProfil
       email: 'yourname@gmail.com',
       name: 'Ahmad Al-Hassan',
       avatarUrl: simulatedDossier.avatarUrl,
-      bio: null,
+      bio: undefined,
       verified: true,
       dossierTelemetry: simulatedDossier,
     };

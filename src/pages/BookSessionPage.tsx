@@ -135,7 +135,7 @@ export default function BookSessionPage() {
         candidateName: profile.fullName || 'Candidate',
         candidateInitials: 'AH',
         role: selectedTopicData?.label || '1-on-1 Mentorship Session',
-        company: 'Eng. Mariam Ashraf (Microsoft)',
+        company: 'Eng. Mariam Ashraf (Principal Software Engineer)',
         date: selectedDay,
         timeSlot: selectedSlotTime || '10:00 AM',
         timezone: 'Asia/Riyadh (GMT+3)',
@@ -178,7 +178,7 @@ export default function BookSessionPage() {
               </div>
               <div>
                 <p className="text-[14px] font-bold text-[#0B0F19]">Eng. Mariam Ashraf</p>
-                <p className="text-[12px] text-[#0B0F19]/45">Principal Software Engineer, Microsoft</p>
+                <p className="text-[12px] text-[#0B0F19]/45">Principal Software Engineer & Calibration Lead</p>
               </div>
             </div>
             <div className="flex flex-wrap gap-4 text-[12px] text-[#0B0F19]/55 pt-2 border-t border-[#0B0F19]/[0.04]">
@@ -264,7 +264,7 @@ export default function BookSessionPage() {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-[15px] font-bold text-[#0B0F19]">Eng. Mariam Ashraf</p>
-          <p className="text-[12px] text-[#0B0F19]/50">Principal Software Engineer @ Microsoft</p>
+          <p className="text-[12px] text-[#0B0F19]/50">Principal Software Engineer & Calibration Lead</p>
         </div>
         <div className="flex items-center gap-1 text-[12px] shrink-0">
           <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
@@ -460,7 +460,7 @@ export default function BookSessionPage() {
                 </div>
                 <div>
                   <p className="text-[14px] font-bold text-[#0B0F19]">Eng. Mariam Ashraf</p>
-                  <p className="text-[12px] text-[#0B0F19]/50">Principal Software Engineer, Microsoft</p>
+                  <p className="text-[12px] text-[#0B0F19]/50">Principal Software Engineer & Calibration Lead</p>
                 </div>
               </div>
 

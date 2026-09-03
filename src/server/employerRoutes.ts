@@ -1,6 +1,6 @@
 import { db } from './db.ts';
 
-export async function handleGetCompanyProfile(req: Request, userId: string) {
+export async function handleGetCompanyProfile(_req: Request, userId: string) {
   try {
     const profile = await db.companyProfile.findUnique({
       where: { userId },
@@ -31,7 +31,7 @@ export async function handleGetCompanyProfile(req: Request, userId: string) {
 
 export async function handleUpdateCompanyProfile(req: Request, userId: string) {
   try {
-    const body = await req.json();
+    const body = (await req.json()) as any;
 
     let workModel = undefined;
     if (body.workModel) {
@@ -86,7 +86,7 @@ export async function handleUpdateCompanyProfile(req: Request, userId: string) {
   }
 }
 
-export async function handleGetJobListings(req: Request, userId: string) {
+export async function handleGetJobListings(_req: Request, userId: string) {
   try {
     const profile = await db.companyProfile.findUnique({ where: { userId } });
     if (!profile) return new Response(JSON.stringify({ success: false, error: "Company profile not found" }), { status: 404 });
@@ -102,7 +102,7 @@ export async function handleCreateJobListing(req: Request, userId: string) {
     const profile = await db.companyProfile.findUnique({ where: { userId } });
     if (!profile) return new Response(JSON.stringify({ success: false, error: "Company profile not found" }), { status: 404 });
     
-    const body = await req.json();
+    const body = (await req.json()) as any;
 
     const trackMap: Record<string, string> = {
       'Frontend Development': 'FRONTEND',

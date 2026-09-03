@@ -18,7 +18,7 @@ export default function PlaceholderPage({
   actionHref,
 }: PlaceholderPageProps) {
   return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-var(--spacing-topbar)-6rem)] py-8">
+    <div className="flex items-center justify-center min-h-[calc(100vh-12rem)] py-8">
       <div className="text-center max-w-lg w-full bg-white rounded-3xl p-8 sm:p-12 border border-[#0B0F19]/[0.05] shadow-[0_4px_24px_rgba(0,0,0,0.03)] animate-[slide-up_0.5s_var(--ease-spring)]">
         {/* Icon container */}
         <div className="mx-auto w-20 h-20 rounded-3xl bg-[#6E8F75]/10 border border-[#6E8F75]/20 flex items-center justify-center mb-6 animate-[float_6s_ease-in-out_infinite]">

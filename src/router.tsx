@@ -109,15 +109,20 @@ const router = createBrowserRouter([
       { path: '/student/profile', element: <CandidateProfilesPage /> },
       /* Human Technical Calibration (Shared across Student & Graduate Portals) */
       { path: '/candidates/human-interview', element: <HumanInterviewPage /> },
+      { path: '/candidates/interview', element: <HumanInterviewPage /> },
+      { path: '/candidates/calibration', element: <HumanInterviewPage /> },
       { path: '/graduate/human-interview', element: <HumanInterviewPage /> },
       { path: '/student/human-interview', element: <HumanInterviewPage /> },
       { path: '/student/interview', element: <HumanInterviewPage /> },
       { path: '/student/calibration', element: <HumanInterviewPage /> },
       { path: '/portal/human-interview', element: <HumanInterviewPage /> },
       { path: '/human-interview', element: <HumanInterviewPage /> },
+      { path: '/interview', element: <HumanInterviewPage /> },
+      { path: '/calibration', element: <HumanInterviewPage /> },
       { path: '/schedule', element: <HumanInterviewPage /> },
 
       /* AI Technical Interview */
+      { path: '/ai-interview', element: <AIInterviewPage /> },
       { path: '/candidates/ai-interview', element: <AIInterviewPage /> },
       { path: '/graduate/ai-interview', element: <AIInterviewPage /> },
       { path: '/student/ai-interview', element: <AIInterviewPage /> },

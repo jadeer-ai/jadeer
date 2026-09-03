@@ -1,7 +1,7 @@
 import { db } from './db.ts';
 import { UserRole } from '@prisma/client';
 
-export async function handleGetAdminMetrics(req: Request, adminUserId: string) {
+export async function handleGetAdminMetrics(_req: Request, adminUserId: string) {
   try {
     const admin = await db.user.findUnique({ where: { id: adminUserId } });
     if (!admin || admin.role !== UserRole.ADMIN) {
@@ -15,7 +15,7 @@ export async function handleGetAdminMetrics(req: Request, adminUserId: string) {
     
     const totalJobListings = await db.jobListing.count();
     const activeJobListings = await db.jobListing.count({ where: { status: 'ACTIVE' } });
-    const totalApplications = await db.jobApplication.count();
+    const totalApplications = await db.application.count();
 
     const metrics = {
       totalUsers,
@@ -42,7 +42,7 @@ export async function handleGetAdminMetrics(req: Request, adminUserId: string) {
   }
 }
 
-export async function handleGetAdminUsers(req: Request, adminUserId: string) {
+export async function handleGetAdminUsers(_req: Request, adminUserId: string) {
   try {
     const admin = await db.user.findUnique({ where: { id: adminUserId } });
     if (!admin || admin.role !== UserRole.ADMIN) {
@@ -63,7 +63,7 @@ export async function handleGetAdminUsers(req: Request, adminUserId: string) {
   }
 }
 
-export async function handleToggleAdminUserStatus(req: Request, adminUserId: string, targetUserId: string, action: 'active' | 'verified' | 'cr') {
+export async function handleToggleAdminUserStatus(_req: Request, adminUserId: string, targetUserId: string, action: 'active' | 'verified' | 'cr') {
   try {
     const admin = await db.user.findUnique({ where: { id: adminUserId } });
     if (!admin || admin.role !== UserRole.ADMIN) {
@@ -97,7 +97,7 @@ export async function handleToggleAdminUserStatus(req: Request, adminUserId: str
   }
 }
 
-export async function handleGetAdminJobs(req: Request, adminUserId: string) {
+export async function handleGetAdminJobs(_req: Request, adminUserId: string) {
   try {
     const admin = await db.user.findUnique({ where: { id: adminUserId } });
     if (!admin || admin.role !== UserRole.ADMIN) {

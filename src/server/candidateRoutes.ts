@@ -1,6 +1,6 @@
 import { db } from './db.ts';
 
-export async function handleGetCandidateProfile(req: Request, userId: string) {
+export async function handleGetCandidateProfile(_req: Request, userId: string) {
   try {
     const profile = await db.studentProfile.findUnique({
       where: { userId },
@@ -33,7 +33,7 @@ export async function handleGetCandidateProfile(req: Request, userId: string) {
 
 export async function handleUpdateCandidateProfile(req: Request, userId: string) {
   try {
-    const body = await req.json();
+    const body = (await req.json()) as any;
     
     // Convert softwareTrack to Prisma enum if needed
     let softwareTrack = undefined;

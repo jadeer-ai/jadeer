@@ -311,7 +311,7 @@ export const AuthService = {
     }
 
     // 2. Fetch User Record from Database / Admin Store
-    const users = AdminApiService.getUsers();
+    const users = await AdminApiService.getUsers();
     let userRecord = users.find((u) => u.email.toLowerCase() === cleanEmail);
 
     // Fallback recognition for default accounts

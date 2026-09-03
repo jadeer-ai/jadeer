@@ -14,9 +14,7 @@ export { default as SettingsPage } from './SettingsPage';
 export { default as StudentDashboardPage } from './StudentDashboardPage';
 export { default as MentorConsultationPage } from './MentorConsultationPage';
 export { default as BookSessionPage } from './BookSessionPage';
-export {
-  ReadinessPage,
-} from './PlaceholderPages';
+export { default as ReadinessPage } from './ReadinessPage';
 
 /* Employer Portal */
 export { default as EmployerLandingPage } from './employer/EmployerLandingPage';

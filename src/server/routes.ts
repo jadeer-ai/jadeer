@@ -11,7 +11,6 @@ import {
   processSocialAuthCallback,
   type SocialProvider,
   type SocialUserProfile,
-  type CandidateDossierTelemetry,
 } from './socialOAuth.ts';
 import { sendOtpEmail } from './emailService.ts';
 import { db } from './db.ts';
