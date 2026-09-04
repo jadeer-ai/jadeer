@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useCompanyProfile } from '@/contexts/CompanyProfileContext';
 import { useInterviewSchedule } from '@/contexts/InterviewScheduleContext';
@@ -209,7 +209,7 @@ export default function EmployerListingsPage() {
 
   const [listings, setListings] = useState<any[]>(initialListings);
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetch('/api/employer/jobs')
       .then(res => res.json())
       .then(data => {
@@ -263,7 +263,7 @@ export default function EmployerListingsPage() {
       const q = searchQuery.toLowerCase();
       const matchTitle = job.title.toLowerCase().includes(q);
       const matchTrack = job.track.toLowerCase().includes(q);
-      const matchSkill = job.skills.some((s) => s.toLowerCase().includes(q));
+      const matchSkill = job.skills.some((s: string) => s.toLowerCase().includes(q));
       if (!matchTitle && !matchTrack && !matchSkill) return false;
     }
 
@@ -570,7 +570,7 @@ export default function EmployerListingsPage() {
 
                 {/* Skills tags preview */}
                 <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                  {job.skills.map((skill) => (
+                  {job.skills.map((skill: string) => (
                     <span
                       key={skill}
                       className="px-2.5 py-0.5 rounded-lg bg-[#f0f5f1] text-[11px] font-semibold text-[#6E8F75] border border-[#dce8de]/60"

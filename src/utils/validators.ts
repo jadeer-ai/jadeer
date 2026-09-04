@@ -83,3 +83,35 @@ export function validateCorporateEmail(email: string): CorporateEmailValidation 
     domain,
   };
 }
+
+/* ── CV Analysis Validators ─────────────────────────────────────────────── */
+
+/**
+ * Returns true only if the value is a valid http:// or https:// URL.
+ * Rejects non-URL text like "GitHub", "LinkedIn", empty strings, null.
+ * Never generates guessed URLs.
+ */
+export function isValidExternalUrl(value: string | null | undefined): boolean {
+  if (!value || typeof value !== 'string') return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Safely displays a free-form date string extracted by the CV parser.
+ * Returns the original string trimmed if truthy, or the fallback.
+ * Does NOT parse into JavaScript Date — real parser dates include
+ * "2026", "Present", "Mar 2023", "Ongoing", "2027 (Expected)".
+ */
+export function displayExtractedDate(
+  value: string | null | undefined,
+  fallback: string = '',
+): string {
+  if (!value || typeof value !== 'string') return fallback;
+  return value.trim();
+}
+

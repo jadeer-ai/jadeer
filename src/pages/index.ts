@@ -17,6 +17,7 @@ export { default as BookSessionPage } from './BookSessionPage';
 export {
   ReadinessPage,
 } from './PlaceholderPages';
+export { default as CVAnalysisPage } from './CVAnalysisPage';
 
 /* Employer Portal */
 export { default as EmployerLandingPage } from './employer/EmployerLandingPage';

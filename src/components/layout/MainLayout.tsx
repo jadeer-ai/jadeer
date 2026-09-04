@@ -1,14 +1,9 @@
 import { Outlet, useLocation, Navigate } from 'react-router-dom';
-import { useSidebar } from '@/contexts/SidebarContext';
 import { useUserRole } from '@/contexts/UserRoleContext';
-import { useCandidateJourney } from '@/contexts/CandidateJourneyContext';
-import Sidebar from './Sidebar';
-import TopBar from './TopBar';
+import TopJourneyNav from './TopJourneyNav';
 
 export default function MainLayout() {
-  const { isCollapsed } = useSidebar();
   const { isStudent } = useUserRole();
-  const { isOnboarded } = useCandidateJourney();
   const location = useLocation();
   const path = location.pathname;
 
@@ -18,26 +13,20 @@ export default function MainLayout() {
   }
 
   return (
-    <div id="candidate-app-layout" className="min-h-screen bg-[#FAF9F6] text-[#0B0F19]">
-      <Sidebar />
-      <TopBar />
+    <div id="candidate-app-layout" className="min-h-screen bg-[#F8F9FA] text-[#0F172A]">
+      {/* ── Unified Top Journey Navigation Shell ── */}
+      <TopJourneyNav />
 
-      {/* ── Main Candidate Content Area ──────────────────────────────── */}
+      {/* ── Main Candidate Content Area (Full-Width) ── */}
       <main
         id="main-content"
-        className={`
-          pt-[var(--spacing-topbar)] min-h-screen
-          transition-all duration-300 ease-[var(--ease-smooth)]
-          ${isCollapsed
-            ? 'lg:pl-[var(--spacing-sidebar-collapsed)]'
-            : 'lg:pl-[var(--spacing-sidebar)]'
-          }
-        `}
+        className="min-h-screen transition-all duration-300 ease-[var(--ease-smooth)]"
       >
-        <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto animate-[fade-in_0.3s_ease]">
+        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-14 py-6 lg:py-8 animate-[fade-in_0.3s_ease]">
           <Outlet />
         </div>
       </main>
     </div>
   );
 }
+
