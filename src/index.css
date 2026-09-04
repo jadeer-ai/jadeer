@@ -214,6 +214,51 @@
   66% { transform: translate(-5px, 5px) scale(0.98); }
 }
 
+@keyframes hero-idle-drift {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-3.5px) rotate(0.75deg);
+  }
+}
+
+@keyframes hero-float-1 {
+  0%, 100% {
+    transform: translateY(0px) rotate(-4deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(-3.2deg);
+  }
+}
+
+@keyframes hero-float-2 {
+  0%, 100% {
+    transform: translateY(0px) rotate(3.5deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(4.2deg);
+  }
+}
+
+@keyframes hero-float-3 {
+  0%, 100% {
+    transform: translateY(0px) rotate(-2.5deg);
+  }
+  50% {
+    transform: translateY(-4px) rotate(-1.8deg);
+  }
+}
+
+@keyframes hero-float-4 {
+  0%, 100% {
+    transform: translateY(0px) rotate(2.8deg);
+  }
+  50% {
+    transform: translateY(-5.5px) rotate(3.5deg);
+  }
+}
+
 @keyframes expand-width {
   from { width: 0; }
   to { width: 100%; }
@@ -346,3 +391,42 @@ body {
   background: #0a0f1e;
   color: #b8bdd0;
 }
+
+/* ── Evidence Card Idle Floating Keyframes (Subtle 6–10px organic drift) ── */
+@keyframes card-drift-1 {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50% { transform: translate3d(2px, -8px, 0) rotate(0.8deg); }
+}
+
+@keyframes card-drift-2 {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50% { transform: translate3d(-3px, 7px, 0) rotate(-0.9deg); }
+}
+
+@keyframes card-drift-3 {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50% { transform: translate3d(2px, -6px, 0) rotate(0.7deg); }
+}
+
+@keyframes card-drift-4 {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50% { transform: translate3d(-2px, 8px, 0) rotate(-0.8deg); }
+}
+
+@keyframes card-drift-5 {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50% { transform: translate3d(3px, -7px, 0) rotate(0.8deg); }
+}
+
+@keyframes card-drift-6 {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50% { transform: translate3d(-2px, 6px, 0) rotate(-0.7deg); }
+}
+
+.animate-card-drift-1 { animation: card-drift-1 11s ease-in-out infinite; }
+.animate-card-drift-2 { animation: card-drift-2 13s ease-in-out infinite; }
+.animate-card-drift-3 { animation: card-drift-3 12s ease-in-out infinite; }
+.animate-card-drift-4 { animation: card-drift-4 14s ease-in-out infinite; }
+.animate-card-drift-5 { animation: card-drift-5 12.5s ease-in-out infinite; }
+.animate-card-drift-6 { animation: card-drift-6 13.5s ease-in-out infinite; }
+
