@@ -18,6 +18,7 @@ import {
   JobMatchesPage,
   SettingsPage,
   ReadinessPage,
+  CVAnalysisPage,
   EmployerLandingPage,
   EmployerSignInPage,
   EmployerSignUpPage,
@@ -116,6 +117,12 @@ const router = createBrowserRouter([
       { path: '/portal/human-interview', element: <HumanInterviewPage /> },
       { path: '/human-interview', element: <HumanInterviewPage /> },
       { path: '/schedule', element: <HumanInterviewPage /> },
+
+      /* CV Analysis & Review (Profile Sub-Stage) */
+      { path: '/cv-analysis', element: <CVAnalysisPage /> },
+      { path: '/candidates/cv-analysis', element: <CVAnalysisPage /> },
+      { path: '/graduate/cv-analysis', element: <CVAnalysisPage /> },
+      { path: '/student/cv-analysis', element: <CVAnalysisPage /> },
 
       /* AI Technical Interview */
       { path: '/candidates/ai-interview', element: <AIInterviewPage /> },

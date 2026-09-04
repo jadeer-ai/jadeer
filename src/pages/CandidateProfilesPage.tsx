@@ -1,11 +1,12 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
 import { useUserProfile, type ProfileLink } from '@/contexts/UserProfileContext';
 import { useInterviewSchedule } from '@/contexts/InterviewScheduleContext';
 import { useCompanyProfile } from '@/contexts/CompanyProfileContext';
+import { CVAnalysisService } from '@/services/cvAnalysisService';
+import type { CurrentCVSnapshot } from '@/lib/cv-types';
 import {
-  User,
   MapPin,
   Mail,
   Globe,
@@ -30,6 +31,8 @@ import {
   Lock,
   Layers,
   FileCheck,
+  FileSearch,
+  ArrowRight,
   Briefcase,
   ChevronRight,
   Link as LinkIcon,
@@ -243,6 +246,19 @@ export default function CandidateProfilesPage() {
   const clerkName = clerkUser?.fullName || clerkUser?.firstName || clerkUser?.username;
   const clerkEmail = clerkUser?.primaryEmailAddress?.emailAddress;
 
+  /* ── Real Persisted CV State ── */
+  const [currentCv, setCurrentCv] = useState<CurrentCVSnapshot | null>(null);
+  const [isUploadingCv, setIsUploadingCv] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    if (!clerkUser?.id) return;
+    CVAnalysisService.getCurrentCV(clerkUser.id).then((snap) => {
+      if (active) setCurrentCv(snap);
+    });
+    return () => { active = false; };
+  }, [clerkUser?.id]);
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Build initial dynamic links from either socialLinks or legacy fields
@@ -327,7 +343,7 @@ export default function CandidateProfilesPage() {
   const [savedToast, setSavedToast] = useState<string | null>(null);
 
   // Sync state when matched candidate updates
-  useMemo(() => {
+  useEffect(() => {
     setProfile(matchedCandidate);
     if (!isEditing) {
       setDraft(matchedCandidate);
@@ -499,80 +515,92 @@ export default function CandidateProfilesPage() {
     }
   };
 
-  /* 📌 Resume Upload Handler 📌 */
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  /* 📌 Resume Document Upload Handler 📌 */
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-    const isValidType = validTypes.includes(file.type) || file.name.endsWith('.pdf') || file.name.endsWith('.doc') || file.name.endsWith('.docx');
+    const validTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ];
+    const isValidType =
+      validTypes.includes(file.type) ||
+      file.name.endsWith('.pdf') ||
+      file.name.endsWith('.doc') ||
+      file.name.endsWith('.docx');
     if (!isValidType) {
       alert('Please upload a valid PDF or Word document');
       return;
     }
 
-    const fileName = file.name;
-    const sizeInMB = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
-    const uploadDate = new Date().toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
-      const patch = {
-        resumeFileName: fileName,
-        resumeFileSize: sizeInMB,
-        resumeUploadDate: uploadDate,
-        resumeDataUrl: dataUrl,
-      };
-
-      if (isEditing) {
-        setDraft((prev) => ({ ...prev, ...patch }));
-      } else {
-        setProfile((prev) => ({ ...prev, ...patch }));
-        setDraft((prev) => ({ ...prev, ...patch }));
-        updateProfile(patch);
-      }
-
-      setSavedToast(`Resume "${fileName}" uploaded successfully!`);
-      setTimeout(() => setSavedToast(null), 3500);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  /* ── Resume Download Handler ── */
-  const handleDownloadResume = () => {
-    const dataUrl = profile.resumeDataUrl;
-    const fileName = profile.resumeFileName || 'Candidate_Al-Hassan_Resume.pdf';
-
-    if (dataUrl) {
-      const link = document.createElement('a');
-      link.href = dataUrl;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } else {
-      const blob = new Blob(
-        [
-          `%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/MediaBox[0 0 595 842]/Parent 2 0 R/Resources<<>>>>endobj\nxref\n0 4\n0000000000 65535 f\n0000000009 00000 n\n0000000052 00000 n\n0000000101 00000 n\ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n178\n%%EOF`,
-        ],
-        { type: 'application/pdf' }
-      );
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+    const candidateId = clerkUser?.id;
+    if (!candidateId) {
+      alert('Please sign in to upload your CV document.');
+      return;
     }
 
-    setSavedToast(`Downloading ${fileName}...`);
+    setIsUploadingCv(true);
+    setSavedToast(`Uploading "${file.name}" to secure storage...`);
+
+    try {
+      const res = await CVAnalysisService.uploadCandidateCV(file, candidateId);
+      if (res.success) {
+        const snap = await CVAnalysisService.getCurrentCV(candidateId);
+        setCurrentCv(snap);
+
+        const patch = {
+          resumeFileName: file.name,
+          resumeFileSize: (file.size / (1024 * 1024)).toFixed(1) + ' MB',
+          resumeUploadDate: new Date().toLocaleDateString(undefined, {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+          }),
+        };
+
+        if (isEditing) {
+          setDraft((prev) => ({ ...prev, ...patch }));
+        } else {
+          setProfile((prev) => ({ ...prev, ...patch }));
+          setDraft((prev) => ({ ...prev, ...patch }));
+          updateProfile(patch);
+        }
+
+        setSavedToast(`CV "${file.name}" uploaded successfully!`);
+      } else {
+        setSavedToast(`Upload failed: ${res.error || 'Unknown error'}`);
+      }
+    } catch (err: any) {
+      setSavedToast(`Upload error: ${err.message}`);
+    } finally {
+      setIsUploadingCv(false);
+      setTimeout(() => setSavedToast(null), 3500);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  /* ── Real Resume Download Handler ── */
+  const handleDownloadResume = async () => {
+    if (currentCv?.download_url) {
+      window.open(currentCv.download_url, '_blank');
+      setSavedToast(`Opening ${currentCv.original_filename}...`);
+      setTimeout(() => setSavedToast(null), 2500);
+      return;
+    }
+
+    if (currentCv?.storage_path) {
+      const url = await CVAnalysisService.getCVDownloadUrl(currentCv.storage_path);
+      if (url) {
+        window.open(url, '_blank');
+        return;
+      }
+    }
+
+    setSavedToast('No uploaded CV document available for download.');
     setTimeout(() => setSavedToast(null), 2500);
   };
 
@@ -603,57 +631,57 @@ export default function CandidateProfilesPage() {
   const renderPlatformIcon = (platform: string) => {
     switch (platform.toLowerCase()) {
       case 'github':
-        return <GitHubIcon className="w-4 h-4 text-[#0B0F19]" />;
+        return <GitHubIcon className="w-4 h-4 text-[#0F172A]" />;
       case 'linkedin':
         return <LinkedInIcon className="w-4 h-4 text-[#0A66C2]" />;
       case 'leetcode':
-        return <LeetCodeIcon className="w-4 h-4 text-amber-500" />;
+        return <LeetCodeIcon className="w-4 h-4 text-amber-600" />;
       case 'codeforces':
         return <CodeforcesIcon className="w-4 h-4 text-[#318CE7]" />;
       case 'portfolio':
-        return <Globe className="w-4 h-4 text-[#6E8F75]" />;
+        return <Globe className="w-4 h-4 text-[#5E8174]" />;
       default:
-        return <LinkIcon className="w-4 h-4 text-[#6E8F75]" />;
+        return <LinkIcon className="w-4 h-4 text-[#5E8174]" />;
     }
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 animate-[fade-in_0.4s_ease] pb-16 py-2 sm:py-4">
+    <div className="w-full space-y-8 animate-[fade-in_0.4s_ease] pb-16 py-2 sm:py-4">
 
       {/* ── Employer Cross-Portal Navigation & Telemetry Banner ────────── */}
       {isFromEmployer && (
-        <div className="bg-[#0B0F19] text-white rounded-3xl p-5 sm:p-6 border border-white/[0.08] shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="bg-[#0F172A] text-white rounded-3xl p-5 sm:p-6 border border-slate-800 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <Link
                 to={jobId ? '/employer/listings' : '/employer/dashboard'}
-                className="inline-flex items-center gap-1 text-xs font-bold text-[#6E8F75] hover:text-white transition-colors"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-[#84A98C] hover:text-white transition-colors"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 {jobId ? 'Back to Job Applicants' : 'Back to Employer Dashboard'}
               </Link>
               <span className="text-white/20">•</span>
-              <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-400">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#84A98C]">
                 Verified Candidate Dossier
               </span>
             </div>
             <h2 className="text-lg font-extrabold text-white">
-              Live Evaluation Telemetry for <span className="text-[#6E8F75]">{profile.fullName}</span>
+              Live Evaluation Telemetry for <span className="text-[#84A98C]">{profile.fullName}</span>
             </h2>
-            <p className="text-xs text-white/50">
+            <p className="text-xs text-slate-300">
               Evaluated across Adaptive AI Assessment, Systems Telemetry, and Tamper-Proof Evidence.
             </p>
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
             <div className="text-right hidden sm:block">
-              <p className="text-[10px] font-bold text-white/40 uppercase tracking-wider">AI Evaluation</p>
-              <p className="text-lg font-black text-[#6E8F75]">{profile.aiScore}%</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">AI Evaluation</p>
+              <p className="text-lg font-black text-[#84A98C]">{profile.aiScore}%</p>
             </div>
 
             <button
               onClick={handleEmployerSchedule}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#6E8F75] text-white text-xs font-bold hover:bg-[#587a60] shadow-md transition-all active:scale-95 cursor-pointer"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#5E8174] text-white text-xs font-bold hover:bg-[#4d6d62] shadow-sm transition-all active:scale-95 cursor-pointer"
             >
               <Calendar className="w-4 h-4" />
               <span>Schedule Interview</span>
@@ -664,16 +692,16 @@ export default function CandidateProfilesPage() {
 
       {/* Schedule success toast */}
       {scheduledDone && (
-        <div className="p-4 rounded-2xl bg-[#ecfdf5] border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 animate-[slide-up_0.2s_ease]">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+        <div className="p-4 rounded-2xl bg-white border border-[#5E8174]/30 text-[#0F172A] text-xs font-semibold flex items-center gap-2 animate-[slide-up_0.2s_ease] shadow-sm">
+          <CheckCircle2 className="w-4 h-4 text-[#5E8174] shrink-0" />
           <span>Interview invitation dispatched and synced with {profile.fullName}'s candidate calendar!</span>
         </div>
       )}
 
       {/* Live Saved Toast Notification */}
       {savedToast && (
-        <div className="p-4 rounded-2xl bg-[#ecfdf5] border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2.5 shadow-sm animate-[slide-up_0.2s_ease]">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+        <div className="p-4 rounded-2xl bg-white border border-[#5E8174]/30 text-[#0F172A] text-xs font-semibold flex items-center gap-2.5 shadow-sm animate-[slide-up_0.2s_ease]">
+          <CheckCircle2 className="w-4 h-4 text-[#5E8174] shrink-0" />
           <span>{savedToast}</span>
         </div>
       )}
@@ -681,20 +709,20 @@ export default function CandidateProfilesPage() {
       {/* ═══════════════════════════════════════════════════════════════
          PROFILE HERO HEADER CARD WITH EDIT CONTROLS
          ═══════════════════════════════════════════════════════════════ */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#0B0F19]/[0.06] shadow-[0_2px_16px_rgba(0,0,0,0.02)] relative overflow-hidden">
-        {/* Accent bar on top */}
-        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#6E8F75] via-[#10B981] to-[#6E8F75]" />
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.03)] relative overflow-hidden">
+        {/* Restrained Muted Sage top accent line */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-[#5E8174]/40" />
 
         <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6 pt-2">
 
           {/* Left: Avatar & Candidate Overview */}
           <div className="flex flex-col sm:flex-row items-start gap-5 flex-1">
             <div className="relative">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-[#6E8F75] text-white flex items-center justify-center text-2xl sm:text-3xl font-extrabold ring-4 ring-[#6E8F75]/15 shadow-md shrink-0">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-[#0F172A] text-white flex items-center justify-center text-2xl sm:text-3xl font-extrabold ring-4 ring-[#5E8174]/15 shadow-sm shrink-0">
                 {profile.initials}
               </div>
               <span
-                className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-[#10b981] ring-2 ring-white"
+                className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-[#5E8174] ring-2 ring-white"
                 title="Active & Verified Candidate"
               />
             </div>
@@ -706,39 +734,39 @@ export default function CandidateProfilesPage() {
                   <div className="flex flex-wrap items-center gap-2">
                     {/* Read-Only Locked Role Badge */}
                     <span
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-xs font-bold text-[#0B0F19]/80 shadow-2xs"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F8F9FA] border border-slate-200 text-xs font-semibold text-slate-600 shadow-2xs"
                       title="Role locked at registration. Elevation managed by institution administration."
                     >
-                      <Lock className="w-3.5 h-3.5 opacity-60" />
-                      {profile.role === 'student' ? 'Student Candidate' : 'Graduate Candidate'}
+                      <Lock className="w-3 h-3 text-slate-400" />
+                      <span>{profile.role === 'student' ? 'Student Candidate' : 'Graduate Candidate'}</span>
                     </span>
 
                     {/* Candidate Track Badge */}
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#6E8F75]/10 text-[#6E8F75] text-xs font-bold border border-[#6E8F75]/20">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#5E8174]/10 text-[#5E8174] text-xs font-semibold border border-[#5E8174]/20">
                       <Layers className="w-3 h-3" />
                       <span>{profile.track}</span>
                     </span>
                   </div>
 
-                  <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B0F19] tracking-tight">
+                  <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight">
                     {profile.fullName}
                   </h1>
 
-                  <p className="text-[15px] text-[#0B0F19]/70 font-medium">
+                  <p className="text-[15px] text-[#334155] font-medium">
                     {profile.title}
                   </p>
 
-                  <div className="flex flex-wrap items-center gap-4 text-xs text-[#0B0F19]/50 pt-1">
+                  <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 pt-1">
                     <span className="flex items-center gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 text-[#6E8F75]" />
+                      <MapPin className="w-3.5 h-3.5 text-[#5E8174]" />
                       <span>{profile.location}</span>
                     </span>
                     <span className="flex items-center gap-1.5">
-                      <Mail className="w-3.5 h-3.5 text-[#6E8F75]" />
+                      <Mail className="w-3.5 h-3.5 text-[#5E8174]" />
                       <span className="font-mono">{profile.email}</span>
                     </span>
                     <span className="flex items-center gap-1.5">
-                      <GraduationCap className="w-3.5 h-3.5 text-[#6E8F75]" />
+                      <GraduationCap className="w-3.5 h-3.5 text-[#5E8174]" />
                       <span>{profile.education.institution}</span>
                     </span>
                   </div>
@@ -747,43 +775,43 @@ export default function CandidateProfilesPage() {
                 /* ── Header Edit Inputs ── */
                 <div className="space-y-4 w-full">
                   {/* Strictly Locked Role Card */}
-                  <div className="p-3 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.06] flex items-center justify-between text-xs">
+                  <div className="p-3 rounded-2xl bg-[#F8F9FA] border border-slate-200/80 flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2">
-                      <Lock className="w-3.5 h-3.5 text-[#6E8F75]" />
-                      <span className="font-bold text-[#0B0F19]">
+                      <Lock className="w-3.5 h-3.5 text-slate-400" />
+                      <span className="font-semibold text-[#0F172A]">
                         Role:{' '}
-                        <span className="text-[#6E8F75]">
+                        <span className="text-[#5E8174] font-bold">
                           {draft.role === 'student' ? 'University Student (Internships & Co-ops)' : 'Graduate Engineer (Full-Time Roles)'}
                         </span>
                       </span>
                     </div>
-                    <span className="text-[10px] font-bold text-[#45624c] bg-[#dce8de] px-2.5 py-0.5 rounded-full uppercase tracking-wider border border-[#b9d1bf]">
+                    <span className="text-[10px] font-semibold text-slate-500 bg-white px-2.5 py-0.5 rounded-full uppercase tracking-wider border border-slate-200">
                       Locked & Read-Only
                     </span>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <div>
-                      <label className="block text-[11px] font-bold uppercase tracking-wider text-[#0B0F19]/50 mb-1">
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
                         Full Name
                       </label>
                       <input
                         type="text"
                         value={draft.fullName}
                         onChange={(e) => setDraft({ ...draft, fullName: e.target.value })}
-                        className="w-full h-10 px-3 rounded-xl bg-[#FAF9F6] border border-[#0B0F19]/[0.1] text-sm font-bold text-[#0B0F19] focus:bg-white focus:border-[#6E8F75] focus:outline-none"
+                        className="w-full h-10 px-3 rounded-xl bg-[#F8F9FA] border border-slate-200 text-sm font-bold text-[#0F172A] focus:bg-white focus:border-[#5E8174] focus:outline-none transition-colors"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-bold uppercase tracking-wider text-[#0B0F19]/50 mb-1">
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
                         Headline / Professional Title
                       </label>
                       <input
                         type="text"
                         value={draft.title}
                         onChange={(e) => setDraft({ ...draft, title: e.target.value })}
-                        className="w-full h-10 px-3 rounded-xl bg-[#FAF9F6] border border-[#0B0F19]/[0.1] text-xs font-semibold text-[#0B0F19] focus:bg-white focus:border-[#6E8F75] focus:outline-none"
+                        className="w-full h-10 px-3 rounded-xl bg-[#F8F9FA] border border-slate-200 text-xs font-semibold text-[#0F172A] focus:bg-white focus:border-[#5E8174] focus:outline-none transition-colors"
                         placeholder="e.g. Junior Backend & Systems Engineer"
                       />
                     </div>
@@ -791,26 +819,26 @@ export default function CandidateProfilesPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <div>
-                      <label className="block text-[11px] font-bold uppercase tracking-wider text-[#0B0F19]/50 mb-1">
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
                         Location / City
                       </label>
                       <input
                         type="text"
                         value={draft.location}
                         onChange={(e) => setDraft({ ...draft, location: e.target.value })}
-                        className="w-full h-10 px-3 rounded-xl bg-[#FAF9F6] border border-[#0B0F19]/[0.1] text-xs font-semibold text-[#0B0F19] focus:bg-white focus:border-[#6E8F75] focus:outline-none"
+                        className="w-full h-10 px-3 rounded-xl bg-[#F8F9FA] border border-slate-200 text-xs font-semibold text-[#0F172A] focus:bg-white focus:border-[#5E8174] focus:outline-none transition-colors"
                         placeholder="e.g. Riyadh, Saudi Arabia"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-bold uppercase tracking-wider text-[#0B0F19]/50 mb-1">
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
                         Select Software Track (Changeable)
                       </label>
                       <select
                         value={draft.track}
                         onChange={(e) => setDraft({ ...draft, track: e.target.value })}
-                        className="w-full h-10 px-3 rounded-xl bg-[#FAF9F6] border border-[#0B0F19]/[0.1] text-xs font-bold text-[#0B0F19] focus:bg-white focus:border-[#6E8F75] focus:outline-none"
+                        className="w-full h-10 px-3 rounded-xl bg-[#F8F9FA] border border-slate-200 text-xs font-semibold text-[#0F172A] focus:bg-white focus:border-[#5E8174] focus:outline-none transition-colors"
                       >
                         {AVAILABLE_TRACKS.map((t) => (
                           <option key={t.id} value={t.id}>
@@ -833,10 +861,10 @@ export default function CandidateProfilesPage() {
                   id="edit-profile-btn"
                   onClick={handleStartEdit}
                   className="
-                    inline-flex items-center gap-2 px-5 py-3 rounded-2xl
-                    bg-[#6E8F75] text-white text-xs font-bold
-                    hover:bg-[#587a60] hover:shadow-[0_4px_16px_rgba(110,143,117,0.3)]
-                    transition-all duration-200 shadow-sm cursor-pointer active:scale-95
+                    inline-flex items-center gap-2 px-5 py-2.5 rounded-xl
+                    bg-[#5E8174] text-white text-xs font-bold
+                    hover:bg-[#4d6d62] hover:shadow-[0_4px_16px_rgba(94,129,116,0.25)]
+                    transition-all duration-200 shadow-2xs cursor-pointer active:scale-95
                   "
                 >
                   <Edit3 className="w-4 h-4" />
@@ -846,13 +874,13 @@ export default function CandidateProfilesPage() {
                 <div className="flex items-center gap-2.5">
                   <button
                     onClick={handleCancelEdit}
-                    className="px-4 py-2.5 rounded-xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-xs font-semibold text-[#0B0F19]/60 hover:text-[#0B0F19] transition-colors cursor-pointer"
+                    className="px-4 py-2.5 rounded-xl bg-[#F8F9FA] border border-slate-200 text-xs font-semibold text-slate-600 hover:text-[#0F172A] hover:bg-white transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleSaveEdit}
-                    className="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-xl bg-[#6E8F75] text-white text-xs font-bold hover:bg-[#587a60] hover:shadow-[0_4px_16px_rgba(110,143,117,0.3)] transition-all shadow-md cursor-pointer active:scale-95"
+                    className="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-xl bg-[#5E8174] text-white text-xs font-bold hover:bg-[#4d6d62] hover:shadow-[0_4px_16px_rgba(94,129,116,0.25)] transition-all shadow-xs cursor-pointer active:scale-95"
                   >
                     <Save className="w-3.5 h-3.5" />
                     <span>Save Changes</span>
@@ -875,16 +903,19 @@ export default function CandidateProfilesPage() {
         <div className="lg:col-span-8 space-y-7">
 
           {/* 1. Professional Bio & Summary */}
-          <div className="bg-white rounded-3xl p-6 sm:p-7 border border-[#0B0F19]/[0.06] shadow-[0_2px_16px_rgba(0,0,0,0.02)] space-y-3.5">
-            <div className="flex items-center justify-between mb-5">
-                <h2 className="text-[14px] font-extrabold uppercase tracking-wider text-[#0B0F19]/90 flex items-center gap-2">
-                  <User className="w-4 h-4 text-[#0B0F19]/50" />
-                  About Candidate
-                </h2>
-              </div>
+          <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.03)] space-y-3.5">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h2 className="text-base font-bold text-[#0F172A] flex items-center gap-2">
+                <Briefcase className="w-4 h-4 text-[#5E8174]" />
+                <span>Professional Bio & Summary</span>
+              </h2>
+              <span className="text-[11px] font-medium text-slate-500 bg-[#F8F9FA] px-2.5 py-0.5 rounded-md border border-slate-200/60">
+                Verified Candidate Bio
+              </span>
+            </div>
 
             {!isEditing ? (
-              <p className="text-[14px] text-[#0B0F19]/75 leading-relaxed">
+              <p className="text-[14px] text-[#334155] leading-relaxed">
                 {profile.bio}
               </p>
             ) : (
@@ -894,9 +925,9 @@ export default function CandidateProfilesPage() {
                   value={draft.bio}
                   onChange={(e) => setDraft({ ...draft, bio: e.target.value })}
                   placeholder="Write a concise overview of your technical focus, systems passion, and engineering background..."
-                  className="w-full p-3.5 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.1] text-xs leading-relaxed text-[#0B0F19] focus:bg-white focus:border-[#6E8F75] focus:outline-none"
+                  className="w-full p-3.5 rounded-2xl bg-[#F8F9FA] border border-slate-200 text-xs leading-relaxed text-[#0F172A] focus:bg-white focus:border-[#5E8174] focus:outline-none transition-colors"
                 />
-                <p className="text-[11px] text-[#0B0F19]/40 text-right">
+                <p className="text-[11px] text-slate-400 text-right">
                   Displayed directly to hiring managers on your dossier.
                 </p>
               </div>
@@ -904,29 +935,29 @@ export default function CandidateProfilesPage() {
           </div>
 
           {/* 2. Technical Track & Domain Focus */}
-          <div className="bg-white rounded-3xl p-6 sm:p-7 border border-[#0B0F19]/[0.06] shadow-[0_2px_16px_rgba(0,0,0,0.02)] space-y-4">
-            <div className="flex items-center justify-between border-b border-[#0B0F19]/[0.05] pb-3">
+          <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.03)] space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
-                <Layers className="w-4 h-4 text-[#6E8F75]" />
-                <h2 className="text-base font-extrabold text-[#0B0F19]">
+                <Layers className="w-4 h-4 text-[#5E8174]" />
+                <h2 className="text-base font-bold text-[#0F172A]">
                   Technical Track & Domain Focus
                 </h2>
               </div>
-              <span className="text-xs font-bold text-[#6E8F75] bg-[#6E8F75]/10 px-3 py-0.5 rounded-full border border-[#6E8F75]/20">
+              <span className="text-xs font-semibold text-[#5E8174] bg-[#5E8174]/10 px-3 py-0.5 rounded-full border border-[#5E8174]/20">
                 {currentDisplayTrack}
               </span>
             </div>
 
             {!isEditing ? (
-              <div className="p-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.05] flex items-start gap-3.5">
-                <div className="w-10 h-10 rounded-2xl bg-[#6E8F75]/10 text-[#6E8F75] flex items-center justify-center font-bold shrink-0">
+              <div className="p-4 rounded-2xl bg-[#F4F0E8]/80 border border-[#E8E2D5] flex items-start gap-3.5">
+                <div className="w-10 h-10 rounded-2xl bg-[#5E8174]/10 text-[#5E8174] flex items-center justify-center font-bold shrink-0">
                   <Code2 className="w-5 h-5" />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs font-bold text-[#0B0F19]">
-                    Active Track: <span className="text-[#6E8F75]">{profile.track}</span>
+                  <p className="text-xs font-bold text-[#0F172A]">
+                    Active Track: <span className="text-[#5E8174]">{profile.track}</span>
                   </p>
-                  <p className="text-[12px] text-[#0B0F19]/55 leading-relaxed">
+                  <p className="text-[12px] text-slate-500 leading-relaxed">
                     {AVAILABLE_TRACKS.find((t) => t.id === profile.track)?.desc ||
                       'Focused on scalable systems design, automated testing, and reliable cloud deployments.'}
                   </p>
@@ -934,7 +965,7 @@ export default function CandidateProfilesPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                <p className="text-xs text-[#0B0F19]/60">
+                <p className="text-xs text-slate-500">
                   Select your primary technical domain. This calibrates your Job Matches, AI assessment modules, and project workspace:
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -948,18 +979,18 @@ export default function CandidateProfilesPage() {
                         className={`
                           text-left p-3.5 rounded-2xl border transition-all cursor-pointer
                           ${isSelected
-                            ? 'bg-[#6E8F75]/10 border-[#6E8F75] shadow-xs'
-                            : 'bg-[#FAF9F6] border-[#0B0F19]/[0.06] hover:border-[#6E8F75]/40'
+                            ? 'bg-[#5E8174]/10 border-[#5E8174] shadow-2xs'
+                            : 'bg-[#F8F9FA] border-slate-200/70 hover:border-[#5E8174]/40 hover:bg-white'
                           }
                         `}
                       >
                         <div className="flex items-center justify-between">
-                          <p className={`text-xs font-bold ${isSelected ? 'text-[#6E8F75]' : 'text-[#0B0F19]'}`}>
+                          <p className={`text-xs font-bold ${isSelected ? 'text-[#5E8174]' : 'text-[#0F172A]'}`}>
                             {t.label}
                           </p>
-                          {isSelected && <Check className="w-3.5 h-3.5 text-[#6E8F75]" />}
+                          {isSelected && <Check className="w-3.5 h-3.5 text-[#5E8174]" />}
                         </div>
-                        <p className="text-[11px] text-[#0B0F19]/50 mt-1 line-clamp-2">
+                        <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">
                           {t.desc}
                         </p>
                       </button>
@@ -971,18 +1002,18 @@ export default function CandidateProfilesPage() {
           </div>
 
           {/* 3. Tech Stack & Verified Skills Management */}
-          <div className="bg-white rounded-3xl p-6 sm:p-7 border border-[#0B0F19]/[0.06] shadow-[0_2px_16px_rgba(0,0,0,0.02)] space-y-5">
-            <div className="flex items-center justify-between border-b border-[#0B0F19]/[0.05] pb-3">
+          <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.03)] space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
-                <h2 className="text-base font-extrabold text-[#0B0F19] flex items-center gap-2">
-                  <Code2 className="w-4 h-4 text-[#6E8F75]" />
+                <h2 className="text-base font-bold text-[#0F172A] flex items-center gap-2">
+                  <Code2 className="w-4 h-4 text-[#5E8174]" />
                   <span>Tech Stack & Competencies</span>
                 </h2>
-                <p className="text-xs text-[#0B0F19]/45 mt-0.5">
+                <p className="text-xs text-slate-400 mt-0.5">
                   Manage your technical skills and tooling expertise
                 </p>
               </div>
-              <span className="text-xs font-bold text-[#6E8F75] bg-[#6E8F75]/10 px-3 py-1 rounded-full border border-[#6E8F75]/20">
+              <span className="text-xs font-semibold text-[#5E8174] bg-[#5E8174]/10 px-3 py-1 rounded-full border border-[#5E8174]/20">
                 {(isEditing ? draft.skills : profile.skills).length} Active Skills
               </span>
             </div>
@@ -992,24 +1023,24 @@ export default function CandidateProfilesPage() {
               {(isEditing ? draft.skills : profile.skills).map((skill) => (
                 <span
                   key={skill}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#FAF9F6] border border-[#0B0F19]/[0.07] text-xs font-bold text-[#0B0F19] shadow-2xs group hover:border-[#6E8F75]/40 transition-all"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white border border-slate-200 text-xs font-medium text-[#0F172A] shadow-2xs group hover:border-[#5E8174]/40 transition-all"
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#6E8F75]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#5E8174]" />
                   <span>{skill}</span>
                   <button
                     type="button"
                     onClick={() => handleRemoveSkill(skill)}
-                    className="ml-1 text-[#0B0F19]/35 hover:text-rose-600 transition-colors cursor-pointer"
+                    className="ml-1 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
                     title={`Remove ${skill}`}
                   >
-                    <X className="w-3.5 h-3.5" />
+                    <X className="w-3 h-3" />
                   </button>
                 </span>
               ))}
             </div>
 
             {/* Add Skill Input Form */}
-            <div className="pt-2 border-t border-[#0B0F19]/[0.05] space-y-3">
+            <div className="pt-2 border-t border-slate-100 space-y-3">
               <div className="flex items-center gap-2">
                 <input
                   type="text"
@@ -1022,13 +1053,13 @@ export default function CandidateProfilesPage() {
                       handleAddSkill();
                     }
                   }}
-                  className="flex-1 h-10 px-3.5 rounded-xl bg-[#FAF9F6] border border-[#0B0F19]/[0.1] text-xs text-[#0B0F19] focus:bg-white focus:border-[#6E8F75] focus:outline-none"
+                  className="flex-1 h-9 px-3 rounded-lg bg-[#F8F9FA] border border-slate-200 text-xs text-[#0F172A] focus:bg-white focus:border-[#5E8174] focus:outline-none transition-colors"
                 />
                 <button
                   type="button"
                   onClick={() => handleAddSkill()}
                   disabled={!newSkillInput.trim()}
-                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#6E8F75] text-white text-xs font-bold hover:bg-[#587a60] disabled:opacity-40 transition-all shadow-xs cursor-pointer active:scale-95"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#F8F9FA] border border-slate-200 hover:border-[#5E8174]/40 hover:bg-white text-xs font-semibold text-[#0F172A] hover:text-[#5E8174] disabled:opacity-40 transition-all cursor-pointer active:scale-95"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Add</span>
@@ -1037,7 +1068,7 @@ export default function CandidateProfilesPage() {
 
               {/* Suggested Skills for Active Track */}
               <div className="space-y-1.5 pt-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#0B0F19]/40 block">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block">
                   Suggested for {currentDisplayTrack}:
                 </span>
                 <div className="flex flex-wrap gap-1.5">
@@ -1049,7 +1080,7 @@ export default function CandidateProfilesPage() {
                         key={suggestion}
                         type="button"
                         onClick={() => handleAddSkill(suggestion)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#FAF9F6] hover:bg-[#6E8F75]/10 border border-[#0B0F19]/[0.06] hover:border-[#6E8F75]/30 text-[11px] font-medium text-[#0B0F19]/70 hover:text-[#6E8F75] transition-all cursor-pointer"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#F8F9FA] hover:bg-white border border-slate-200/70 hover:border-[#5E8174]/40 text-[11px] font-medium text-slate-600 hover:text-[#5E8174] transition-all cursor-pointer"
                       >
                         <Plus className="w-3 h-3" />
                         <span>{suggestion}</span>
@@ -1061,30 +1092,38 @@ export default function CandidateProfilesPage() {
           </div>
 
           {/* 4. Education & Academic Background */}
-          <div className="bg-white rounded-3xl p-6 sm:p-7 border border-[#0B0F19]/[0.06] shadow-[0_2px_16px_rgba(0,0,0,0.02)] space-y-4">
-            <div className="flex items-center justify-between mb-6">
-                <h2 className="text-[14px] font-extrabold uppercase tracking-wider text-[#0B0F19]/90 flex items-center gap-2">
-                  <GraduationCap className="w-4 h-4 text-[#0B0F19]/50" />
-                  Academic Foundation
-                </h2>
-              </div>
+          <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.03)] space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h2 className="text-base font-bold text-[#0F172A] flex items-center gap-2">
+                <GraduationCap className="w-4 h-4 text-[#5E8174]" />
+                <span>Education & Academic Credentials</span>
+              </h2>
+              <span className="text-[11px] font-medium text-[#5E8174] bg-[#5E8174]/10 px-2.5 py-0.5 rounded-md border border-[#5E8174]/20">
+                Degree Verified
+              </span>
+            </div>
 
             {!isEditing ? (
-              <div className="flex flex-col gap-2 p-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.05]">
+              <div className="flex flex-col gap-2 p-4 rounded-2xl bg-[#F4F0E8]/80 border border-[#E8E2D5]">
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
-                    <h3 className="text-sm font-bold text-[#0B0F19]">
+                    <h3 className="text-sm font-bold text-[#0F172A]">
                       {profile.education.degree || 'Degree Not Specified'} {profile.education.specialization ? `in ${profile.education.specialization}` : ''}
                     </h3>
-                    <p className="text-xs text-[#0B0F19]/60">
-                      {profile.education.institution || 'Institution Not Specified'} {profile.education.faculty ? `— ${profile.education.faculty}` : ''}
+                    <p className="text-xs text-slate-500">
+                      {profile.education.institution || 'Institution Not Specified'} {profile.education.faculty ? `— ${profile.education.faculty}` : ''} • Class of {profile.education.graduationYear || '2025'}
                     </p>
                   </div>
+                  {profile.education.graduationYear && (
+                    <span className="text-xs font-mono font-semibold text-slate-600 bg-white border border-slate-200 px-2.5 py-0.5 rounded-full">
+                      {profile.education.graduationYear}
+                    </span>
+                  )}
                 </div>
                 {(profile.education.gpa || (profile.education.startDate && profile.education.endDate)) && (
-                  <div className="flex items-center gap-4 mt-2 text-xs text-[#0B0F19]/50 font-medium">
+                  <div className="flex items-center gap-4 mt-1 text-xs text-slate-500 font-medium">
                     {profile.education.gpa && (
-                      <span className="bg-white border border-[#0B0F19]/10 px-2 py-0.5 rounded-md">GPA: {profile.education.gpa}</span>
+                      <span className="bg-white border border-slate-200 px-2 py-0.5 rounded-md">GPA: {profile.education.gpa}</span>
                     )}
                     {(profile.education.startDate && profile.education.endDate) && (
                       <span>{profile.education.startDate} to {profile.education.endDate}</span>
@@ -1095,7 +1134,7 @@ export default function CandidateProfilesPage() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                 <div className="sm:col-span-2">
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#0B0F19]/50 mb-1">
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
                     University / Institution
                   </label>
                   <input
@@ -1107,13 +1146,13 @@ export default function CandidateProfilesPage() {
                         education: { ...draft.education, institution: e.target.value },
                       })
                     }
-                    className="w-full h-10 px-3 rounded-xl bg-[#FAF9F6] border border-[#0B0F19]/[0.1] text-xs font-semibold text-[#0B0F19] focus:bg-white focus:border-[#6E8F75] focus:outline-none"
-                    placeholder="e.g. King Fahd University of Petroleum & Minerals"
+                    className="w-full h-10 px-3 rounded-xl bg-[#F8F9FA] border border-slate-200 text-xs font-semibold text-[#0F172A] focus:bg-white focus:border-[#5E8174] focus:outline-none transition-colors"
+                    placeholder="e.g. King Fahd University of Petroleum & Minerals (KFUPM)"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#0B0F19]/50 mb-1">
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
                     Graduation Year
                   </label>
                   <input
@@ -1125,13 +1164,13 @@ export default function CandidateProfilesPage() {
                         education: { ...draft.education, graduationYear: e.target.value },
                       })
                     }
-                    className="w-full h-10 px-3 rounded-xl bg-[#FAF9F6] border border-[#0B0F19]/[0.1] text-xs font-semibold text-[#0B0F19] focus:bg-white focus:border-[#6E8F75] focus:outline-none"
+                    className="w-full h-10 px-3 rounded-xl bg-[#F8F9FA] border border-slate-200 text-xs font-semibold text-[#0F172A] focus:bg-white focus:border-[#5E8174] focus:outline-none transition-colors"
                     placeholder="2025"
                   />
                 </div>
 
                 <div className="sm:col-span-3">
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#0B0F19]/50 mb-1">
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
                     Degree / Major
                   </label>
                   <input
@@ -1143,7 +1182,7 @@ export default function CandidateProfilesPage() {
                         education: { ...draft.education, degree: e.target.value },
                       })
                     }
-                    className="w-full h-10 px-3 rounded-xl bg-[#FAF9F6] border border-[#0B0F19]/[0.1] text-xs font-semibold text-[#0B0F19] focus:bg-white focus:border-[#6E8F75] focus:outline-none"
+                    className="w-full h-10 px-3 rounded-xl bg-[#F8F9FA] border border-slate-200 text-xs font-semibold text-[#0F172A] focus:bg-white focus:border-[#5E8174] focus:outline-none transition-colors"
                     placeholder="e.g. B.S. in Computer Science & Software Engineering"
                   />
                 </div>
@@ -1192,13 +1231,13 @@ export default function CandidateProfilesPage() {
         <div className="lg:col-span-4 space-y-7">
 
           {/* 1. Dynamic Connected Social & Public Links */}
-          <div className="bg-white rounded-3xl p-6 border border-[#0B0F19]/[0.06] shadow-[0_2px_16px_rgba(0,0,0,0.02)] space-y-4">
-            <div className="flex items-center justify-between border-b border-[#0B0F19]/[0.05] pb-3">
-              <h2 className="text-sm font-extrabold text-[#0B0F19] flex items-center gap-1.5">
-                <Globe className="w-4 h-4 text-[#6E8F75]" />
+          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.03)] space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h2 className="text-sm font-bold text-[#0F172A] flex items-center gap-1.5">
+                <Globe className="w-4 h-4 text-[#5E8174]" />
                 <span>Connected Profiles</span>
               </h2>
-              <span className="text-[10px] font-bold text-[#6E8F75] bg-[#6E8F75]/10 px-2.5 py-0.5 rounded-full border border-[#6E8F75]/20">
+              <span className="text-[10px] font-semibold text-slate-500 bg-[#F8F9FA] px-2.5 py-0.5 rounded-full border border-slate-200">
                 {(isEditing ? draft.socialLinks : profile.socialLinks).filter((l) => Boolean(l.url && l.url.trim())).length} Active
               </span>
             </div>
@@ -1215,17 +1254,17 @@ export default function CandidateProfilesPage() {
                         href={link.url.trim().startsWith('http') ? link.url.trim() : `https://${link.url.trim()}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="flex items-center justify-between p-3 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.04] hover:border-[#6E8F75]/40 hover:bg-white transition-all group"
+                        className="flex items-center justify-between p-3 rounded-2xl bg-[#F8F9FA] border border-slate-200/60 hover:border-[#5E8174]/40 hover:bg-white transition-all group"
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
                           {renderPlatformIcon(link.platform)}
-                          <span className="font-bold text-[#0B0F19] truncate">{link.label || link.platform}</span>
+                          <span className="font-bold text-[#0F172A] truncate">{link.label || link.platform}</span>
                         </div>
-                        <ExternalLink className="w-3.5 h-3.5 text-[#0B0F19]/30 group-hover:text-[#6E8F75] shrink-0" />
+                        <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#5E8174] shrink-0 transition-colors" />
                       </a>
                     ))
                 ) : (
-                  <p className="text-xs text-[#0B0F19]/40 italic py-2 text-center">
+                  <p className="text-xs text-slate-400 italic py-2 text-center">
                     No public links connected yet. Click Edit Profile to add your links.
                   </p>
                 )}
@@ -1233,10 +1272,10 @@ export default function CandidateProfilesPage() {
             ) : (
               /* Edit Mode: Dynamic Link Editor (Add, Edit, Delete on the fly) */
               <div className="space-y-3.5 text-xs">
-                {draft.socialLinks.map((link, idx) => (
+                {draft.socialLinks.map((link) => (
                   <div
                     key={link.id}
-                    className="p-3 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08] space-y-2.5 relative group"
+                    className="p-3 rounded-2xl bg-[#F8F9FA] border border-slate-200/80 space-y-2.5 relative group"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5 flex-1">
@@ -1244,7 +1283,7 @@ export default function CandidateProfilesPage() {
                         <select
                           value={link.platform}
                           onChange={(e) => handleUpdateLink(link.id, 'platform', e.target.value)}
-                          className="h-7 px-2 rounded-lg bg-white border border-[#0B0F19]/[0.1] text-[11px] font-bold text-[#0B0F19] focus:outline-none focus:border-[#6E8F75]"
+                          className="h-7 px-2 rounded-lg bg-white border border-slate-200 text-[11px] font-semibold text-[#0F172A] focus:outline-none focus:border-[#5E8174]"
                         >
                           {PLATFORM_OPTIONS.map((p) => (
                             <option key={p.value} value={p.value}>
@@ -1257,7 +1296,7 @@ export default function CandidateProfilesPage() {
                       <button
                         type="button"
                         onClick={() => handleDeleteLink(link.id)}
-                        className="p-1 rounded-lg text-[#0B0F19]/40 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                        className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                         title="Delete Link"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -1270,7 +1309,7 @@ export default function CandidateProfilesPage() {
                         value={link.label}
                         onChange={(e) => handleUpdateLink(link.id, 'label', e.target.value)}
                         placeholder="Link Label (e.g. Substack, Medium, Kaggle)"
-                        className="w-full h-8 px-2.5 rounded-lg bg-white border border-[#0B0F19]/[0.1] text-xs text-[#0B0F19] focus:border-[#6E8F75] focus:outline-none"
+                        className="w-full h-8 px-2.5 rounded-lg bg-white border border-slate-200 text-xs text-[#0F172A] focus:border-[#5E8174] focus:outline-none"
                       />
                     )}
 
@@ -1282,14 +1321,14 @@ export default function CandidateProfilesPage() {
                         PLATFORM_OPTIONS.find((p) => p.value === link.platform)?.placeholder ||
                         'https://...'
                       }
-                      className="w-full h-8 px-2.5 rounded-lg bg-white border border-[#0B0F19]/[0.1] text-xs text-[#0B0F19] font-mono focus:border-[#6E8F75] focus:outline-none"
+                      className="w-full h-8 px-2.5 rounded-lg bg-white border border-slate-200 text-xs text-[#0F172A] font-mono focus:border-[#5E8174] focus:outline-none"
                     />
                   </div>
                 ))}
 
                 {/* Quick Add Preset Links */}
                 <div className="space-y-1.5 pt-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#0B0F19]/40 block">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block">
                     Quick Add Link:
                   </span>
                   <div className="flex flex-wrap gap-1.5">
@@ -1303,8 +1342,8 @@ export default function CandidateProfilesPage() {
                           className={`
                             inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-[11px] font-medium transition-all cursor-pointer
                             ${alreadyAdded
-                              ? 'bg-white border-[#0B0F19]/[0.08] text-[#0B0F19]/60 hover:text-[#0B0F19]'
-                              : 'bg-[#6E8F75]/10 border-[#6E8F75]/20 text-[#6E8F75] hover:bg-[#6E8F75]/20'
+                              ? 'bg-white border-slate-200 text-slate-500 hover:text-[#0F172A]'
+                              : 'bg-[#5E8174]/10 border-[#5E8174]/20 text-[#5E8174] hover:bg-[#5E8174]/20'
                             }
                           `}
                         >
@@ -1320,45 +1359,97 @@ export default function CandidateProfilesPage() {
           </div>
 
           {/* 2. Dedicated Resume / CV Document Section */}
-          <div className="bg-white rounded-3xl p-6 border border-[#0B0F19]/[0.06] shadow-[0_2px_16px_rgba(0,0,0,0.02)] space-y-4">
-            <div className="flex items-center justify-between border-b border-[#0B0F19]/[0.05] pb-3">
-              <h2 className="text-sm font-extrabold text-[#0B0F19] flex items-center gap-1.5">
-                <FileText className="w-4 h-4 text-[#6E8F75]" />
+          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.03)] space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h2 className="text-sm font-bold text-[#0F172A] flex items-center gap-1.5">
+                <FileText className="w-4 h-4 text-[#5E8174]" />
                 <span>Resume / CV Document</span>
               </h2>
-              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/50">
-                PDF Document
+              <span className={`text-[10px] font-medium px-2.5 py-0.5 rounded-full border ${
+                currentCv?.has_cv
+                  ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                  : 'text-slate-500 bg-[#F8F9FA] border-slate-200'
+              }`}>
+                {currentCv?.has_cv ? 'Persisted Document' : 'No CV Uploaded'}
               </span>
             </div>
 
             {/* Resume Info Card */}
-            <div className="p-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.05] space-y-3">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-[#6E8F75]/10 text-[#6E8F75] flex items-center justify-center shrink-0">
-                  <FileCheck className="w-5 h-5" />
+            {currentCv?.has_cv ? (
+              <div className="p-3.5 rounded-2xl bg-[#F8F9FA] border border-slate-200/60 space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-[#5E8174]/10 text-[#5E8174] flex items-center justify-center shrink-0">
+                    <FileCheck className="w-4.5 h-4.5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-[#0F172A] truncate" title={currentCv.original_filename}>
+                      {currentCv.original_filename}
+                    </p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      {(currentCv.file_size ? (currentCv.file_size / (1024 * 1024)).toFixed(1) + ' MB' : 'PDF')} • Uploaded {currentCv.uploaded_at ? new Date(currentCv.uploaded_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'Recently'}
+                    </p>
+                  </div>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold text-[#0B0F19] truncate" title={profile.resumeFileName}>
-                    {profile.resumeFileName || 'Candidate_Al-Hassan_Resume.pdf'}
-                  </p>
-                  <p className="text-[11px] text-[#0B0F19]/45 mt-0.5">
-                    {profile.resumeFileSize || '1.4 MB'} • Uploaded {profile.resumeUploadDate || 'Aug 28, 2026'}
-                  </p>
-                </div>
-              </div>
 
-              <div className="flex items-center gap-2 pt-2 border-t border-[#0B0F19]/[0.05]">
-                {/* Download Button */}
-                <button
-                  type="button"
-                  onClick={handleDownloadResume}
-                  className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-white border border-[#0B0F19]/[0.08] hover:border-[#6E8F75]/40 text-xs font-bold text-[#0B0F19] transition-all cursor-pointer active:scale-95 shadow-2xs"
+                <div className="flex items-center gap-2 pt-2 border-t border-slate-200/60">
+                  {/* Download Button */}
+                  <button
+                    type="button"
+                    onClick={handleDownloadResume}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-white border border-slate-200 hover:border-slate-300 text-xs font-semibold text-slate-700 hover:text-[#0F172A] transition-all cursor-pointer active:scale-95 shadow-2xs"
+                  >
+                    <Download className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Download</span>
+                  </button>
+
+                  {/* Hidden File Input */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+
+                  {/* Replace Resume Button */}
+                  <button
+                    type="button"
+                    disabled={isUploadingCv}
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#5E8174] text-white text-xs font-bold hover:bg-[#4d6d62] transition-all cursor-pointer active:scale-95 shadow-2xs disabled:opacity-50"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>{isUploadingCv ? 'Uploading...' : 'Replace'}</span>
+                  </button>
+                </div>
+
+                {/* Review CV Analysis Entry Point */}
+                <Link
+                  to="/candidates/cv-analysis"
+                  className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#5E8174]/10 hover:bg-[#5E8174]/20 border border-[#5E8174]/25 text-xs font-bold text-[#5E8174] transition-all cursor-pointer active:scale-95 shadow-2xs"
                 >
-                  <Download className="w-3.5 h-3.5 text-[#6E8F75]" />
-                  <span>Download</span>
-                </button>
+                  <FileSearch className="w-3.5 h-3.5" />
+                  <span>
+                    {currentCv.analysis_status === 'confirmed'
+                      ? 'View Confirmed CV Context'
+                      : currentCv.analysis_status === 'review_required'
+                      ? 'Review CV Analysis & Context'
+                      : 'Analyze CV (Pending)'}
+                  </span>
+                  <ArrowRight className="w-3 h-3 ml-0.5" />
+                </Link>
+              </div>
+            ) : (
+              /* Clean empty state when no real CV has been uploaded yet */
+              <div className="p-5 rounded-2xl bg-[#F8F9FA] border border-dashed border-slate-300 text-center space-y-3">
+                <FileText className="w-8 h-8 text-slate-300 mx-auto" />
+                <div>
+                  <p className="text-xs font-bold text-[#0F172A]">No CV Document Uploaded</p>
+                  <p className="text-[11px] text-slate-400 mt-1 max-w-[240px] mx-auto">
+                    Upload your technical CV in PDF format to initiate automated skills analysis.
+                  </p>
+                </div>
 
-                {/* Hidden File Input */}
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -1367,24 +1458,24 @@ export default function CandidateProfilesPage() {
                   className="hidden"
                 />
 
-                {/* Replace Resume Button */}
                 <button
                   type="button"
+                  disabled={isUploadingCv}
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#6E8F75] text-white text-xs font-bold hover:bg-[#587a60] transition-all cursor-pointer active:scale-95 shadow-xs"
+                  className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#5E8174] text-white text-xs font-bold hover:bg-[#4d6d62] transition-all cursor-pointer active:scale-95 shadow-2xs disabled:opacity-50"
                 >
                   <Upload className="w-3.5 h-3.5" />
-                  <span>Replace</span>
+                  <span>{isUploadingCv ? 'Uploading...' : 'Upload CV Document'}</span>
                 </button>
               </div>
-            </div>
+            )}
           </div>
 
           {/* 3. Visual Verified Badges Section (Project evidence kept in Portfolio tab) */}
-          <div className="bg-white rounded-3xl p-6 border border-[#0B0F19]/[0.06] shadow-[0_2px_16px_rgba(0,0,0,0.02)] space-y-4">
-            <div className="flex items-center justify-between border-b border-[#0B0F19]/[0.05] pb-3">
-              <h2 className="text-sm font-extrabold text-[#0B0F19] flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-[#6E8F75]" />
+          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.03)] space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h2 className="text-sm font-bold text-[#0F172A] flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-[#5E8174]" />
                 <span>Verified Badges</span>
               </h2>
             </div>
@@ -1393,15 +1484,15 @@ export default function CandidateProfilesPage() {
               {(userProfile.verifiedBadges || ['Verified Backend Engineer', 'Jadeer AI Technical Badge', 'System Design Verified']).map((badge) => (
                 <div
                   key={badge}
-                  className="flex items-center justify-between p-3 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.05] hover:border-[#6E8F75]/30 transition-all"
+                  className="flex items-center justify-between p-3 rounded-2xl bg-[#F8F9FA] border border-slate-200/60 hover:border-slate-300 transition-all"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-7 h-7 rounded-xl bg-[#6E8F75]/10 text-[#6E8F75] flex items-center justify-center shrink-0">
-                      <Award className="w-4 h-4" />
+                    <div className="w-7 h-7 rounded-xl bg-[#5E8174]/10 text-[#5E8174] flex items-center justify-center shrink-0">
+                      <Award className="w-4 h-4 text-[#5E8174]" />
                     </div>
-                    <span className="text-xs font-extrabold text-[#0B0F19] truncate">{badge}</span>
+                    <span className="text-xs font-bold text-[#0F172A] truncate">{badge}</span>
                   </div>
-                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md shrink-0 border border-emerald-200/50">
+                  <span className="text-[10px] font-semibold text-[#5E8174] bg-[#5E8174]/10 px-2 py-0.5 rounded-md shrink-0 border border-[#5E8174]/20">
                     Verified
                   </span>
                 </div>
@@ -1409,10 +1500,10 @@ export default function CandidateProfilesPage() {
             </div>
 
             {/* Subtle Link pointing to the dedicated Evidence Portfolio */}
-            <div className="pt-2 border-t border-[#0B0F19]/[0.05]">
+            <div className="pt-2 border-t border-slate-100">
               <Link
                 to="/candidates/portfolio"
-                className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-[#6E8F75] hover:bg-[#6E8F75]/10 transition-colors"
+                className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-[#5E8174] hover:bg-[#5E8174]/10 transition-colors"
               >
                 <span>View Full Evidence Portfolio</span>
                 <ChevronRight className="w-3.5 h-3.5" />

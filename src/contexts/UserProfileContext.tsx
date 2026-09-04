@@ -178,7 +178,7 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
     }
     
     // Only fetch for candidate roles
-    if (userRole === 'student' || userRole === 'grad' || userRole === 'candidate') {
+    if (userRole === 'student' || userRole === 'grad' || userRole === 'graduate') {
       fetch('/api/candidate/profile')
         .then(res => res.json())
         .then(data => {
@@ -206,7 +206,7 @@ export function UserProfileProvider({ children }: { children: React.ReactNode })
               skills: data.profile.skills || prev.skills,
               resumeFileName: data.profile.resumeUrl ? data.profile.resumeUrl.split('/').pop() : prev.resumeFileName,
               track: data.profile.softwareTrack ? data.profile.softwareTrack.replace(/_/g, ' ') : prev.track,
-              role: userRole,
+              role: normalizeCandidateRole(userRole),
             }));
           }
         })

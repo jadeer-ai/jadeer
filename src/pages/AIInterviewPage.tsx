@@ -1,6 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { useUser } from '@clerk/clerk-react';
 import { useUserProfile } from '@/contexts/UserProfileContext';
+import { CVAnalysisService } from '@/services/cvAnalysisService';
+import type { CVPrerequisiteResult } from '@/lib/cv-types';
 import {
   Sparkles,
   Send,
@@ -12,18 +15,15 @@ import {
   Clock,
   CheckCircle2,
   BrainCircuit,
-  Terminal,
   Copy,
   Check,
-  Pause,
-  Play,
-  RotateCcw,
-  Sliders,
   ShieldCheck,
   Award,
-  PlaySquare,
   ArrowRight,
   RefreshCw,
+  Lock,
+  FileSearch,
+  AlertCircle,
 } from 'lucide-react';
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -86,7 +86,28 @@ const initialMessages: Message[] = [
 
 export default function AIInterviewPage() {
   const navigate = useNavigate();
+  const { user: clerkUser } = useUser();
+  const candidateId = clerkUser?.id || '';
   const { addAssessmentResult, profile: userProfile } = useUserProfile();
+
+  /* ── CV Analysis Prerequisite Check ── */
+  const [prereq, setPrereq] = useState<CVPrerequisiteResult | null>(null);
+  const [checkingCv, setCheckingCv] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    if (!candidateId) {
+      setCheckingCv(false);
+      return;
+    }
+    CVAnalysisService.getPrerequisite(candidateId).then((res) => {
+      if (active) {
+        setPrereq(res);
+        setCheckingCv(false);
+      }
+    });
+    return () => { active = false; };
+  }, [candidateId]);
 
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [inputValue, setInputValue] = useState('');
@@ -98,7 +119,7 @@ export default function AIInterviewPage() {
 
   /* Test Runner State & Modal */
   const [isRunningTests, setIsRunningTests] = useState(false);
-  const [testResults, setTestResults] = useState<Array<{ name: string; passed: boolean; duration: string }>>([
+  const [testResults] = useState<Array<{ name: string; passed: boolean; duration: string }>>([
     { name: 'Virtual Destructor Pointer Dispatch', passed: true, duration: '12ms' },
     { name: 'RAII Smart Pointer Scope Cleanup', passed: true, duration: '8ms' },
     { name: 'Template Inlining & Zero-Cost CRTP', passed: true, duration: '15ms' },
@@ -217,57 +238,129 @@ export default function AIInterviewPage() {
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
+  /* ── Prerequisite Gate: CV Analysis Confirmation ── */
+  if (!checkingCv && (!prereq || !prereq.is_ready)) {
+    return (
+      <div className="max-w-2xl mx-auto py-8 sm:py-12 animate-[fade-in_0.4s_ease]">
+        <div className="bg-white rounded-3xl p-8 sm:p-10 border border-slate-200/80 shadow-[0_4px_24px_rgba(15,23,42,0.04)] text-center space-y-6">
+          <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200/60 text-amber-600 flex items-center justify-center mx-auto shadow-2xs">
+            <Lock className="w-8 h-8" />
+          </div>
+
+          <div className="space-y-2 max-w-lg mx-auto">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-xs font-bold text-amber-700">
+              <AlertCircle className="w-3.5 h-3.5" />
+              <span>Prerequisite Required</span>
+            </div>
+            <h1 className="text-2xl font-bold text-[#0F172A] tracking-tight">
+              Confirm Your CV Analysis First
+            </h1>
+            <p className="text-sm text-slate-500 leading-relaxed">
+              {prereq?.message || 'Review and confirm your CV analysis before starting your AI Assessment.'}
+            </p>
+            {prereq?.original_filename && (
+              <p className="text-xs text-slate-400 font-medium">
+                Document: <strong className="text-slate-600">{prereq.original_filename}</strong> • Status: <span className="capitalize">{prereq.status?.replace(/_/g, ' ')}</span>
+              </p>
+            )}
+          </div>
+
+          {/* Candidate Preparation Flow */}
+          <div className="bg-[#F8F9FA] rounded-2xl p-5 border border-slate-200/60 max-w-md mx-auto text-left space-y-3">
+            <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">Candidate Preparation Flow</p>
+            <div className="space-y-2.5">
+              <div className="flex items-center gap-3 text-xs text-slate-600">
+                <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-[11px] shrink-0">✓</div>
+                <span className="font-medium">Step 1: Profile & CV Upload</span>
+              </div>
+              <div className="flex items-center gap-3 text-xs text-amber-800 bg-amber-50/80 p-2.5 rounded-xl border border-amber-200/60">
+                <div className="w-6 h-6 rounded-full bg-amber-200 text-amber-900 flex items-center justify-center font-bold text-[11px] shrink-0">2</div>
+                <div className="min-w-0">
+                  <span className="font-bold block">Step 2: CV Analysis & Review</span>
+                  <span className="text-[11px] text-amber-700">Action Required — Review and confirm your detected context</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 text-xs text-slate-400">
+                <div className="w-6 h-6 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center font-bold text-[11px] shrink-0">3</div>
+                <span>Step 3: AI Technical Assessment (Unlocked after confirmation)</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Action CTAs */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <Link
+              to="/candidates/cv-analysis"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#5E8174] hover:bg-[#4D6D62] text-white text-sm font-bold shadow-sm hover:shadow-md transition-all active:scale-95 cursor-pointer"
+            >
+              <FileSearch className="w-4 h-4" />
+              <span>Review CV Analysis</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+
+            <Link
+              to="/profile"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white border border-slate-200 hover:border-slate-300 text-slate-700 text-sm font-semibold transition-all cursor-pointer"
+            >
+              <span>Back to Profile</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5 animate-[fade-in_0.4s_ease]">
 
       {/* ═══════════════════════════════════════════════════════════════
          ASSESSMENT HEADER & METRICS BAR
          ═══════════════════════════════════════════════════════════════ */}
-      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-[#0B0F19]/[0.06] shadow-[0_2px_16px_rgba(0,0,0,0.02)]">
+      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.03)] space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
 
           {/* Left: Active Session Info */}
-          <div>
-            <div className="flex flex-wrap items-center gap-2.5 mb-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#10b981]/10 text-[#059669] text-xs font-bold border border-[#10b981]/20">
-                <span className="w-2 h-2 rounded-full bg-[#10b981] animate-[pulse-glow_1.8s_ease-in-out_infinite]" />
+          <div className="space-y-1.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#5E8174]/10 text-[#5E8174] text-xs font-semibold border border-[#5E8174]/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#5E8174] animate-pulse" />
                 Live Assessment Session
               </span>
-              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-lg bg-[#0B0F19]/[0.04] text-[#0B0F19]/60">
+              <span className="text-xs font-medium px-2.5 py-0.5 rounded-md bg-[#F8F9FA] border border-slate-200/60 text-slate-500">
                 Track: {userProfile.track || 'Junior Backend / Systems'}
               </span>
-              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-[#0B0F19]/70">
-                Calibration: {userProfile.role === 'student' ? '🎓 Internship Benchmark' : '⚡ Graduate Hiring Gate'}
+              <span className="text-xs font-medium px-2.5 py-0.5 rounded-md bg-[#F8F9FA] border border-slate-200/60 text-slate-500">
+                Calibration: {userProfile.role === 'student' ? 'Internship Benchmark' : 'Graduate Hiring Gate'}
               </span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-extrabold text-[#0B0F19] tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-bold text-[#0F172A] tracking-tight">
               C++ Object-Oriented Design & Memory Architecture
             </h2>
           </div>
 
           {/* Right: Timer, Test Runner & Claim Badge Action */}
-          <div className="flex flex-wrap items-center gap-3 self-start lg:self-center">
+          <div className="flex flex-wrap items-center gap-2.5 self-start lg:self-center">
             {/* Session Timer */}
-            <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#FAF9F6] border border-[#0B0F19]/[0.06] text-xs font-semibold text-[#0B0F19]">
-              <Clock className="w-4 h-4 text-[#6E8F75]" />
+            <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#F8F9FA] border border-slate-200 text-xs font-medium text-slate-600">
+              <Clock className="w-3.5 h-3.5 text-slate-400" />
               <span>18:42</span>
-              <span className="text-[#0B0F19]/30">/ 30:00</span>
+              <span className="text-slate-400">/ 30:00</span>
             </div>
 
-            {/* Run Tests Button */}
+            {/* Run Tests Button (Deep Slate Navy) */}
             <button
               onClick={handleRunTests}
               disabled={isRunningTests}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0B0F19] text-white text-xs font-bold hover:bg-[#1a2332] transition-colors shadow-sm"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0F172A] text-white text-xs font-semibold hover:bg-[#1E293B] transition-colors shadow-2xs cursor-pointer active:scale-95 disabled:opacity-50"
             >
-              <RefreshCw className={`w-3.5 h-3.5 text-[#82a78a] ${isRunningTests ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 text-slate-300 ${isRunningTests ? 'animate-spin' : ''}`} />
               <span>{isRunningTests ? 'Executing Test Suite...' : 'Run Test Suite'}</span>
             </button>
 
-            {/* Complete & Submit Assessment Button */}
+            {/* Complete & Submit Assessment Button (Muted Sage) */}
             <button
               onClick={handleCompleteAssessment}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#6E8F75] text-white text-xs font-bold hover:bg-[#5d7d64] hover:shadow-[0_4px_16px_rgba(110,143,117,0.3)] transition-all shadow-sm active:scale-95"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#5E8174] text-white text-xs font-bold hover:bg-[#4D6D62] hover:shadow-[0_4px_16px_rgba(94,129,116,0.25)] transition-all shadow-2xs active:scale-95 cursor-pointer"
             >
               <Award className="w-4 h-4" />
               <span>Submit & Claim Badge</span>
@@ -277,29 +370,29 @@ export default function AIInterviewPage() {
             <button
               onClick={() => setIsMuted(!isMuted)}
               className={`
-                flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-200 border
+                flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-200 border cursor-pointer
                 ${isMuted
-                  ? 'bg-white border-[#0B0F19]/[0.08] text-[#0B0F19]/40'
-                  : 'bg-[#6E8F75]/10 border-[#6E8F75]/25 text-[#6E8F75]'
+                  ? 'bg-[#F8F9FA] border-slate-200 text-slate-400 hover:text-slate-600'
+                  : 'bg-[#5E8174]/10 border-[#5E8174]/20 text-[#5E8174]'
                 }
               `}
               title={isMuted ? 'Unmute AI Voice' : 'Mute AI Voice'}
             >
               {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-              <span className="hidden sm:inline">{isMuted ? 'Voice Off' : 'AI Voice On'}</span>
+              <span className="hidden sm:inline">{isMuted ? 'Voice Off' : 'Voice On'}</span>
             </button>
           </div>
         </div>
 
-        {/* Live Test Suite Indicators */}
-        <div className="mt-4 pt-4 border-t border-[#0B0F19]/[0.05] grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+        {/* Live Test Suite Indicators (3 Refined Technical Status Chips) */}
+        <div className="pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-2.5">
           {testResults.map((t) => (
-            <div key={t.name} className="flex items-center justify-between p-2.5 rounded-xl bg-[#FAF9F6] border border-[#0B0F19]/[0.05] text-xs">
-              <span className="flex items-center gap-2 font-medium text-[#0B0F19]/80 truncate">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+            <div key={t.name} className="flex items-center justify-between p-2.5 rounded-xl bg-[#F8F9FA] border border-slate-200/60 text-xs">
+              <span className="flex items-center gap-2 font-medium text-slate-600 truncate">
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#5E8174] shrink-0" />
                 <span className="truncate">{t.name}</span>
               </span>
-              <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md shrink-0 font-bold">
+              <span className="text-[10px] font-mono text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded-md shrink-0 font-medium">
                 {t.duration}
               </span>
             </div>
@@ -310,10 +403,10 @@ export default function AIInterviewPage() {
       {/* ═══════════════════════════════════════════════════════════════
          SCROLLABLE CONVERSATION WORKSPACE
          ═══════════════════════════════════════════════════════════════ */}
-      <div className="bg-white rounded-3xl border border-[#0B0F19]/[0.06] shadow-[0_4px_24px_rgba(0,0,0,0.03)] flex flex-col h-[620px] overflow-hidden">
+      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_20px_rgba(15,23,42,0.03)] flex flex-col h-[620px] overflow-hidden">
 
         {/* Chat Messages Stream */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 bg-[#FAF9F6]/40">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 bg-[#F8F9FA]">
           {messages.map((msg) => {
             const isAi = msg.sender === 'ai';
 
@@ -324,23 +417,22 @@ export default function AIInterviewPage() {
               >
                 {/* AI Avatar */}
                 {isAi && (
-                  <div className="w-10 h-10 rounded-2xl bg-[#0B0F19] text-white flex items-center justify-center shrink-0 shadow-[0_4px_12px_rgba(11,15,25,0.2)] border border-white/10">
-                    <Sparkles className="w-5 h-5 text-[#82a78a]" />
+                  <div className="w-9 h-9 rounded-xl bg-[#0F172A] text-white flex items-center justify-center shrink-0 border border-slate-800 shadow-xs">
+                    <Sparkles className="w-4 h-4 text-[#84A98C]" />
                   </div>
                 )}
 
                 {/* Message Bubble Container */}
-                <div className={`max-w-[88%] sm:max-w-[80%] ${isAi ? 'space-y-2.5' : 'space-y-1.5'}`}>
+                <div className={`max-w-[88%] sm:max-w-[80%] ${isAi ? 'space-y-2' : 'space-y-1.5'}`}>
 
-                  {/* Header info */}
-                  <div className={`flex items-center gap-2 px-1 text-xs ${isAi ? 'text-[#0B0F19]/40' : 'justify-end text-[#0B0F19]/40'}`}>
-                    <span className="font-bold text-[#0B0F19]/70">
+                  <div className={`flex items-center gap-2 px-1 text-xs ${isAi ? 'text-slate-400' : 'justify-end text-slate-400'}`}>
+                    <span className="font-bold text-[#0F172A]">
                       {isAi ? 'Jadeer AI Technical Interviewer' : `${userProfile.fullName || 'Candidate'} (You)`}
                     </span>
                     <span>•</span>
                     <span>{msg.timestamp}</span>
                     {msg.competencyPill && (
-                      <span className="hidden sm:inline-flex px-2 py-0.5 rounded-md bg-[#6E8F75]/10 text-[#6E8F75] font-semibold text-[10px]">
+                      <span className="hidden sm:inline-flex px-2 py-0.5 rounded-md bg-[#5E8174]/10 text-[#5E8174] font-semibold text-[10px] border border-[#5E8174]/20">
                         {msg.competencyPill}
                       </span>
                     )}
@@ -352,8 +444,8 @@ export default function AIInterviewPage() {
                       p-4 sm:p-5 rounded-3xl text-[14.5px] leading-relaxed
                       ${
                         isAi
-                          ? 'bg-[#0B0F19] text-white/95 rounded-tl-lg shadow-[0_4px_20px_rgba(11,15,25,0.15)] border border-white/[0.08]'
-                          : 'bg-white text-[#0B0F19] rounded-tr-lg border border-[#0B0F19]/[0.08] shadow-[0_2px_12px_rgba(0,0,0,0.03)]'
+                          ? 'bg-[#0F172A] text-slate-100 rounded-tl-lg shadow-[0_4px_16px_rgba(15,23,42,0.12)] border border-slate-800'
+                          : 'bg-white text-[#0F172A] rounded-tr-lg border border-slate-200 shadow-2xs'
                       }
                     `}
                   >
@@ -361,8 +453,8 @@ export default function AIInterviewPage() {
                     {msg.audioDuration && (
                       <div
                         className={`
-                          inline-flex items-center gap-2 px-3 py-1 rounded-full mb-3 text-xs font-semibold
-                          ${isAi ? 'bg-white/10 text-white/80' : 'bg-[#6E8F75]/10 text-[#6E8F75]'}
+                          inline-flex items-center gap-2 px-3 py-1 rounded-full mb-3 text-xs font-medium
+                          ${isAi ? 'bg-white/[0.08] border border-white/[0.1] text-slate-200' : 'bg-[#5E8174]/10 border border-[#5E8174]/20 text-[#5E8174]'}
                         `}
                       >
                         <Volume2 className="w-3.5 h-3.5" />
@@ -377,20 +469,20 @@ export default function AIInterviewPage() {
 
                     {/* C++ Code Block inside AI message */}
                     {msg.codeSnippet && (
-                      <div className="mt-4 rounded-2xl overflow-hidden border border-white/10 bg-[#050810] shadow-inner">
-                        <div className="flex items-center justify-between px-4 py-2 bg-white/[0.04] border-b border-white/[0.06] text-xs text-white/50 font-mono">
-                          <span className="flex items-center gap-1.5 font-semibold text-white/70">
-                            <Code2 className="w-3.5 h-3.5 text-[#82a78a]" />
+                      <div className="mt-4 rounded-2xl overflow-hidden border border-slate-800/80 bg-[#0A0F1D] shadow-inner">
+                        <div className="flex items-center justify-between px-4 py-2 bg-white/[0.03] border-b border-slate-800 text-xs text-slate-400 font-mono">
+                          <span className="flex items-center gap-1.5 font-semibold text-slate-300">
+                            <Code2 className="w-3.5 h-3.5 text-[#84A98C]" />
                             {msg.codeSnippet.language.toUpperCase()} Snippet
                           </span>
                           <button
                             onClick={() => copyCode(msg.codeSnippet!.code, msg.id)}
-                            className="flex items-center gap-1 hover:text-white transition-colors"
+                            className="flex items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
                           >
                             {copiedCodeId === msg.id ? (
                               <>
-                                <Check className="w-3.5 h-3.5 text-[#10b981]" />
-                                <span className="text-[#10b981]">Copied</span>
+                                <Check className="w-3.5 h-3.5 text-[#5E8174]" />
+                                <span className="text-[#5E8174] font-medium">Copied</span>
                               </>
                             ) : (
                               <>
@@ -400,7 +492,7 @@ export default function AIInterviewPage() {
                             )}
                           </button>
                         </div>
-                        <pre className="p-4 text-[13px] font-mono text-[#d1fae5] overflow-x-auto leading-relaxed scrollbar-none">
+                        <pre className="p-4 text-[13px] font-mono text-[#E2E8F0] overflow-x-auto leading-relaxed scrollbar-none">
                           <code>{msg.codeSnippet.code}</code>
                         </pre>
                       </div>
@@ -410,7 +502,7 @@ export default function AIInterviewPage() {
 
                 {/* Candidate Avatar */}
                 {!isAi && (
-                  <div className="w-10 h-10 rounded-2xl bg-[#6E8F75] text-white flex items-center justify-center shrink-0 shadow-[0_4px_12px_rgba(110,143,117,0.3)] font-bold text-xs">
+                  <div className="w-9 h-9 rounded-xl bg-[#5E8174] text-white flex items-center justify-center shrink-0 shadow-xs font-bold text-xs">
                     AH
                   </div>
                 )}
@@ -421,15 +513,15 @@ export default function AIInterviewPage() {
           {/* AI Thinking Animation Indicator */}
           {isAiThinking && (
             <div className="flex gap-3 sm:gap-4 justify-start animate-[fade-in_0.3s_ease]">
-              <div className="w-10 h-10 rounded-2xl bg-[#0B0F19] text-white flex items-center justify-center shrink-0 border border-white/10">
-                <BrainCircuit className="w-5 h-5 text-[#82a78a] animate-[pulse-glow_1.5s_infinite]" />
+              <div className="w-9 h-9 rounded-xl bg-[#0F172A] text-white flex items-center justify-center shrink-0 border border-slate-800">
+                <BrainCircuit className="w-4 h-4 text-[#84A98C] animate-pulse" />
               </div>
-              <div className="bg-[#0B0F19] text-white p-4 rounded-3xl rounded-tl-lg border border-white/[0.08] shadow-md flex items-center gap-3">
-                <span className="text-xs text-white/70 font-medium">Evaluating your answer & adapting next prompt</span>
+              <div className="bg-[#0F172A] text-white p-4 rounded-3xl rounded-tl-lg border border-slate-800 shadow-sm flex items-center gap-3">
+                <span className="text-xs text-slate-300 font-medium">Evaluating your answer & adapting next prompt</span>
                 <div className="flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#82a78a] animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#82a78a] animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#82a78a] animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#84A98C] animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#84A98C] animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#84A98C] animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
               </div>
             </div>
@@ -441,28 +533,28 @@ export default function AIInterviewPage() {
         {/* ═══════════════════════════════════════════════════════════════
            SLEEK BOTTOM INPUT SECTION WITH VOICE & TEXT
            ═══════════════════════════════════════════════════════════════ */}
-        <div className="p-4 sm:p-5 bg-white border-t border-[#0B0F19]/[0.06]">
+        <div className="p-4 sm:p-5 bg-white border-t border-slate-100">
 
           {/* Live Voice Recording Bar (Active State) */}
           {isRecording && (
-            <div className="flex items-center justify-between px-4 py-3 mb-3 rounded-2xl bg-[#f43f5e]/[0.06] border border-[#f43f5e]/20 animate-[slide-up_0.2s_ease]">
+            <div className="flex items-center justify-between px-4 py-3 mb-3 rounded-2xl bg-rose-50 border border-rose-200 animate-[slide-up_0.2s_ease]">
               <div className="flex items-center gap-3">
-                <span className="flex h-3 w-3 rounded-full bg-[#f43f5e] animate-ping" />
-                <span className="text-xs font-bold text-[#f43f5e] uppercase tracking-wider">
+                <span className="flex h-2.5 w-2.5 rounded-full bg-rose-500 animate-ping" />
+                <span className="text-xs font-semibold text-rose-700 uppercase tracking-wider">
                   Listening to Voice Input... ({formatTimer(recordingSeconds)})
                 </span>
                 {/* Voice soundwave animation bars */}
                 <div className="hidden sm:flex items-center gap-1 ml-2">
-                  <span className="w-1 h-3 bg-[#f43f5e] rounded-full animate-[pulse_0.6s_ease-in-out_infinite]" />
-                  <span className="w-1 h-6 bg-[#f43f5e] rounded-full animate-[pulse_0.4s_ease-in-out_infinite_0.1s]" />
-                  <span className="w-1 h-4 bg-[#f43f5e] rounded-full animate-[pulse_0.5s_ease-in-out_infinite_0.2s]" />
-                  <span className="w-1 h-7 bg-[#f43f5e] rounded-full animate-[pulse_0.7s_ease-in-out_infinite_0.3s]" />
-                  <span className="w-1 h-3 bg-[#f43f5e] rounded-full animate-[pulse_0.5s_ease-in-out_infinite]" />
+                  <span className="w-1 h-3 bg-rose-500 rounded-full animate-[pulse_0.6s_ease-in-out_infinite]" />
+                  <span className="w-1 h-5 bg-rose-500 rounded-full animate-[pulse_0.4s_ease-in-out_infinite_0.1s]" />
+                  <span className="w-1 h-3.5 bg-rose-500 rounded-full animate-[pulse_0.5s_ease-in-out_infinite_0.2s]" />
+                  <span className="w-1 h-6 bg-rose-500 rounded-full animate-[pulse_0.7s_ease-in-out_infinite_0.3s]" />
+                  <span className="w-1 h-3 bg-rose-500 rounded-full animate-[pulse_0.5s_ease-in-out_infinite]" />
                 </div>
               </div>
               <button
                 onClick={handleToggleRecord}
-                className="px-3 py-1 text-xs font-bold bg-[#f43f5e] text-white rounded-lg hover:bg-[#e11d48] transition-colors"
+                className="px-3 py-1 text-xs font-semibold bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors cursor-pointer"
               >
                 Done Speaking
               </button>
@@ -472,22 +564,22 @@ export default function AIInterviewPage() {
           {/* Input Box Controls */}
           <div className="flex items-end gap-2 sm:gap-3">
 
-            {/* Voice Microphone Button (Prominent) */}
+            {/* Voice Microphone Button */}
             <button
               id="voice-record-btn"
               type="button"
               onClick={handleToggleRecord}
               className={`
-                flex items-center justify-center h-[52px] w-[52px] rounded-2xl shrink-0 transition-all duration-300
+                flex items-center justify-center h-11 w-11 rounded-xl shrink-0 transition-all duration-200 cursor-pointer
                 ${
                   isRecording
-                    ? 'bg-[#f43f5e] text-white shadow-[0_0_20px_rgba(244,63,94,0.4)] scale-105'
-                    : 'bg-[#6E8F75] text-white hover:bg-[#5d7d64] hover:shadow-[0_4px_16px_rgba(110,143,117,0.35)] active:scale-95'
+                    ? 'bg-rose-600 text-white shadow-sm scale-105'
+                    : 'bg-[#5E8174] text-white hover:bg-[#4D6D62] active:scale-95 shadow-2xs'
                 }
               `}
               title={isRecording ? 'Stop Voice Recording' : 'Hold to Speak / Voice Input'}
             >
-              {isRecording ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+              {isRecording ? <MicOff className="w-4.5 h-4.5" /> : <Mic className="w-4.5 h-4.5" />}
             </button>
 
             {/* Text Input Field */}
@@ -505,12 +597,12 @@ export default function AIInterviewPage() {
                 }}
                 placeholder="Type your technical response or click the microphone to speak..."
                 className="
-                  w-full px-4 py-3 rounded-2xl resize-none
-                  bg-[#FAF9F6] border border-[#0B0F19]/[0.08]
-                  text-[14.5px] text-[#0B0F19] placeholder:text-[#0B0F19]/30
+                  w-full px-4 py-2.5 rounded-xl resize-none
+                  bg-[#F8F9FA] border border-slate-200
+                  text-[14px] text-[#0F172A] placeholder:text-slate-400
                   transition-all duration-200
-                  hover:border-[#0B0F19]/15
-                  focus:outline-none focus:border-[#6E8F75] focus:ring-[3px] focus:ring-[#6E8F75]/10 focus:bg-white
+                  hover:border-slate-300
+                  focus:outline-none focus:border-[#5E8174] focus:ring-2 focus:ring-[#5E8174]/15 focus:bg-white
                   leading-relaxed
                 "
               />
@@ -523,24 +615,24 @@ export default function AIInterviewPage() {
               onClick={handleSendMessage}
               disabled={!inputValue.trim() || isAiThinking}
               className={`
-                flex items-center justify-center h-[52px] px-5 rounded-2xl shrink-0 text-sm font-semibold gap-2 transition-all duration-300
+                flex items-center justify-center h-11 px-4 rounded-xl shrink-0 text-xs font-semibold gap-1.5 transition-all duration-200
                 ${
                   inputValue.trim() && !isAiThinking
-                    ? 'bg-[#6E8F75] text-white hover:bg-[#5d7d64] hover:shadow-[0_4px_16px_rgba(110,143,117,0.3)] active:scale-95 cursor-pointer'
-                    : 'bg-[#0B0F19]/[0.05] text-[#0B0F19]/30 cursor-not-allowed'
+                    ? 'bg-[#5E8174] text-white hover:bg-[#4D6D62] hover:shadow-[0_4px_16px_rgba(94,129,116,0.25)] active:scale-95 cursor-pointer font-bold'
+                    : 'bg-[#F8F9FA] border border-slate-200 text-slate-300 cursor-not-allowed'
                 }
               `}
             >
               <span className="hidden sm:inline">Submit</span>
-              <Send className="w-4 h-4" />
+              <Send className="w-3.5 h-3.5" />
             </button>
           </div>
 
           {/* Bottom helper prompt shortcuts */}
-          <div className="flex items-center justify-between mt-3 text-[11px] text-[#0B0F19]/40 px-1">
+          <div className="flex items-center justify-between mt-2.5 text-[11px] text-slate-400 px-1">
             <span className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#6E8F75]" />
-              Press <kbd className="px-1.5 py-0.5 rounded bg-[#FAF9F6] border border-[#0B0F19]/10 font-mono text-[10px]">Enter</kbd> to submit, <kbd className="px-1.5 py-0.5 rounded bg-[#FAF9F6] border border-[#0B0F19]/10 font-mono text-[10px]">Shift+Enter</kbd> for new line
+              <span className="w-1.5 h-1.5 rounded-full bg-[#5E8174]" />
+              Press <kbd className="px-1.5 py-0.5 rounded bg-[#F8F9FA] border border-slate-200 font-mono text-[10px] text-slate-600">Enter</kbd> to submit, <kbd className="px-1.5 py-0.5 rounded bg-[#F8F9FA] border border-slate-200 font-mono text-[10px] text-slate-600">Shift+Enter</kbd> for new line
             </span>
             <span className="hidden md:inline">
               Voice transcription automatically converts to code & technical notes
@@ -553,33 +645,33 @@ export default function AIInterviewPage() {
          COMPLETION & BADGE CLAIM MODAL
          ═══════════════════════════════════════════════════════════════ */}
       {showCompletionModal && (
-        <div className="fixed inset-0 z-50 bg-[#0B0F19]/60 backdrop-blur-sm flex items-center justify-center p-4 animate-[fade-in_0.2s_ease]">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-[#0B0F19]/[0.08] shadow-2xl space-y-6 text-center animate-[scale-in_0.25s_var(--ease-spring)]">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-[#6E8F75]/10 text-[#6E8F75] ring-4 ring-[#6E8F75]/20 shadow-md">
-              <ShieldCheck className="w-10 h-10" />
+        <div className="fixed inset-0 z-50 bg-[#0F172A]/60 backdrop-blur-xs flex items-center justify-center p-4 animate-[fade-in_0.2s_ease]">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-slate-200 shadow-xl space-y-6 text-center animate-[scale-in_0.25s_var(--ease-spring)]">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#5E8174]/10 text-[#5E8174] ring-4 ring-[#5E8174]/15 shadow-xs">
+              <ShieldCheck className="w-8 h-8" />
             </div>
 
             <div className="space-y-2">
-              <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-extrabold uppercase tracking-wider border border-emerald-200">
+              <span className="px-3 py-1 rounded-full bg-[#5E8174]/10 text-[#5E8174] text-xs font-bold uppercase tracking-wider border border-[#5E8174]/20">
                 Evaluation Passed • 96% Rating
               </span>
-              <h2 className="text-2xl font-extrabold text-[#0B0F19] tracking-tight">
+              <h2 className="text-2xl font-bold text-[#0F172A] tracking-tight">
                 Verified Badge Earned!
               </h2>
-              <p className="text-xs text-[#0B0F19]/60 leading-relaxed max-w-sm mx-auto">
-                Congratulations Candidate! Your C++ Memory Safety & Systems evaluation results have been verified and persisted to your profile context.
+              <p className="text-xs text-slate-500 leading-relaxed max-w-sm mx-auto">
+                Congratulations {userProfile.fullName || 'Candidate'}! Your C++ Memory Safety & Systems evaluation results have been verified and persisted to your profile context.
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.06] flex items-center justify-between text-left">
+            <div className="p-3.5 rounded-xl bg-[#F8F9FA] border border-slate-200/70 flex items-center justify-between text-left">
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-wider text-[#0B0F19]/45">Newly Unlocked Badge</p>
-                <p className="text-sm font-extrabold text-[#0B0F19] flex items-center gap-1.5 mt-0.5">
-                  <Award className="w-4 h-4 text-[#6E8F75]" />
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Newly Unlocked Badge</p>
+                <p className="text-sm font-bold text-[#0F172A] flex items-center gap-1.5 mt-0.5">
+                  <Award className="w-4 h-4 text-[#5E8174]" />
                   {claimedBadge}
                 </p>
               </div>
-              <span className="text-xs font-mono font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-lg">
+              <span className="text-xs font-mono font-semibold text-[#5E8174] bg-[#5E8174]/10 border border-[#5E8174]/20 px-2.5 py-1 rounded-lg">
                 Synced to Profile
               </span>
             </div>
@@ -587,14 +679,14 @@ export default function AIInterviewPage() {
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <button
                 onClick={() => navigate('/candidates/portfolio')}
-                className="w-full py-3 rounded-2xl bg-[#6E8F75] text-white text-xs font-bold hover:bg-[#5d7d64] transition-all shadow-md flex items-center justify-center gap-2"
+                className="w-full py-2.5 rounded-xl bg-[#5E8174] text-white text-xs font-bold hover:bg-[#4D6D62] transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer active:scale-95"
               >
                 <span>View Verified Candidate Dossier</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setShowCompletionModal(false)}
-                className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-[#FAF9F6] border border-[#0B0F19]/[0.08] text-xs font-semibold text-[#0B0F19]/70 hover:text-[#0B0F19] transition-colors"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#F8F9FA] border border-slate-200 text-xs font-semibold text-slate-600 hover:text-[#0F172A] hover:bg-white transition-colors cursor-pointer"
               >
                 Close
               </button>
