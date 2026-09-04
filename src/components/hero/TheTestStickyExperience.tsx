@@ -92,7 +92,7 @@ export function TheTestStickyExperience() {
 
     // Preload & decode the Jadeer brand logo to prevent decoding hitch at P = 0.72
     const preloadImg = new Image();
-    preloadImg.src = '/images/jadeer-logo-tight.png';
+    preloadImg.src = '/Jadeer-logo.png';
     if (preloadImg.decode) {
       preloadImg.decode().catch(() => {});
     }
@@ -953,7 +953,7 @@ export function TheTestStickyExperience() {
             }}
           >
             <img
-              src="/images/jadeer-logo-tight.png"
+              src="/Jadeer-logo.png"
               alt="Jadeer Verified Brand Mark"
               className="w-full h-full object-contain select-none pointer-events-none drop-shadow-[0_16px_36px_rgba(15,23,42,0.14)]"
             />

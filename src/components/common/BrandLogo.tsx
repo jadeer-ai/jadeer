@@ -57,17 +57,17 @@ export default function BrandLogo({
 }: BrandLogoProps) {
   const config = sizeConfig[size] || sizeConfig.md;
 
-  const textColorClass = inverted
-    ? 'text-white'
-    : textColor === 'light'
-      ? 'text-white'
-      : textColor === 'dark'
-        ? 'text-[#0F172A]'
-        : 'text-current';
+  const isLight = inverted || textColor === 'light';
 
-  const logoSrc = inverted ? '/images/jadeer-logo-white.png' : '/Jadeer-logo.png';
-  const imgSizeClass = inverted && size === 'md' ? 'w-8 h-8 sm:w-[34px] sm:h-[34px]' : config.imgSize;
-  const dotColorClass = inverted ? 'text-[#6E9385]' : 'text-[#5E8174]';
+  const textColorClass = isLight
+    ? 'text-white'
+    : textColor === 'dark'
+      ? 'text-[#0F172A]'
+      : 'text-current';
+
+  const logoSrc = isLight ? '/images/jadeer-logo-white.png' : '/Jadeer-logo.png';
+  const imgSizeClass = isLight && size === 'md' ? 'w-8 h-8 sm:w-[34px] sm:h-[34px]' : config.imgSize;
+  const dotColorClass = isLight ? 'text-[#6E9385]' : 'text-[#5E8174]';
 
   const logoNode = (
     <div className={`inline-flex items-center ${config.gap} ${className}`}>
